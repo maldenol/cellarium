@@ -14,12 +14,12 @@
 // along with cellevolution.  If not, see <https://www.gnu.org/licenses/>.
 
 class Cell {
-  public int[] genom;
-  public int counter;
-  public int energy;
-  public int direction;
-  public int colorR, colorG, colorB;
-  public boolean isAlive;
+  private int[] genom;
+  private int counter;
+  private int energy;
+  private int direction;
+  private int colorR, colorG, colorB;
+  private boolean isAlive;
 
 
   public Cell(int[] genom, int energy, int direction) {

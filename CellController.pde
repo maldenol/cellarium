@@ -13,49 +13,55 @@
 // You should have received a copy of the GNU General Public License
 // along with cellevolution.  If not, see <https://www.gnu.org/licenses/>.
 
+final int[][] DIRECTIONS = {
+  {0, -1},
+  {1, -1},
+  {1, 0},
+  {1, 1},
+  {0, 1},
+  {-1, 1},
+  {-1, 0},
+  {-1, -1},
+};
+
+
 class CellController {
-  public final int rows = height, columns = width;
-  public final int genomSize = 64, minChildEnergy = 40, maxEnergy = 200;
-  public final int dayDurationInTicks = 240, seasonDurationInDays = 92;
-  public final int maxPhotosynthesisEnergy = 30, maxPhotosynthesisDepth = 75;
-  public final int maxMineralEnergy = 15, maxMineralDepth = 50;
-  public final float foodEfficiency = 0.95;
-  public final float randomMutationChance = 0.01, childMutationChance = 0.25, parentMutationChance = 0.05;
+  private int rows = height, columns = width;
+  private int genomSize = 64, minChildEnergy = 40, maxEnergy = 200;
+  private int dayDurationInTicks = 240, seasonDurationInDays = 92;
+  private int maxPhotosynthesisEnergy = 30, maxPhotosynthesisDepth = 750;
+  private int maxMineralEnergy = 15, maxMineralDepth = 500;
+  private float foodEfficiency = 0.95;
+  private float randomMutationChance = 0.01, childMutationChance = 0.25, parentMutationChance = 0.05;
+  private float gammaFlashPeriodInDays = 720, gammaFlashMaxMutationsCount = 3;
 
-  public final int[][] DIRECTIONS = {
-    {0, -1},
-    {1, -1},
-    {1, 0},
-    {1, 1},
-    {0, 1},
-    {-1, 1},
-    {-1, 0},
-    {-1, -1},
-  };
+  private Cell[][] cells;
+  private ArrayList<Cell> actedCells;
 
-  public Cell[][] cells;
-  public ArrayList<Cell> actedCells;
+  private int ticksNumber, daysNumber, yearsNumber;
 
-  public float cellSideLength;
-
-  public int ticksNumber, daysNumber, yearsNumber;
+  private float cellSideLength;
+  private float renderWidth, renderHeight;
 
 
   public CellController() {
     this.cells = new Cell[this.columns][this.rows];
+
     int[] genom = new int[this.genomSize];
     for (int i = 0; i < this.genomSize; i++) {
       genom[i] = 3;
     }
     this.cells[this.columns / 2][2] = new Cell(genom, this.minChildEnergy * 3, 2);
 
-    this.cellSideLength = min(width / this.columns, height / this.rows);
-
     this.actedCells = new ArrayList<Cell>();
 
     this.ticksNumber = 0;
     this.daysNumber = 0;
     this.yearsNumber = 0;
+
+    this.cellSideLength = min(width / this.columns, height / this.rows);
+    this.renderWidth = this.columns * this.cellSideLength - 1;
+    this.renderHeight = this.rows * this.cellSideLength - 1;
   }
 
 
@@ -84,7 +90,7 @@ class CellController {
         }
 
         if (random(1) < this.randomMutationChance) {
-          this.mutateRandomGenomCell(cell);
+          this.mutateRandomGen(cell);
         }
 
         int action = cell.genom[cell.counter];
@@ -114,11 +120,8 @@ class CellController {
             this.incrementGenomCounter(cell);
             break;
           case 7:
-            this.mutateRandomGenomCell(cell);
+            this.mutateRandomGen(cell);
             this.incrementGenomCounter(cell);
-            break;
-          case 8:
-            this.jmpToGenomCell(cell);
             break;
           default:
             this.addToCounter(cell);
@@ -126,13 +129,31 @@ class CellController {
         }
       }
     }
+
     this.actedCells.clear();
 
     this.calculateTime();
+
+    if ((this.daysNumber + (this.yearsNumber + 1) * this.seasonDurationInDays * 4) % this.gammaFlashPeriodInDays == 0 && this.ticksNumber == 0) {
+      for (int c = 0; c < this.columns; c++) {
+        for (int r = 0; r < this.rows; r++) {
+          Cell cell = this.cells[c][r];
+
+          if (cell == null || this.actedCells.contains(cell) || !cell.isAlive) {
+            continue;
+          }
+
+          int mutationsCount = ceil(this.gammaFlashMaxMutationsCount * random(1));
+          for (int i = 0; i < mutationsCount; i++) {
+            this.mutateRandomGen(cell);
+          }
+        }
+      }
+    }
   }
 
 
-  public void calculateTime() {
+  private void calculateTime() {
     this.ticksNumber++;
 
     if (this.ticksNumber == this.dayDurationInTicks) {
@@ -146,7 +167,7 @@ class CellController {
     }
   }
 
-  public float calculateTransparencyCoefficient(int column, int row) {
+  private float calculateTransparencyCoefficient(int column, int row) {
     float sumOfTransparencyCoefficients = 0;
     final float upperCornerTransparencyCoefficient = cos(PI / 4), sideTransparencyCoefficient = cos(PI / 3);
     final float maxTransparencyCoefficients = 1 + 2 / upperCornerTransparencyCoefficient + 2 / sideTransparencyCoefficient;
@@ -176,11 +197,11 @@ class CellController {
     return sumOfTransparencyCoefficients / maxTransparencyCoefficients;
   }
 
-  public float calculateSeasonCoefficient() {
+  private float calculateSeasonCoefficient() {
     return 1.25 + 0.75 * sin(map((float)this.daysNumber / this.seasonDurationInDays, 0, 4, 0, 2 * PI));
   }
 
-  public float calculateDayCoefficient(int column, int row) {
+  private float calculateDayCoefficient(int column, int row) {
     float noonPositionX = map(this.ticksNumber, 0, this.dayDurationInTicks - 1, 0, this.columns - 1);
     float possibleNoonDistanceX = abs(noonPositionX - column);
     float noonDistanceX = min(possibleNoonDistanceX, this.columns - possibleNoonDistanceX);
@@ -189,10 +210,10 @@ class CellController {
   }
 
 
-  public int[] calculateCoordinatesByDirection(int column, int row, int direction) {
-    int c = (column + this.DIRECTIONS[direction][0] + this.columns) % this.columns;
+  private int[] calculateCoordinatesByDirection(int column, int row, int direction) {
+    int c = (column + DIRECTIONS[direction][0] + this.columns) % this.columns;
 
-    int r = row + this.DIRECTIONS[direction][1];
+    int r = row + DIRECTIONS[direction][1];
     if (r > this.rows - 1) {
       r = this.rows - 1;
     } else if (r < 0) {
@@ -202,20 +223,21 @@ class CellController {
     return new int[]{c, r};
   }
 
-  public int getNextNthGenomCell(Cell cell, int n) {
+  private int getNextNthGenomCell(Cell cell, int n) {
     return cell.genom[(cell.counter + n) % this.genomSize];
   }
 
-  public void incrementGenomCounter(Cell cell) {
+  private void incrementGenomCounter(Cell cell) {
     cell.counter = (cell.counter + 1) % this.genomSize;
   }
 
-  public void turn(Cell cell) {
+  private void turn(Cell cell) {
     cell.direction = (cell.direction + this.getNextNthGenomCell(cell, 1)) % 8;
   }
 
-  public void move(Cell cell, int column, int row) {
+  private void move(Cell cell, int column, int row) {
     int[] targetCoordinates = this.calculateCoordinatesByDirection(column, row, cell.direction);
+
     if (this.cells[targetCoordinates[0]][targetCoordinates[1]] == null) {
       this.cells[targetCoordinates[0]][targetCoordinates[1]] = cell;
       this.cells[column][row] = null;
@@ -224,7 +246,7 @@ class CellController {
     this.actedCells.add(cell);
   }
 
-  public void getEnergyFromPhotosynthesis(Cell cell, int column, int row) {
+  private void getEnergyFromPhotosynthesis(Cell cell, int column, int row) {
     int deltaEnergy = round(map(row, 0, this.maxPhotosynthesisDepth, this.maxPhotosynthesisEnergy, 0));
     deltaEnergy *= this.calculateTransparencyCoefficient(column, row);
     deltaEnergy *= this.calculateSeasonCoefficient();
@@ -240,7 +262,7 @@ class CellController {
     }
   }
 
-  public void getEnergyFromMinerals(Cell cell, int column, int row) {
+  private void getEnergyFromMinerals(Cell cell, int column, int row) {
     int deltaEnergy = round(map(row, this.rows - 1, this.rows - 1 - this.maxMineralDepth, this.maxMineralEnergy, 0));
 
     if (deltaEnergy > 0) {
@@ -253,8 +275,9 @@ class CellController {
     }
   }
 
-  public void getEnergyFromFood(Cell cell, int column, int row) {
+  private void getEnergyFromFood(Cell cell, int column, int row) {
     int[] targetCoordinates = this.calculateCoordinatesByDirection(column, row, cell.direction);
+
     if (this.cells[targetCoordinates[0]][targetCoordinates[1]] != null) {
       cell.energy += this.cells[targetCoordinates[0]][targetCoordinates[1]].energy * foodEfficiency;
       if (cell.energy > this.maxEnergy) {
@@ -267,7 +290,7 @@ class CellController {
     }
   }
 
-  public void bud(Cell cell, int column, int row) {
+  private void bud(Cell cell, int column, int row) {
     int[] targetCoordinates;
 
     if (cell.energy < this.minChildEnergy * 2) {
@@ -280,12 +303,12 @@ class CellController {
       if (this.cells[targetCoordinates[0]][targetCoordinates[1]] == null) {
         this.cells[targetCoordinates[0]][targetCoordinates[1]] = new Cell(cell.genom, cell.energy / 2, cell.direction);
         if (random(1) < this.childMutationChance) {
-          this.mutateRandomGenomCell(this.cells[targetCoordinates[0]][targetCoordinates[1]]);
+          this.mutateRandomGen(this.cells[targetCoordinates[0]][targetCoordinates[1]]);
         }
         this.actedCells.add(this.cells[targetCoordinates[0]][targetCoordinates[1]]);
 
         if (random(1) < this.parentMutationChance) {
-          this.mutateRandomGenomCell(cell);
+          this.mutateRandomGen(cell);
         }
         cell.energy -= cell.energy / 2;
 
@@ -296,19 +319,15 @@ class CellController {
     this.turnIntoFood(cell, column, row);
   }
 
-  public void mutateRandomGenomCell(Cell cell) {
+  private void mutateRandomGen(Cell cell) {
     cell.genom[floor(random(this.genomSize))] = floor(random(this.genomSize));
   }
 
-  public void jmpToGenomCell(Cell cell) {
-    cell.counter = this.getNextNthGenomCell(cell, 1);
-  }
-
-  public void addToCounter(Cell cell) {
+  private void addToCounter(Cell cell) {
     cell.counter = (cell.counter + cell.genom[cell.counter]) % this.genomSize;
   }
 
-  public void turnIntoFood(Cell cell, int column, int row) {
+  private void turnIntoFood(Cell cell, int column, int row) {
     cell.isAlive = false;
     cell.direction = 4;
   }
@@ -328,10 +347,10 @@ class CellController {
     }
   }
 
-  public void renderBackground() {
+  private void renderBackground() {
     noStroke();
     fill(255);
-    rect(0, 0, this.columns * this.cellSideLength - 1, this.rows * this.cellSideLength - 1);
+    rect(0, 0, this.renderWidth, this.renderHeight);
     noFill();
 
     for (int x = 0; x < this.columns; x++) {
@@ -358,7 +377,7 @@ class CellController {
     }
   }
 
-  public void renderCell(Cell cell, int column, int row) {
+  private void renderCell(Cell cell, int column, int row) {
     noStroke();
 
     if (cell.isAlive) {
