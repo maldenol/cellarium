@@ -27,12 +27,13 @@ final int[][] DIRECTIONS = {
 
 class CellController {
   private int rows = height, columns = width;
-  private int genomSize = 64, minChildEnergy = 40, maxEnergy = 200;
+  private int genomSize = 64, maxActionsPerTick = 16;
+  private int minChildEnergy = 40, maxEnergy = 200;
   private int dayDurationInTicks = 240, seasonDurationInDays = 92;
   private int maxPhotosynthesisEnergy = 30, maxPhotosynthesisDepth = 750;
   private int maxMineralEnergy = 15, maxMineralDepth = 500;
   private float foodEfficiency = 0.95;
-  private float randomMutationChance = 0.01, childMutationChance = 0.25, parentMutationChance = 0.05;
+  private float randomMutationChance = 0.002, budMutationChance = 0.05;
   private float gammaFlashPeriodInDays = 720, gammaFlashMaxMutationsCount = 3;
 
   private Cell[][] cells;
@@ -93,39 +94,48 @@ class CellController {
           this.mutateRandomGen(cell);
         }
 
-        int action = cell.genom[cell.counter];
-        switch (action) {
-          case 1:
-            this.turn(cell);
-            this.incrementGenomCounter(cell);
-            break;
-          case 2:
-            this.move(cell, c, r);
-            this.incrementGenomCounter(cell);
-            break;
-          case 3:
-            this.getEnergyFromPhotosynthesis(cell, c, r);
-            this.incrementGenomCounter(cell);
-            break;
-          case 4:
-            this.getEnergyFromMinerals(cell, c, r);
-            this.incrementGenomCounter(cell);
-            break;
-          case 5:
-            this.getEnergyFromFood(cell, c, r);
-            this.incrementGenomCounter(cell);
-            break;
-          case 6:
-            this.bud(cell, c, r);
-            this.incrementGenomCounter(cell);
-            break;
-          case 7:
-            this.mutateRandomGen(cell);
-            this.incrementGenomCounter(cell);
-            break;
-          default:
-            this.addToCounter(cell);
-            break;
+        for (int i = 0; i < this.maxActionsPerTick; i++) {
+          int action = cell.genom[cell.counter];
+
+          switch (action) {
+            case 1:
+              this.turn(cell);
+              this.incrementGenomCounter(cell);
+              break;
+            case 2:
+              this.move(cell, c, r);
+              this.incrementGenomCounter(cell);
+              i = this.maxActionsPerTick;
+              break;
+            case 3:
+              this.getEnergyFromPhotosynthesis(cell, c, r);
+              this.incrementGenomCounter(cell);
+              i = this.maxActionsPerTick;
+              break;
+            case 4:
+              this.getEnergyFromMinerals(cell, r);
+              this.incrementGenomCounter(cell);
+              i = this.maxActionsPerTick;
+              break;
+            case 5:
+              this.getEnergyFromFood(cell, c, r);
+              this.incrementGenomCounter(cell);
+              i = this.maxActionsPerTick;
+              break;
+            case 6:
+              this.bud(cell, c, r);
+              this.incrementGenomCounter(cell);
+              i = this.maxActionsPerTick;
+              break;
+            case 7:
+              this.mutateRandomGen(cell);
+              this.incrementGenomCounter(cell);
+              i = this.maxActionsPerTick;
+              break;
+            default:
+              this.addToCounter(cell);
+              break;
+          }
         }
       }
     }
@@ -262,7 +272,7 @@ class CellController {
     }
   }
 
-  private void getEnergyFromMinerals(Cell cell, int column, int row) {
+  private void getEnergyFromMinerals(Cell cell, int row) {
     int deltaEnergy = round(map(row, this.rows - 1, this.rows - 1 - this.maxMineralDepth, this.maxMineralEnergy, 0));
 
     if (deltaEnergy > 0) {
@@ -302,12 +312,12 @@ class CellController {
 
       if (this.cells[targetCoordinates[0]][targetCoordinates[1]] == null) {
         this.cells[targetCoordinates[0]][targetCoordinates[1]] = new Cell(cell.genom, cell.energy / 2, cell.direction);
-        if (random(1) < this.childMutationChance) {
+        if (random(1) < this.budMutationChance) {
           this.mutateRandomGen(this.cells[targetCoordinates[0]][targetCoordinates[1]]);
         }
         this.actedCells.add(this.cells[targetCoordinates[0]][targetCoordinates[1]]);
 
-        if (random(1) < this.parentMutationChance) {
+        if (random(1) < this.budMutationChance) {
           this.mutateRandomGen(cell);
         }
         cell.energy -= cell.energy / 2;
@@ -316,7 +326,7 @@ class CellController {
       }
     }
 
-    this.turnIntoFood(cell, column, row);
+    this.turnIntoFood(cell);
   }
 
   private void mutateRandomGen(Cell cell) {
@@ -327,7 +337,7 @@ class CellController {
     cell.counter = (cell.counter + cell.genom[cell.counter]) % this.genomSize;
   }
 
-  private void turnIntoFood(Cell cell, int column, int row) {
+  private void turnIntoFood(Cell cell) {
     cell.isAlive = false;
     cell.direction = 4;
   }
