@@ -17,12 +17,12 @@ class CellController {
   public final int rows = height, columns = width;
   public final int genomSize = 64, minChildEnergy = 40, maxEnergy = 200;
   public final int dayDurationInTicks = 240, seasonDurationInDays = 92;
-  public final int maxPhotosynthesisEnergy = 10 * 3, maxPhotosynthesisDepth = 75;
-  public final int maxMineralEnergy = 5 * 3, maxMineralDepth = 50;
-  public final int maxFoodEnergy = 25 * 3;
+  public final int maxPhotosynthesisEnergy = 30, maxPhotosynthesisDepth = 75;
+  public final int maxMineralEnergy = 15, maxMineralDepth = 50;
+  public final float foodEfficiency = 0.95;
   public final float randomMutationChance = 0.01, childMutationChance = 0.25, parentMutationChance = 0.05;
 
-  public final int[][] directions = {
+  public final int[][] DIRECTIONS = {
     {0, -1},
     {1, -1},
     {1, 0},
@@ -39,6 +39,7 @@ class CellController {
   public float cellSideLength;
 
   public int ticksNumber, daysNumber, yearsNumber;
+
 
   public CellController() {
     this.cells = new Cell[this.columns][this.rows];
@@ -57,66 +58,71 @@ class CellController {
     this.yearsNumber = 0;
   }
 
+
   public void act() {
     for (int c = 0; c < this.columns; c++) {
       for (int r = 0; r < this.rows; r++) {
         Cell cell = this.cells[c][r];
-        if (cell != null && !this.actedCells.contains(cell)) {
-          if (!cell.isAlive) {
+
+        if (cell == null || this.actedCells.contains(cell)) {
+          continue;
+        }
+
+        if (!cell.isAlive) {
+          this.move(cell, c, r);
+          continue;
+        }
+
+        cell.energy--;
+        if (cell.energy <= 0) {
+          this.cells[c][r] = null;
+          continue;
+        }
+        if (cell.energy >= this.maxEnergy - 1) {
+          this.bud(cell, c, r);
+          continue;
+        }
+
+        if (random(1) < this.randomMutationChance) {
+          this.mutateRandomGenomCell(cell);
+        }
+
+        int action = cell.genom[cell.counter];
+        switch (action) {
+          case 1:
+            this.turn(cell);
+            this.incrementGenomCounter(cell);
+            break;
+          case 2:
             this.move(cell, c, r);
-            continue;
-          }
-
-          cell.energy--;
-          if (cell.energy <= 0) {
-            this.cells[c][r] = null;
-            continue;
-          } else if (cell.energy >= this.maxEnergy - 1) {
+            this.incrementGenomCounter(cell);
+            break;
+          case 3:
+            this.getEnergyFromPhotosynthesis(cell, c, r);
+            this.incrementGenomCounter(cell);
+            break;
+          case 4:
+            this.getEnergyFromMinerals(cell, c, r);
+            this.incrementGenomCounter(cell);
+            break;
+          case 5:
+            this.getEnergyFromFood(cell, c, r);
+            this.incrementGenomCounter(cell);
+            break;
+          case 6:
             this.bud(cell, c, r);
-            continue;
-          }
-
-          if (random(1) < this.randomMutationChance) {
+            this.incrementGenomCounter(cell);
+            break;
+          case 7:
             this.mutateRandomGenomCell(cell);
-          }
-
-          int action = cell.genom[cell.counter];
-          switch (action) {
-            case 1:
-              this.turn(cell);
-              this.incrementGenomCounter(cell);
-              break;
-            case 2:
-              this.incrementGenomCounter(cell);
-              this.move(cell, c, r);
-              break;
-            case 3:
-              this.getEnergyFromPhotosynthesis(cell, c, r);
-              this.incrementGenomCounter(cell);
-              break;
-            case 4:
-              this.getEnergyFromMinerals(cell, c, r);
-              this.incrementGenomCounter(cell);
-              break;
-            case 5:
-              this.getEnergyFromFood(cell, c, r);
-              this.incrementGenomCounter(cell);
-              break;
-            case 6:
-              this.bud(cell, c, r);
-              this.incrementGenomCounter(cell);
-              break;
-            case 7:
-              this.mutateRandomGenomCell(cell);
-              this.incrementGenomCounter(cell);
-              break;
-            case 8:
-              this.jmpToGenomCell(cell);
-              break;
-            default:
-              this.addToCounter(cell);
-              break;
-          }
+            this.incrementGenomCounter(cell);
+            break;
+          case 8:
+            this.jmpToGenomCell(cell);
+            break;
+          default:
+            this.addToCounter(cell);
+            break;
         }
       }
     }
@@ -125,11 +131,14 @@ class CellController {
     this.calculateTime();
   }
 
+
   public void calculateTime() {
     this.ticksNumber++;
+
     if (this.ticksNumber == this.dayDurationInTicks) {
       this.ticksNumber = 0;
       this.daysNumber++;
+
       if (this.daysNumber == this.seasonDurationInDays * 4) {
         this.daysNumber = 0;
         this.yearsNumber++;
@@ -179,10 +188,11 @@ class CellController {
     return pow(map(noonDistance, 0, (this.columns - 1) / 2, 1, 0), 2);
   }
 
-  public int[] calculateCoordinatesByDirection(int column, int row, int direction) {
-    int c = (column + this.directions[direction][0] + this.columns) % this.columns;
 
-    int r = row + this.directions[direction][1];
+  public int[] calculateCoordinatesByDirection(int column, int row, int direction) {
+    int c = (column + this.DIRECTIONS[direction][0] + this.columns) % this.columns;
+
+    int r = row + this.DIRECTIONS[direction][1];
     if (r > this.rows - 1) {
       r = this.rows - 1;
     } else if (r < 0) {
@@ -219,22 +229,26 @@ class CellController {
     deltaEnergy *= this.calculateTransparencyCoefficient(column, row);
     deltaEnergy *= this.calculateSeasonCoefficient();
     deltaEnergy *= this.calculateDayCoefficient(column, row);
-    cell.energy += deltaEnergy;
-    if (cell.energy > this.maxEnergy) {
-      cell.energy = this.maxEnergy;
-    }
+
     if (deltaEnergy > 0) {
+      cell.energy += deltaEnergy;
+      if (cell.energy > this.maxEnergy) {
+        cell.energy = this.maxEnergy;
+      }
+
       cell.colorG++;
     }
   }
 
   public void getEnergyFromMinerals(Cell cell, int column, int row) {
     int deltaEnergy = round(map(row, this.rows - 1, this.rows - 1 - this.maxMineralDepth, this.maxMineralEnergy, 0));
-    cell.energy += deltaEnergy;
-    if (cell.energy > this.maxEnergy) {
-      cell.energy = this.maxEnergy;
-    }
+
     if (deltaEnergy > 0) {
+      cell.energy += deltaEnergy;
+      if (cell.energy > this.maxEnergy) {
+        cell.energy = this.maxEnergy;
+      }
+
       cell.colorB++;
     }
   }
@@ -242,22 +256,27 @@ class CellController {
   public void getEnergyFromFood(Cell cell, int column, int row) {
     int[] targetCoordinates = this.calculateCoordinatesByDirection(column, row, cell.direction);
     if (this.cells[targetCoordinates[0]][targetCoordinates[1]] != null) {
-      int deltaEnergy = min(this.cells[targetCoordinates[0]][targetCoordinates[1]].energy, this.maxFoodEnergy);
-      cell.energy += deltaEnergy;
+      cell.energy += this.cells[targetCoordinates[0]][targetCoordinates[1]].energy * foodEfficiency;
       if (cell.energy > this.maxEnergy) {
         cell.energy = this.maxEnergy;
       }
-      if (deltaEnergy > 0) {
-        cell.colorR++;
-      }
 
-      this.turnIntoFood(this.cells[targetCoordinates[0]][targetCoordinates[1]], targetCoordinates[0], targetCoordinates[1], deltaEnergy);
+      cell.colorR++;
+
+      this.cells[targetCoordinates[0]][targetCoordinates[1]] = null;
     }
   }
 
   public void bud(Cell cell, int column, int row) {
-    int[] targetCoordinates = this.calculateCoordinatesByDirection(column, row, cell.direction);
-    if (cell.energy >= this.minChildEnergy * 2) {
+    int[] targetCoordinates;
+
+    if (cell.energy < this.minChildEnergy * 2) {
+      return;
+    }
+
+    for (int i = 0; i < 8; i++) {
+      targetCoordinates = this.calculateCoordinatesByDirection(column, row, (cell.direction + i) % 8);
+
       if (this.cells[targetCoordinates[0]][targetCoordinates[1]] == null) {
         this.cells[targetCoordinates[0]][targetCoordinates[1]] = new Cell(cell.genom, cell.energy / 2, cell.direction);
         if (random(1) < this.childMutationChance) {
@@ -269,10 +288,12 @@ class CellController {
           this.mutateRandomGenomCell(cell);
         }
         cell.energy -= cell.energy / 2;
-      } else {
-        this.turnIntoFood(cell, column, row, 0);
+
+        return;
       }
     }
+
+    this.turnIntoFood(cell, column, row);
   }
 
   public void mutateRandomGenomCell(Cell cell) {
@@ -287,15 +308,11 @@ class CellController {
     cell.counter = (cell.counter + cell.genom[cell.counter]) % this.genomSize;
   }
 
-  public void turnIntoFood(Cell cell, int column, int row, int deltaEnergy) {
-    cell.energy -= deltaEnergy;
-    if(cell.energy <= 0) {
-      this.cells[column][row] = null;
-    }
-
+  public void turnIntoFood(Cell cell, int column, int row) {
     cell.isAlive = false;
     cell.direction = 4;
   }
+
 
   public void render() {
     this.renderBackground();
@@ -303,6 +320,7 @@ class CellController {
     for (int c = 0; c < this.columns; c++) {
       for (int r = 0; r < this.rows; r++) {
         Cell cell = this.cells[c][r];
+
         if (cell != null) {
           this.renderCell(cell, c, r);
         }
@@ -321,6 +339,7 @@ class CellController {
         float a = map(y, 0, this.maxPhotosynthesisDepth, 127, 0);
         a *= this.calculateSeasonCoefficient();
         a *= this.calculateDayCoefficient(x, y);
+
         noStroke();
         fill(255, 255, 0, a);
         rectMode(CORNER);
@@ -329,6 +348,7 @@ class CellController {
       }
       for (int y = this.rows - 1 - this.maxMineralDepth; y <= this.rows - 1; y++) {
         float a = map(y, this.rows - 1, this.rows - 1 - this.maxMineralDepth, 127, 0);
+
         noStroke();
         fill(0, 0, 255, a);
         rectMode(CORNER);
@@ -340,16 +360,19 @@ class CellController {
 
   public void renderCell(Cell cell, int column, int row) {
     noStroke();
+
     if (cell.isAlive) {
       float colorR = cell.colorR, colorG = cell.colorG, colorB = cell.colorB;
       float colorVectorLength = sqrt(colorR * colorR + colorG * colorG + colorB * colorB);
       colorR *= 255 / colorVectorLength;
       colorG *= 255 / colorVectorLength;
       colorB *= 255 / colorVectorLength;
+
       fill(colorR, colorG, colorB);
     } else {
       fill(191);
     }
+
     rectMode(CORNER);
     rect(column * this.cellSideLength, row * this.cellSideLength, this.cellSideLength, this.cellSideLength);
     noFill();

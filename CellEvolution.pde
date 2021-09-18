@@ -13,7 +13,6 @@
 // You should have received a copy of the GNU General Public License
 // along with cellevolution.  If not, see <https://www.gnu.org/licenses/>.
 
-float cellSideLength;
 CellController cellController;
 
 boolean render;
@@ -23,6 +22,7 @@ void setup() {
   fullScreen();
   frameRate(10000000);
   noCursor();
+
 
   cellController = new CellController();
 

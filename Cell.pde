@@ -21,6 +21,7 @@ class Cell {
   public int colorR, colorG, colorB;
   public boolean isAlive;
 
+
   public Cell(int[] genom, int energy, int direction) {
     this.genom = new int[genom.length];
     for (int i = 0; i < genom.length; i++) {
