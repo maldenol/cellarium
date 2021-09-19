@@ -26,9 +26,10 @@ final int[][] DIRECTIONS = {
 
 
 class CellController {
+  private long seed = 1234567890;
   private int rows = height, columns = width;
   private int genomSize = 64, maxActionsPerTick = 16;
-  private int minChildEnergy = 40, maxEnergy = 200;
+  private int minChildEnergy = 40, maxEnergy = 800;
   private int dayDurationInTicks = 240, seasonDurationInDays = 92;
   private int maxPhotosynthesisEnergy = 30, maxPhotosynthesisDepth = 750;
   private int maxMineralEnergy = 15, maxMineralDepth = 500;
@@ -46,6 +47,8 @@ class CellController {
 
 
   public CellController() {
+    randomSeed(this.seed);
+
     this.cells = new Cell[this.columns][this.rows];
 
     int[] genom = new int[this.genomSize];
@@ -311,16 +314,26 @@ class CellController {
       targetCoordinates = this.calculateCoordinatesByDirection(column, row, (cell.direction + i) % 8);
 
       if (this.cells[targetCoordinates[0]][targetCoordinates[1]] == null) {
-        this.cells[targetCoordinates[0]][targetCoordinates[1]] = new Cell(cell.genom, cell.energy / 2, cell.direction);
+        Cell buddedCell = new Cell(cell.genom, cell.energy / 2, cell.direction);
+
+        this.cells[targetCoordinates[0]][targetCoordinates[1]] = buddedCell;
+        this.actedCells.add(buddedCell);
+
+        float colorVectorLength = sqrt(cell.colorR * cell.colorR + cell.colorG * cell.colorG + cell.colorB * cell.colorB);
+        buddedCell.colorR = (int)(cell.colorR * 2 / colorVectorLength);
+        buddedCell.colorG = (int)(cell.colorG * 2 / colorVectorLength);
+        buddedCell.colorB = (int)(cell.colorB * 2 / colorVectorLength);
+
         if (random(1) < this.budMutationChance) {
           this.mutateRandomGen(this.cells[targetCoordinates[0]][targetCoordinates[1]]);
         }
-        this.actedCells.add(this.cells[targetCoordinates[0]][targetCoordinates[1]]);
+
 
         if (random(1) < this.budMutationChance) {
           this.mutateRandomGen(cell);
         }
         cell.energy -= cell.energy / 2;
+
 
         return;
       }
@@ -358,7 +371,6 @@ class CellController {
   }
 
   private void renderBackground() {
-    noStroke();
     fill(255);
     rect(0, 0, this.renderWidth, this.renderHeight);
     noFill();
@@ -369,18 +381,14 @@ class CellController {
         a *= this.calculateSeasonCoefficient();
         a *= this.calculateDayCoefficient(x, y);
 
-        noStroke();
         fill(255, 255, 0, a);
-        rectMode(CORNER);
         rect(x * this.cellSideLength, y * this.cellSideLength, this.cellSideLength, this.cellSideLength);
         noFill();
       }
       for (int y = this.rows - 1 - this.maxMineralDepth; y <= this.rows - 1; y++) {
         float a = map(y, this.rows - 1, this.rows - 1 - this.maxMineralDepth, 127, 0);
 
-        noStroke();
         fill(0, 0, 255, a);
-        rectMode(CORNER);
         rect(x * this.cellSideLength, y * this.cellSideLength, this.cellSideLength, this.cellSideLength);
         noFill();
       }
@@ -388,8 +396,6 @@ class CellController {
   }
 
   private void renderCell(Cell cell, int column, int row) {
-    noStroke();
-
     if (cell.isAlive) {
       float colorR = cell.colorR, colorG = cell.colorG, colorB = cell.colorB;
       float colorVectorLength = sqrt(colorR * colorR + colorG * colorG + colorB * colorB);
@@ -402,7 +408,6 @@ class CellController {
       fill(191);
     }
 
-    rectMode(CORNER);
     rect(column * this.cellSideLength, row * this.cellSideLength, this.cellSideLength, this.cellSideLength);
     noFill();
   }

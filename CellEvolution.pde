@@ -21,7 +21,9 @@ boolean render;
 void setup() {
   fullScreen();
   frameRate(10000000);
-  noCursor();
+
+  noStroke();
+  rectMode(CORNER);
 
 
   cellController = new CellController();
