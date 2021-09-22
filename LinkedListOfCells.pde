@@ -58,6 +58,7 @@ class LinkedListOfCells {
     }
   }
 
+
   public class ListIterator {
     private Element next;
 

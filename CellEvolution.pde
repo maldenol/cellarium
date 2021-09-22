@@ -35,7 +35,6 @@ void draw() {
   cellController.act();
 
   if (render) {
-    background(0);
     cellController.render();
   }
 }
