@@ -18,11 +18,12 @@ class Cell {
   private int counter;
   private int energy;
   private int direction;
+  private int posX, posY;
   private int colorR, colorG, colorB;
   private boolean isAlive;
 
 
-  public Cell(int[] genom, int energy, int direction) {
+  public Cell(int[] genom, int energy, int direction, int posX, int posY) {
     this.genom = new int[genom.length];
     for (int i = 0; i < genom.length; i++) {
       this.genom[i] = genom[i];
@@ -30,6 +31,8 @@ class Cell {
     this.counter = 0;
     this.energy = energy;
     this.direction = direction;
+    this.posX = posX;
+    this.posY = posY;
     this.colorR = 0;
     this.colorG = 0;
     this.colorB = 0;
