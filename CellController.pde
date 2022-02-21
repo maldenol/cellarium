@@ -44,12 +44,12 @@ class CellController {
   private int maxPhotosynthesisDepth        = 750;
   private int maxMineralEnergy              = 15;
   private int maxMineralDepth               = 500;
-  private float budEfficiency               = 0.95;
-  private float foodEfficiency              = 0.95;
-  private float randomMutationChance        = 0.002;
-  private float budMutationChance           = 0.05;
-  private float gammaFlashPeriodInDays      = 720;
-  private float gammaFlashMaxMutationsCount = 3;
+  private float budEfficiency               = 0.95f;
+  private float foodEfficiency              = 0.95f;
+  private float randomMutationChance        = 0.002f;
+  private float budMutationChance           = 0.05f;
+  private float gammaFlashPeriodInDays      = 720f;
+  private float gammaFlashMaxMutationsCount = 3f;
 
   // Linked list of cells for quick consequent access
   private LinkedList<Cell> cells;
@@ -90,8 +90,8 @@ class CellController {
     this.yearsNumber = 0;
 
     this.cellSideLength = min(width / this.columns, height / this.rows);
-    this.renderWidth    = this.columns * this.cellSideLength - 1;
-    this.renderHeight   = this.rows * this.cellSideLength - 1;
+    this.renderWidth    = this.columns * this.cellSideLength - 1f;
+    this.renderHeight   = this.rows * this.cellSideLength - 1f;
   }
 
   public void act() {
@@ -123,7 +123,7 @@ class CellController {
       }
 
       // Applying random mutation
-      if (random(1) < this.randomMutationChance) {
+      if (random(1f) < this.randomMutationChance) {
         this.mutateRandomGen(cell);
       }
 
@@ -210,7 +210,7 @@ class CellController {
           continue;
         }
 
-        int mutationsCount = ceil(this.gammaFlashMaxMutationsCount * random(1));
+        int mutationsCount = ceil(this.gammaFlashMaxMutationsCount * random(1f));
         for (int i = 0; i < mutationsCount; i++) {
           this.mutateRandomGen(cell);
         }
@@ -236,13 +236,13 @@ class CellController {
   }
 
   private float calculateTransparencyCoefficient(int column, int row) {
-    float sumOfTransparencyCoefficients = 0;
+    float sumOfTransparencyCoefficients = 0f;
 
-    float topTransparency       = 1;
-    float topCornerTransparency = 1 / cos(PI / 4);
-    float sideTransparency      = 1 / cos(PI / 3);
+    float topTransparency       = 1f;
+    float topCornerTransparency = 1f / cos(PI / 4f);
+    float sideTransparency      = 1f / cos(PI / 3f);
 
-    float maxTransparencyCoefficient = 1 * topTransparency + 2 * topCornerTransparency + 2 * sideTransparency;
+    float maxTransparencyCoefficient = 1f * topTransparency + 2f * topCornerTransparency + 2f * sideTransparency;
 
     int[] targetCoordinates;
 
@@ -287,14 +287,14 @@ class CellController {
     float seasonCoefficient = sin(
       map(
         (float)this.daysNumber / this.seasonDurationInDays,
-        0,
-        4,
-        0,
-        2 * PI
+        0f,
+        4f,
+        0f,
+        2f * PI
       )
     );
     // Reducing to range from 0.5 to 2
-    seasonCoefficient       = seasonCoefficient * 0.75 + 1.25;
+    seasonCoefficient       = seasonCoefficient * 0.75f + 1.25f;
 
     return seasonCoefficient;
   }
@@ -305,8 +305,8 @@ class CellController {
       this.ticksNumber,
       0,
       this.dayDurationInTicks - 1,
-      0,
-      this.columns - 1
+      0f,
+      this.columns - 1f
     );
     // Calculating smaller ot larger distance to noon on X-axis
     float possibleNoonDistanceX = abs(noonPositionX - column);
@@ -320,8 +320,8 @@ class CellController {
         noonDistance,
         0,
         (this.columns - 1) / 2,
-        1,
-        0
+        1f,
+        0f
       ),
     2);
 
@@ -335,7 +335,7 @@ class CellController {
       0,
       this.maxPhotosynthesisDepth,
       this.maxPhotosynthesisEnergy,
-      0
+      0f
     );
 
     // Applying transparency coefficient
@@ -355,7 +355,7 @@ class CellController {
       this.rows - 1,
       this.rows - 1 - this.maxMineralDepth,
       this.maxMineralEnergy,
-      0
+      0f
     );
 
     return (int)energy;
@@ -464,7 +464,7 @@ class CellController {
 
   private void bud(Cell cell) {
     // Checking and updating energy
-    if (cell.energy * this.budEfficiency < this.minChildEnergy * 2) {
+    if (cell.energy * this.budEfficiency < this.minChildEnergy * 2f) {
       return;
     }
     cell.energy *= this.budEfficiency;
@@ -486,18 +486,18 @@ class CellController {
 
         // Assigning cell color
         float colorVectorLength = sqrt(cell.colorR * cell.colorR + cell.colorG * cell.colorG + cell.colorB * cell.colorB);
-        buddedCell.colorR = (int)(cell.colorR * 2 / colorVectorLength);
-        buddedCell.colorG = (int)(cell.colorG * 2 / colorVectorLength);
-        buddedCell.colorB = (int)(cell.colorB * 2 / colorVectorLength);
+        buddedCell.colorR = (int)(cell.colorR * 2f / colorVectorLength);
+        buddedCell.colorG = (int)(cell.colorG * 2f / colorVectorLength);
+        buddedCell.colorB = (int)(cell.colorB * 2f / colorVectorLength);
 
         // Applying random bud mutation to the budded cell
-        if (random(1) < this.budMutationChance) {
+        if (random(1f) < this.budMutationChance) {
           this.mutateRandomGen(buddedCell);
         }
 
         // Applying random bud mutation to current cell
         cell.energy -= cell.energy / 2;
-        if (random(1) < this.budMutationChance) {
+        if (random(1f) < this.budMutationChance) {
           this.mutateRandomGen(cell);
         }
 
@@ -553,28 +553,28 @@ class CellController {
 
   private void renderBackground() {
     // White background
-    fill(255);
-    rect(0, 0, this.renderWidth, this.renderHeight);
+    fill(255f);
+    rect(0f, 0f, this.renderWidth, this.renderHeight);
     noFill();
 
     // Rendering photosynthesis and minerals energy density
     for (int x = 0; x < this.columns; x++) {
       // Photosynthesis
       for (int y = 0; y <= this.maxPhotosynthesisDepth; y++) {
-        float a = map(y, 0, this.maxPhotosynthesisDepth, 127, 0);
+        float a = map(y, 0, this.maxPhotosynthesisDepth, 127f, 0f);
         a *= this.calculateSeasonCoefficient();
         a *= this.calculateDayCoefficient(x, y);
 
-        fill(255, 255, 0, a);
+        fill(255f, 255f, 0f, a);
         rect(x * this.cellSideLength, y * this.cellSideLength, this.cellSideLength, this.cellSideLength);
         noFill();
       }
 
       // Minerals
       for (int y = this.rows - 1 - this.maxMineralDepth; y < this.rows; y++) {
-        float a = map(y, this.rows - 1 - this.maxMineralDepth, this.rows, 0, 127);
+        float a = map(y, this.rows - 1 - this.maxMineralDepth, this.rows, 0f, 127f);
 
-        fill(0, 0, 255, a);
+        fill(0f, 0f, 255f, a);
         rect(x * this.cellSideLength, y * this.cellSideLength, this.cellSideLength, this.cellSideLength);
         noFill();
       }
@@ -592,15 +592,15 @@ class CellController {
 
       // Normalizing color and reducing it to range from 0 to 255
       float colorVectorLength = sqrt(colorR * colorR + colorG * colorG + colorB * colorB);
-      colorR *= 255 / colorVectorLength;
-      colorG *= 255 / colorVectorLength;
-      colorB *= 255 / colorVectorLength;
+      colorR *= 255f / colorVectorLength;
+      colorG *= 255f / colorVectorLength;
+      colorB *= 255f / colorVectorLength;
     }
     // If cell is dead
     else {
-      colorR = 191;
-      colorG = 191;
-      colorB = 191;
+      colorR = 191f;
+      colorG = 191f;
+      colorB = 191f;
     }
 
     // Rendering cell
