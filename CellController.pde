@@ -44,6 +44,7 @@ class CellController {
   private int maxPhotosynthesisDepth        = 750;
   private int maxMineralEnergy              = 15;
   private int maxMineralDepth               = 500;
+  private int maxFoodEnergy                 = 50;
   private float budEfficiency               = 0.95f;
   private float foodEfficiency              = 0.95f;
   private float randomMutationChance        = 0.002f;
@@ -451,8 +452,14 @@ class CellController {
 
     // If there is cell or food
     if (targetCell != null) {
+      // Calculating energy from food
+      int deltaEnergy = (int)(targetCell.energy * foodEfficiency);
+      if (deltaEnergy > this.maxFoodEnergy) {
+        deltaEnergy = this.maxFoodEnergy;
+      }
+
       // Increasing energy level
-      cell.energy += targetCell.energy * foodEfficiency;
+      cell.energy += deltaEnergy;
 
       // Making cell color more red
       ++cell.colorR;
@@ -528,7 +535,9 @@ class CellController {
   }
 
   private void addCell(Cell cell) {
-    // Push cell to front of the linked list so it will be processed the next step
+    // Pushing cell to the front of the linked list
+    // so it will be processed not earlier than the next step
+    // and before older cells (younger cells have smaller "reaction time")
     this.cells.pushFront(cell);
     this.cellsByCoords[cell.posX][cell.posY] = cell;
   }
