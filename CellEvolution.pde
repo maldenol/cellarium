@@ -17,7 +17,6 @@ CellController cellController;
 
 boolean render;
 
-
 void setup() {
   fullScreen();
   frameRate(10000000);
@@ -25,23 +24,25 @@ void setup() {
   noStroke();
   rectMode(CORNER);
 
-
   cellController = new CellController();
 
   render = true;
 }
 
 void draw() {
+  // Handling next world tick
   cellController.act();
 
+  // Rendering cells if needed
   if (render) {
     cellController.render();
   }
 }
 
-
 void keyReleased() {
+  // If spacebar has been released
   if (key == ' ') {
+    // Toggle render state
     render = !render;
   }
 }

@@ -13,51 +13,60 @@
 // You should have received a copy of the GNU General Public License
 // along with cellevolution.  If not, see <https://www.gnu.org/licenses/>.
 
-class LinkedListOfCells {
-  private Element firstElement;
+class LinkedList<T> {
+  private Element first;
 
-  public LinkedListOfCells() {
-    this.firstElement = null;
+  public LinkedList() {
+    this.first = null;
   }
 
-  public void addAsFirst(Cell cell) {
-    this.firstElement = new Element(this.firstElement, cell);
+  public void pushFront(T value) {
+    this.first = new Element(this.first, value);
   }
 
-  public void remove(Cell cell) {
-    Element previous = null, current = this.firstElement;
+  public void remove(T value) {
+    Element previous = null;
+    Element current  = this.first;
 
+    // Until current is not null
     while (current != null) {
-      if (current.cell == cell) {
+      // If value is found
+      if (current.value == value) {
+        // If current element is not the first one
         if (previous != null) {
-          previous.nextElement = current.nextElement;
-        } else {
-          this.firstElement = current.nextElement;
+          // Removing current element
+          previous.next = current.next;
+        }
+        // If current element is the first one
+        else {
+          // Removing current element
+          this.first = current.next;
         }
 
         return;
       }
 
+      // Keep searching
       previous = current;
-      current = current.nextElement;
+      current  = current.next;
     }
+
+    // Value is not found
   }
 
   public ListIterator listIterator() {
-    return new ListIterator(this.firstElement);
+    return new ListIterator(this.first);
   }
-
 
   private class Element {
-    private Element nextElement;
-    private Cell cell;
+    private Element next;
+    private T value;
 
-    public Element(Element nextElement, Cell cell) {
-      this.nextElement = nextElement;
-      this.cell = cell;
+    public Element(Element next, T value) {
+      this.next  = next;
+      this.value = value;
     }
   }
-
 
   public class ListIterator {
     private Element next;
@@ -70,10 +79,12 @@ class LinkedListOfCells {
       return (this.next != null);
     }
 
-    public Cell next() {
-      Cell valueToReturn = this.next.cell;
-      this.next = this.next.nextElement;
-      return valueToReturn;
+    public T next() {
+      T value   = this.next.value;
+
+      this.next = this.next.next;
+
+      return value;
     }
   }
 }
