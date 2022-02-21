@@ -37,7 +37,7 @@ class Cell {
     int posY
   ) {
     this.genom = new int[genom.length];
-    for (int i = 0; i < genom.length; i++) {
+    for (int i = 0; i < genom.length; ++i) {
       this.genom[i] = genom[i];
     }
     this.counter = 0;

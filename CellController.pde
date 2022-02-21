@@ -73,7 +73,7 @@ class CellController {
     this.cellsByCoords = new Cell[this.columns][this.rows];
 
     int[] genom = new int[this.genomSize];
-    for (int i = 0; i < this.genomSize; i++) {
+    for (int i = 0; i < this.genomSize; ++i) {
       genom[i] = 3;
     }
     this.addCell(new Cell(
@@ -128,7 +128,7 @@ class CellController {
       }
 
       // Executing genom machine instructions with maximum instructions per tick limit
-      for (int i = 0; i < this.maxInstructionsPerTick; i++) {
+      for (int i = 0; i < this.maxInstructionsPerTick; ++i) {
         // Getting current instruction from genom
         int instuction = cell.genom[cell.counter];
 
@@ -211,7 +211,7 @@ class CellController {
         }
 
         int mutationsCount = ceil(this.gammaFlashMaxMutationsCount * random(1f));
-        for (int i = 0; i < mutationsCount; i++) {
+        for (int i = 0; i < mutationsCount; ++i) {
           this.mutateRandomGen(cell);
         }
       }
@@ -220,17 +220,17 @@ class CellController {
 
   private void updateTime() {
     // Updating ticks
-    this.ticksNumber++;
+    ++this.ticksNumber;
 
     // Updating ticks and days if ticks overflow
     if (this.ticksNumber == this.dayDurationInTicks) {
       this.ticksNumber = 0;
-      this.daysNumber++;
+      ++this.daysNumber;
 
       // Updating days and years if days overflow
       if (this.daysNumber == this.seasonDurationInDays * 4) {
         this.daysNumber = 0;
-        this.yearsNumber++;
+        ++this.yearsNumber;
       }
     }
   }
@@ -414,12 +414,12 @@ class CellController {
     int deltaEnergy = calculateEnergyFromPhotosynthesis(cell.posX, cell.posY);
 
     // If energy from photosynthesis is positive
-    if (deltaEnergy > 0) {
+    if (deltaEnergy > 0f) {
       // Increasing energy level
       cell.energy += deltaEnergy;
 
       // Making cell color more green
-      cell.colorG++;
+      ++cell.colorG;
     }
   }
 
@@ -428,12 +428,12 @@ class CellController {
     int deltaEnergy = calculateEnergyFromMinerals(cell.posY);
 
     // If energy from minerals is positive
-    if (deltaEnergy > 0) {
+    if (deltaEnergy > 0f) {
       // Increasing energy level
       cell.energy += deltaEnergy;
 
       // Making cell color more blue
-      cell.colorB++;
+      ++cell.colorB;
     }
   }
 
@@ -455,7 +455,7 @@ class CellController {
       cell.energy += targetCell.energy * foodEfficiency;
 
       // Making cell color more red
-      cell.colorR++;
+      ++cell.colorR;
 
       // Removing prey or food
       this.removeCell(targetCell);
@@ -470,7 +470,7 @@ class CellController {
     cell.energy *= this.budEfficiency;
 
     // Checking each direction clockwise for ability to bud
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 8; ++i) {
       // Calculating coordinates by current direction
       int[] targetCoordinates = this.calculateCoordinatesByDirection(cell.posX, cell.posY, (cell.direction + i) % 8);
 
@@ -558,23 +558,23 @@ class CellController {
     noFill();
 
     // Rendering photosynthesis and minerals energy density
-    for (int x = 0; x < this.columns; x++) {
+    for (int x = 0; x < this.columns; ++x) {
       // Photosynthesis
-      for (int y = 0; y <= this.maxPhotosynthesisDepth; y++) {
-        float a = map(y, 0, this.maxPhotosynthesisDepth, 127f, 0f);
-        a *= this.calculateSeasonCoefficient();
-        a *= this.calculateDayCoefficient(x, y);
+      for (int y = 0; y <= this.maxPhotosynthesisDepth; ++y) {
+        float colorA = map(y, 0, this.maxPhotosynthesisDepth, 127f, 0f);
+        colorA *= this.calculateSeasonCoefficient();
+        colorA *= this.calculateDayCoefficient(x, y);
 
-        fill(255f, 255f, 0f, a);
+        fill(255f, 255f, 0f, colorA);
         rect(x * this.cellSideLength, y * this.cellSideLength, this.cellSideLength, this.cellSideLength);
         noFill();
       }
 
       // Minerals
-      for (int y = this.rows - 1 - this.maxMineralDepth; y < this.rows; y++) {
-        float a = map(y, this.rows - 1 - this.maxMineralDepth, this.rows, 0f, 127f);
+      for (int y = this.rows - 1 - this.maxMineralDepth; y < this.rows; ++y) {
+        float colorA = map(y, this.rows - 1 - this.maxMineralDepth, this.rows, 0f, 127f);
 
-        fill(0f, 0f, 255f, a);
+        fill(0f, 0f, 255f, colorA);
         rect(x * this.cellSideLength, y * this.cellSideLength, this.cellSideLength, this.cellSideLength);
         noFill();
       }

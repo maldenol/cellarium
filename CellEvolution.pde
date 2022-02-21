@@ -15,7 +15,9 @@
 
 CellController cellController;
 
-boolean render;
+int ticksPerDraw;
+int currTick;
+boolean draw;
 
 void setup() {
   fullScreen();
@@ -26,7 +28,9 @@ void setup() {
 
   cellController = new CellController();
 
-  render = true;
+  ticksPerDraw = 10;
+  currTick     = 0;
+  draw         = true;
 }
 
 void draw() {
@@ -34,15 +38,18 @@ void draw() {
   cellController.act();
 
   // Rendering cells if needed
-  if (render) {
+  if (draw && currTick % ticksPerDraw == 0) {
     cellController.render();
+
+    currTick = 0;
   }
+  ++currTick;
 }
 
 void keyReleased() {
   // If spacebar has been released
   if (key == ' ') {
     // Toggle render state
-    render = !render;
+    draw = !draw;
   }
 }
