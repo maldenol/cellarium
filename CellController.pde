@@ -136,6 +136,11 @@ class CellController {
 
         // Performing appropriate action
         switch (instuction) {
+          // Do nothing
+          case 0:
+            this.incrementGenomCounter(cell);
+
+            break;
           // Turning
           case 1:
             this.turn(cell);
@@ -185,6 +190,15 @@ class CellController {
           // Making random gen mutate (no more instructions permitted)
           case 7:
             this.mutateRandomGen(cell);
+
+            this.incrementGenomCounter(cell);
+
+            i = this.maxInstructionsPerTick;
+
+            break;
+          // Transferring energy (no more instructions permitted)
+          case 8:
+            this.transferEnergy(cell);
 
             this.incrementGenomCounter(cell);
 
@@ -393,8 +407,16 @@ class CellController {
   }
 
   private void move(Cell cell) {
-    // Calculating coordinates by current direction
-    int[] targetCoordinates = this.calculateCoordinatesByDirection(cell.posX, cell.posY, cell.direction);
+    // Calculating coordinates by target direction
+    int targetDirection;
+    if (cell.isAlive) {
+      int deltaDirection = this.getNextNthGenomCell(cell, 1);
+      targetDirection = (cell.direction + deltaDirection) % 8;
+    } else {
+      // Setting direction to 4 so it will be moving down (sinking) each step if cell is dead
+      targetDirection = 4;
+    }
+    int[] targetCoordinates = this.calculateCoordinatesByDirection(cell.posX, cell.posY, targetDirection);
 
     // If coordinates are beyond simulation world (above top or below bottom)
     if (targetCoordinates[1] == -1) {
@@ -451,7 +473,7 @@ class CellController {
     // Getting cell at this direction
     Cell targetCell = this.cellsByCoords[targetCoordinates[0]][targetCoordinates[1]];
 
-    // If there is cell or food
+    // If there is a cell or food
     if (targetCell != null) {
       // Calculating energy from food
       int deltaEnergy = (int)(targetCell.energy * foodEfficiency);
@@ -524,6 +546,29 @@ class CellController {
     cell.genom[floor(random(this.genomSize))] = floor(random(this.genomSize));
   }
 
+  private void transferEnergy(Cell cell) {
+    // Calculating coordinates by current direction
+    int[] targetCoordinates = this.calculateCoordinatesByDirection(cell.posX, cell.posY, cell.direction);
+
+    // If coordinates are beyond simulation world (above top or below bottom)
+    if (targetCoordinates[1] == -1) {
+      return;
+    }
+
+    // Getting cell at this direction
+    Cell targetCell = this.cellsByCoords[targetCoordinates[0]][targetCoordinates[1]];
+
+    // If there is a cell
+    if (targetCell != null && targetCell.isAlive) {
+      // Calculating shared energy
+      int deltaEnergy = (int)(cell.energy * this.getNextNthGenomCell(cell, 1) / (float)this.genomSize);
+
+      // Sharing energy
+      cell.energy       -= deltaEnergy;
+      targetCell.energy += deltaEnergy;
+    }
+  }
+
   private void addToCounter(Cell cell) {
     // Adding dummy instruction value to instruction counter with overflow handling
     cell.counter = (cell.counter + cell.genom[cell.counter]) % this.genomSize;
@@ -531,8 +576,6 @@ class CellController {
 
   private void turnIntoFood(Cell cell) {
     cell.isAlive   = false;
-    // Setting direction to 4 so it will be moving down (sinking) each step
-    cell.direction = 4;
   }
 
   private void addCell(Cell cell) {
