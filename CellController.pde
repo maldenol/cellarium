@@ -190,7 +190,6 @@ class CellController {
           // Making random gen mutate (no more instructions permitted)
           case 7:
             this.mutateRandomGen(cell);
-
             this.incrementGenomCounter(cell);
 
             i = this.maxInstructionsPerTick;
@@ -199,39 +198,52 @@ class CellController {
           // Transferring energy (no more instructions permitted)
           case 8:
             this.transferEnergy(cell);
-
             this.incrementGenomCounter(cell);
 
             i = this.maxInstructionsPerTick;
 
             break;
-          // Dummy instruction
+          // Looking forward (conditional instruction)
+          case 9:
+            this.lookForward(cell);
+
+            break;
+          // Determining own energy level (conditional instruction)
+          case 10:
+            this.determineEnergyLevel(cell);
+
+            break;
+          // Determining own depth (conditional instruction)
+          case 11:
+            this.determineDepth(cell);
+
+            break;
+          // Determining energy surge from photosynthesis (conditional instruction)
+          case 12:
+            this.determinePhotosynthesisEnergy(cell);
+
+            break;
+          // Determining energy surge from minerals (conditional instruction)
+          case 13:
+            this.determineMineralEnergy(cell);
+
+            break;
+          // Determining functional organization (conditional instruction)
+          case 14:
+            this.determineFunctionalOrganization(cell);
+
+            break;
+          // Unconditional jump
           default:
-            this.addToCounter(cell);
+            this.addGenToCounter(cell);
 
             break;
         }
       }
     }
 
-    // Performing gamma flash if the time has come
-    if (this.ticksNumber == 0 && (this.daysNumber + this.yearsNumber * this.seasonDurationInDays * 4) % this.gammaFlashPeriodInDays == 0) {
-      // For each cell
-      iter = this.cells.listIterator();
-      while (iter.hasNext()) {
-        Cell cell = iter.next();
-
-        // Ignoring if cell is dead
-        if (!cell.isAlive) {
-          continue;
-        }
-
-        int mutationsCount = ceil(this.gammaFlashMaxMutationsCount * random(1f));
-        for (int i = 0; i < mutationsCount; ++i) {
-          this.mutateRandomGen(cell);
-        }
-      }
-    }
+    // Performing gamma flash
+    this.gammaFlash();
   }
 
   private void updateTime() {
@@ -249,6 +261,377 @@ class CellController {
         ++this.yearsNumber;
       }
     }
+  }
+
+  private void gammaFlash() {
+    // If the time has come
+    if (this.ticksNumber == 0 && (this.daysNumber + this.yearsNumber * this.seasonDurationInDays * 4) % this.gammaFlashPeriodInDays == 0) {
+      // For each cell
+      LinkedList<Cell>.ListIterator iter = this.cells.listIterator();
+      while (iter.hasNext()) {
+        Cell cell = iter.next();
+
+        // Ignoring if cell is dead
+        if (!cell.isAlive) {
+          continue;
+        }
+
+        int mutationsCount = ceil(this.gammaFlashMaxMutationsCount * random(1f));
+        for (int i = 0; i < mutationsCount; ++i) {
+          this.mutateRandomGen(cell);
+        }
+      }
+    }
+  }
+
+  private void turn(Cell cell) {
+    // Updating direction with overflow handling
+    int deltaDirection = this.getNextNthGen(cell, 1);
+    cell.direction     = (cell.direction + deltaDirection) % 8;
+  }
+
+  private void move(Cell cell) {
+    // Calculating coordinates by target direction
+    int targetDirection;
+    if (cell.isAlive) {
+      int deltaDirection = this.getNextNthGen(cell, 1);
+      targetDirection = (cell.direction + deltaDirection) % 8;
+    } else {
+      // Setting direction to 4 so it will be moving down (sinking) each step if cell is dead
+      targetDirection = 4;
+    }
+    int[] targetCoordinates = this.calculateCoordinatesByDirection(cell.posX, cell.posY, targetDirection);
+
+    // If coordinates are beyond simulation world (above top or below bottom)
+    if (targetCoordinates[1] == -1) {
+      return;
+    }
+
+    // If there is nothing at this direction
+    if (this.cellsByCoords[targetCoordinates[0]][targetCoordinates[1]] == null) {
+      this.cellsByCoords[targetCoordinates[0]][targetCoordinates[1]] = cell;
+      this.cellsByCoords[cell.posX][cell.posY]                       = null;
+
+      cell.posX = targetCoordinates[0];
+      cell.posY = targetCoordinates[1];
+    }
+  }
+
+  private void getEnergyFromPhotosynthesis(Cell cell) {
+    // Calculating energy from photosynthesis at current position
+    int deltaEnergy = calculatePhotosynthesisEnergy(cell.posX, cell.posY);
+
+    // If energy from photosynthesis is positive
+    if (deltaEnergy > 0f) {
+      // Increasing energy level
+      cell.energy += deltaEnergy;
+
+      // Making cell color more green
+      ++cell.colorG;
+    }
+  }
+
+  private void getEnergyFromMinerals(Cell cell) {
+    // Calculating energy from minerals at current position
+    int deltaEnergy = calculateMineralEnergy(cell.posY);
+
+    // If energy from minerals is positive
+    if (deltaEnergy > 0f) {
+      // Increasing energy level
+      cell.energy += deltaEnergy;
+
+      // Making cell color more blue
+      ++cell.colorB;
+    }
+  }
+
+  private void getEnergyFromFood(Cell cell) {
+    // Calculating coordinates by current direction
+    int[] targetCoordinates = this.calculateCoordinatesByDirection(cell.posX, cell.posY, cell.direction);
+
+    // If coordinates are beyond simulation world (above top or below bottom)
+    if (targetCoordinates[1] == -1) {
+      return;
+    }
+
+    // Getting cell at this direction
+    Cell targetCell = this.cellsByCoords[targetCoordinates[0]][targetCoordinates[1]];
+
+    // If there is a cell or food
+    if (targetCell != null) {
+      // Calculating energy from food
+      int deltaEnergy = (int)(targetCell.energy * foodEfficiency);
+      if (deltaEnergy > this.maxFoodEnergy) {
+        deltaEnergy = this.maxFoodEnergy;
+      }
+
+      // Increasing energy level
+      cell.energy += deltaEnergy;
+
+      // Making cell color more red
+      ++cell.colorR;
+
+      // Removing prey or food
+      this.removeCell(targetCell);
+    }
+  }
+
+  private void bud(Cell cell) {
+    // Checking and updating energy
+    if (cell.energy * this.budEfficiency < this.minChildEnergy * 2f) {
+      return;
+    }
+    cell.energy *= this.budEfficiency;
+
+    // Checking each direction clockwise for ability to bud
+    for (int i = 0; i < 8; ++i) {
+      // Calculating coordinates by current direction
+      int[] targetCoordinates = this.calculateCoordinatesByDirection(cell.posX, cell.posY, (cell.direction + i) % 8);
+
+      // If coordinates are beyond simulation world (above top or below bottom)
+      if (targetCoordinates[1] == -1) {
+        continue;
+      }
+
+      // If there is nothing at this direction
+      if (this.cellsByCoords[targetCoordinates[0]][targetCoordinates[1]] == null) {
+        // Creating new cell
+        Cell buddedCell = new Cell(cell.genom, cell.energy / 2, cell.direction, targetCoordinates[0], targetCoordinates[1]);
+
+        // Assigning cell color
+        float colorVectorLength = sqrt(cell.colorR * cell.colorR + cell.colorG * cell.colorG + cell.colorB * cell.colorB);
+        buddedCell.colorR = (int)(cell.colorR * 2f / colorVectorLength);
+        buddedCell.colorG = (int)(cell.colorG * 2f / colorVectorLength);
+        buddedCell.colorB = (int)(cell.colorB * 2f / colorVectorLength);
+
+        // Applying random bud mutation to the budded cell
+        if (random(1f) < this.budMutationChance) {
+          this.mutateRandomGen(buddedCell);
+        }
+
+        // Applying random bud mutation to current cell
+        cell.energy -= cell.energy / 2;
+        if (random(1f) < this.budMutationChance) {
+          this.mutateRandomGen(cell);
+        }
+
+        this.addCell(buddedCell);
+
+        return;
+      }
+    }
+
+    // Turning cell into food if it have to but not able to bud
+    this.turnIntoFood(cell);
+  }
+
+  private void mutateRandomGen(Cell cell) {
+    // Changing random gen on another random one
+    cell.genom[floor(random(this.genomSize))] = floor(random(this.genomSize));
+  }
+
+  private void transferEnergy(Cell cell) {
+    // Calculating coordinates by current direction
+    int[] targetCoordinates = this.calculateCoordinatesByDirection(cell.posX, cell.posY, cell.direction);
+
+    // If coordinates are beyond simulation world (above top or below bottom)
+    if (targetCoordinates[1] == -1) {
+      return;
+    }
+
+    // Getting cell at this direction
+    Cell targetCell = this.cellsByCoords[targetCoordinates[0]][targetCoordinates[1]];
+
+    // If there is a cell
+    if (targetCell != null && targetCell.isAlive) {
+      // Calculating shared energy
+      int deltaEnergy = (int)(cell.energy * this.getNextNthGen(cell, 1) / (float)this.genomSize);
+
+      // Sharing energy
+      cell.energy       -= deltaEnergy;
+      targetCell.energy += deltaEnergy;
+    }
+  }
+
+  private void lookForward(Cell cell) {
+    // Calculating coordinates by current direction
+    int[] targetCoordinates = this.calculateCoordinatesByDirection(cell.posX, cell.posY, cell.direction);
+
+    // If coordinates are beyond simulation world (above top or below bottom)
+    if (targetCoordinates[1] == -1) {
+      return;
+    }
+
+    // Getting cell at this direction
+    Cell targetCell = this.cellsByCoords[targetCoordinates[0]][targetCoordinates[1]];
+
+    // If there is a cell or food
+    if (targetCell != null) {
+      // If there is a live cell
+      if (targetCell.isAlive) {
+        this.jumpCounter(cell, this.getNextNthGen(cell, 3));
+      }
+      // If there is food
+      else {
+        this.jumpCounter(cell, this.getNextNthGen(cell, 2));
+      }
+    }
+    // If there is nothing at this direction
+    else {
+      this.jumpCounter(cell, this.getNextNthGen(cell, 1));
+    }
+  }
+
+  private void determineEnergyLevel(Cell cell) {
+    // Calculating value to compare
+    int valueToCompare = (int)(this.maxEnergy * this.getNextNthGen(cell, 1) / (float)this.genomSize);
+
+    // Less
+    if (cell.energy < valueToCompare) {
+      this.jumpCounter(cell, this.getNextNthGen(cell, 2));
+    }
+    // Greater
+    else if (cell.energy > valueToCompare) {
+      this.jumpCounter(cell, this.getNextNthGen(cell, 4));
+    }
+    // Equal
+    else {
+      this.jumpCounter(cell, this.getNextNthGen(cell, 3));
+    }
+  }
+
+  private void determineDepth(Cell cell) {
+    // Calculating value to compare
+    int valueToCompare = (int)(this.rows * this.getNextNthGen(cell, 1) / (float)this.genomSize);
+
+    // Less
+    if (cell.posY < valueToCompare) {
+      this.jumpCounter(cell, this.getNextNthGen(cell, 2));
+    }
+    // Greater
+    else if (cell.posY > valueToCompare) {
+      this.jumpCounter(cell, this.getNextNthGen(cell, 4));
+    }
+    // Equal
+    else {
+      this.jumpCounter(cell, this.getNextNthGen(cell, 3));
+    }
+  }
+
+  private void determinePhotosynthesisEnergy(Cell cell) {
+    // Calculating value to compare
+    int valueToCompare = (int)(this.maxPhotosynthesisEnergy * this.getNextNthGen(cell, 1) / (float)this.genomSize);
+
+    // Calculating surge of photosynthesis energy
+    int surgeOfEnergy = calculatePhotosynthesisEnergy(cell.posX, cell.posY);
+
+    // Less
+    if (surgeOfEnergy < valueToCompare) {
+      this.jumpCounter(cell, this.getNextNthGen(cell, 2));
+    }
+    // Greater
+    else if (surgeOfEnergy > valueToCompare) {
+      this.jumpCounter(cell, this.getNextNthGen(cell, 4));
+    }
+    // Equal
+    else {
+      this.jumpCounter(cell, this.getNextNthGen(cell, 3));
+    }
+  }
+
+  private void determineMineralEnergy(Cell cell) {
+    // Calculating value to compare
+    int valueToCompare = (int)(this.maxMineralEnergy * this.getNextNthGen(cell, 1) / (float)this.genomSize);
+
+    // Calculating surge of photosynthesis energy
+    int surgeOfEnergy = calculateMineralEnergy(cell.posY);
+
+    // Less
+    if (surgeOfEnergy < valueToCompare) {
+      this.jumpCounter(cell, this.getNextNthGen(cell, 2));
+    }
+    // Greater
+    else if (surgeOfEnergy > valueToCompare) {
+      this.jumpCounter(cell, this.getNextNthGen(cell, 4));
+    }
+    // Equal
+    else {
+      this.jumpCounter(cell, this.getNextNthGen(cell, 3));
+    }
+  }
+
+  private void determineFunctionalOrganization(Cell cell) {
+    this.incrementGenomCounter(cell);
+  }
+
+  private void incrementGenomCounter(Cell cell) {
+    // Incrementing instruction counter with overflow handling
+    cell.counter = (cell.counter + 1) % this.genomSize;
+  }
+
+  private void addGenToCounter(Cell cell) {
+    // Adding dummy instruction value to instruction counter with overflow handling
+    cell.counter = (cell.counter + cell.genom[cell.counter]) % this.genomSize;
+  }
+
+  private void jumpCounter(Cell cell, int offset) {
+    // Performing jump command on instruction counter with overflow handling
+    cell.counter = (cell.counter + offset) % this.genomSize;
+  }
+
+  private int getNextNthGen(Cell cell, int n) {
+    // Getting (counter + n)'th gen
+    return cell.genom[(cell.counter + n) % this.genomSize];
+  }
+
+  private void turnIntoFood(Cell cell) {
+    cell.isAlive = false;
+  }
+
+  private int[] calculateCoordinatesByDirection(int column, int row, int direction) {
+    // Calculating column at given direction with overflow handling
+    int c = (column + DIRECTIONS[direction][0] + this.columns) % this.columns;
+
+    // Calculating row at given direction with overflow handling
+    int r = row + DIRECTIONS[direction][1];
+    if (r > this.rows - 1 || r < 0) {
+      r = -1;
+    }
+
+    return new int[]{c, r};
+  }
+
+  private int calculatePhotosynthesisEnergy(int column, int row) {
+    // Getting base energy from photosynthesis
+    float energy = map(
+      row,
+      0,
+      this.maxPhotosynthesisDepth,
+      this.maxPhotosynthesisEnergy,
+      0f
+    );
+
+    // Applying transparency coefficient
+    energy *= this.calculateTransparencyCoefficient(column, row);
+    // Applying season coefficient
+    energy *= this.calculateSeasonCoefficient();
+    // Applying day coefficient
+    energy *= this.calculateDayCoefficient(column, row);
+
+    return (int)energy;
+  }
+
+  private int calculateMineralEnergy(int row) {
+    // Getting energy from minerals
+    float energy = map(
+      row,
+      this.rows - 1,
+      this.rows - 1 - this.maxMineralDepth,
+      this.maxMineralEnergy,
+      0f
+    );
+
+    return (int)energy;
   }
 
   private float calculateTransparencyCoefficient(int column, int row) {
@@ -342,240 +725,6 @@ class CellController {
     2);
 
     return dayCoefficient;
-  }
-
-  private int calculateEnergyFromPhotosynthesis(int column, int row) {
-    // Getting base energy from photosynthesis
-    float energy = map(
-      row,
-      0,
-      this.maxPhotosynthesisDepth,
-      this.maxPhotosynthesisEnergy,
-      0f
-    );
-
-    // Applying transparency coefficient
-    energy *= this.calculateTransparencyCoefficient(column, row);
-    // Applying season coefficient
-    energy *= this.calculateSeasonCoefficient();
-    // Applying day coefficient
-    energy *= this.calculateDayCoefficient(column, row);
-
-    return (int)energy;
-  }
-
-  private int calculateEnergyFromMinerals(int row) {
-    // Getting energy from minerals
-    float energy = map(
-      row,
-      this.rows - 1,
-      this.rows - 1 - this.maxMineralDepth,
-      this.maxMineralEnergy,
-      0f
-    );
-
-    return (int)energy;
-  }
-
-  private int[] calculateCoordinatesByDirection(int column, int row, int direction) {
-    // Calculating column at given direction with overflow handling
-    int c = (column + DIRECTIONS[direction][0] + this.columns) % this.columns;
-
-    // Calculating row at given direction with overflow handling
-    int r = row + DIRECTIONS[direction][1];
-    if (r > this.rows - 1 || r < 0) {
-      r = -1;
-    }
-
-    return new int[]{c, r};
-  }
-
-  private int getNextNthGenomCell(Cell cell, int n) {
-    // Getting (counter + n)'th gen
-    return cell.genom[(cell.counter + n) % this.genomSize];
-  }
-
-  private void incrementGenomCounter(Cell cell) {
-    // Incrementing instruction counter with overflow handling
-    cell.counter = (cell.counter + 1) % this.genomSize;
-  }
-
-  private void turn(Cell cell) {
-    // Updating direction with overflow handling
-    int deltaDirection = this.getNextNthGenomCell(cell, 1);
-    cell.direction     = (cell.direction + deltaDirection) % 8;
-  }
-
-  private void move(Cell cell) {
-    // Calculating coordinates by target direction
-    int targetDirection;
-    if (cell.isAlive) {
-      int deltaDirection = this.getNextNthGenomCell(cell, 1);
-      targetDirection = (cell.direction + deltaDirection) % 8;
-    } else {
-      // Setting direction to 4 so it will be moving down (sinking) each step if cell is dead
-      targetDirection = 4;
-    }
-    int[] targetCoordinates = this.calculateCoordinatesByDirection(cell.posX, cell.posY, targetDirection);
-
-    // If coordinates are beyond simulation world (above top or below bottom)
-    if (targetCoordinates[1] == -1) {
-      return;
-    }
-
-    // If space at this direction is empty
-    if (this.cellsByCoords[targetCoordinates[0]][targetCoordinates[1]] == null) {
-      this.cellsByCoords[targetCoordinates[0]][targetCoordinates[1]] = cell;
-      this.cellsByCoords[cell.posX][cell.posY]                       = null;
-
-      cell.posX = targetCoordinates[0];
-      cell.posY = targetCoordinates[1];
-    }
-  }
-
-  private void getEnergyFromPhotosynthesis(Cell cell) {
-    // Calculating energy from photosynthesis at current position
-    int deltaEnergy = calculateEnergyFromPhotosynthesis(cell.posX, cell.posY);
-
-    // If energy from photosynthesis is positive
-    if (deltaEnergy > 0f) {
-      // Increasing energy level
-      cell.energy += deltaEnergy;
-
-      // Making cell color more green
-      ++cell.colorG;
-    }
-  }
-
-  private void getEnergyFromMinerals(Cell cell) {
-    // Calculating energy from minerals at current position
-    int deltaEnergy = calculateEnergyFromMinerals(cell.posY);
-
-    // If energy from minerals is positive
-    if (deltaEnergy > 0f) {
-      // Increasing energy level
-      cell.energy += deltaEnergy;
-
-      // Making cell color more blue
-      ++cell.colorB;
-    }
-  }
-
-  private void getEnergyFromFood(Cell cell) {
-    // Calculating coordinates by current direction
-    int[] targetCoordinates = this.calculateCoordinatesByDirection(cell.posX, cell.posY, cell.direction);
-
-    // If coordinates are beyond simulation world (above top or below bottom)
-    if (targetCoordinates[1] == -1) {
-      return;
-    }
-
-    // Getting cell at this direction
-    Cell targetCell = this.cellsByCoords[targetCoordinates[0]][targetCoordinates[1]];
-
-    // If there is a cell or food
-    if (targetCell != null) {
-      // Calculating energy from food
-      int deltaEnergy = (int)(targetCell.energy * foodEfficiency);
-      if (deltaEnergy > this.maxFoodEnergy) {
-        deltaEnergy = this.maxFoodEnergy;
-      }
-
-      // Increasing energy level
-      cell.energy += deltaEnergy;
-
-      // Making cell color more red
-      ++cell.colorR;
-
-      // Removing prey or food
-      this.removeCell(targetCell);
-    }
-  }
-
-  private void bud(Cell cell) {
-    // Checking and updating energy
-    if (cell.energy * this.budEfficiency < this.minChildEnergy * 2f) {
-      return;
-    }
-    cell.energy *= this.budEfficiency;
-
-    // Checking each direction clockwise for ability to bud
-    for (int i = 0; i < 8; ++i) {
-      // Calculating coordinates by current direction
-      int[] targetCoordinates = this.calculateCoordinatesByDirection(cell.posX, cell.posY, (cell.direction + i) % 8);
-
-      // If coordinates are beyond simulation world (above top or below bottom)
-      if (targetCoordinates[1] == -1) {
-        continue;
-      }
-
-      // If space at this direction is empty
-      if (this.cellsByCoords[targetCoordinates[0]][targetCoordinates[1]] == null) {
-        // Creating new cell
-        Cell buddedCell = new Cell(cell.genom, cell.energy / 2, cell.direction, targetCoordinates[0], targetCoordinates[1]);
-
-        // Assigning cell color
-        float colorVectorLength = sqrt(cell.colorR * cell.colorR + cell.colorG * cell.colorG + cell.colorB * cell.colorB);
-        buddedCell.colorR = (int)(cell.colorR * 2f / colorVectorLength);
-        buddedCell.colorG = (int)(cell.colorG * 2f / colorVectorLength);
-        buddedCell.colorB = (int)(cell.colorB * 2f / colorVectorLength);
-
-        // Applying random bud mutation to the budded cell
-        if (random(1f) < this.budMutationChance) {
-          this.mutateRandomGen(buddedCell);
-        }
-
-        // Applying random bud mutation to current cell
-        cell.energy -= cell.energy / 2;
-        if (random(1f) < this.budMutationChance) {
-          this.mutateRandomGen(cell);
-        }
-
-        this.addCell(buddedCell);
-
-        return;
-      }
-    }
-
-    // Turning cell into food if it have to but not able to bud
-    this.turnIntoFood(cell);
-  }
-
-  private void mutateRandomGen(Cell cell) {
-    // Changing random gen on another random one
-    cell.genom[floor(random(this.genomSize))] = floor(random(this.genomSize));
-  }
-
-  private void transferEnergy(Cell cell) {
-    // Calculating coordinates by current direction
-    int[] targetCoordinates = this.calculateCoordinatesByDirection(cell.posX, cell.posY, cell.direction);
-
-    // If coordinates are beyond simulation world (above top or below bottom)
-    if (targetCoordinates[1] == -1) {
-      return;
-    }
-
-    // Getting cell at this direction
-    Cell targetCell = this.cellsByCoords[targetCoordinates[0]][targetCoordinates[1]];
-
-    // If there is a cell
-    if (targetCell != null && targetCell.isAlive) {
-      // Calculating shared energy
-      int deltaEnergy = (int)(cell.energy * this.getNextNthGenomCell(cell, 1) / (float)this.genomSize);
-
-      // Sharing energy
-      cell.energy       -= deltaEnergy;
-      targetCell.energy += deltaEnergy;
-    }
-  }
-
-  private void addToCounter(Cell cell) {
-    // Adding dummy instruction value to instruction counter with overflow handling
-    cell.counter = (cell.counter + cell.genom[cell.counter]) % this.genomSize;
-  }
-
-  private void turnIntoFood(Cell cell) {
-    cell.isAlive   = false;
   }
 
   private void addCell(Cell cell) {
