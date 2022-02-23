@@ -36,6 +36,7 @@ class CellController {
   // Genom machine and environment properties
   public int genomSize                      = 64;
   public int maxInstructionsPerTick         = 16;
+  public int maxAkinGenomDifference         = 4;
   public int minChildEnergy                 = 40;
   public int maxEnergy                      = 800;
   public int maxPhotosynthesisEnergy        = 30;
@@ -57,7 +58,7 @@ class CellController {
   // Linked list of cells for quick consequent access
   private LinkedList<Cell> cells;
   // Two-dimensional array of same cells for quick access by coordinates
-  private Cell[][]         cellsByCoords;
+  private Cell[][] cellsByCoords;
 
   // World time in ticks
   private int ticksNumber;
@@ -238,11 +239,6 @@ class CellController {
           // Determining energy surge from minerals (conditional instruction)
           case 13:
             this.determineMineralEnergy(cell);
-
-            break;
-          // Determining functional organization (conditional instruction)
-          case 14:
-            this.determineFunctionalOrganization(cell);
 
             break;
           // Unconditional jump
@@ -510,11 +506,18 @@ class CellController {
 
     // If there is a cell or food
     if (targetCell != null) {
-      // If there is a live cell
+      // If it is a live cell
       if (targetCell.isAlive) {
-        this.jumpCounter(cell, this.getNextNthGen(cell, 3));
+        // If it is an akin cell
+        if (this.areAkin(cell, targetCell)) {
+          this.jumpCounter(cell, this.getNextNthGen(cell, 3));
+        }
+        // If it is a strange cell
+        else {
+          this.jumpCounter(cell, this.getNextNthGen(cell, 4));
+        }
       }
-      // If there is food
+      // If it is food
       else {
         this.jumpCounter(cell, this.getNextNthGen(cell, 2));
       }
@@ -603,10 +606,6 @@ class CellController {
     }
   }
 
-  private void determineFunctionalOrganization(Cell cell) {
-    this.incrementGenomCounter(cell);
-  }
-
   private void incrementGenomCounter(Cell cell) {
     // Incrementing instruction counter with overflow handling
     cell.counter = (cell.counter + 1) % this.genomSize;
@@ -629,6 +628,21 @@ class CellController {
 
   private void turnIntoFood(Cell cell) {
     cell.isAlive = false;
+  }
+
+  private boolean areAkin(Cell a, Cell b) {
+    int diff = 0;
+
+    for (int i = 0; i < this.genomSize; ++i) {
+      if (a.genom[i] != b.genom[i]) {
+        ++diff;
+        if (diff > this.maxAkinGenomDifference) {
+          return false;
+        }
+      }
+    }
+
+    return true;
   }
 
   private int[] calculateCoordinatesByDirection(int column, int row, int direction) {
