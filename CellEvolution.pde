@@ -15,8 +15,6 @@
 
 CellController cellController;
 
-boolean keyIsPressed = false;
-
 int ticksPerDraw = 1;
 int currTick     = 0;
 
@@ -25,9 +23,12 @@ boolean drawBackground = true;
 boolean draw           = true;
 boolean pause          = false;
 
+void settings() {
+  size(displayWidth, displayHeight - 95, P2D);
+}
+
 void setup() {
-  fullScreen();
-  frameRate(10000000);
+  frameRate(1000);
 
   noStroke();
   rectMode(CORNER);
@@ -40,7 +41,7 @@ void draw() {
 
   // Handling next simulation tick
   if (!pause) {
-    cellController.act(drawCurrentStep);
+    cellController.act(drawCurrentStep && drawBackground);
   }
 
   // Rendering the simulation
@@ -51,6 +52,8 @@ void draw() {
   }
   ++currTick;
 }
+
+boolean keyIsPressed = false;
 
 void keyPressed() {
   if (keyIsPressed) {

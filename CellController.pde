@@ -29,31 +29,32 @@ class CellController {
   // Random seed
   public long seed = 1234567890;
 
+  // Space scale
+  public int scale = 8;
+
   // Space dimensions
-  public int rows    = height / 4;
-  public int columns = width / 4;
+  public int rows    = height / scale;
+  public int columns = width / scale;
 
   // Genom machine and environment properties
-  public int genomSize                      = 64;
-  public int maxInstructionsPerTick         = 16;
-  public int maxAkinGenomDifference         = 4;
-  public int minChildEnergy                 = 40;
-  public int maxEnergy                      = 800;
-  public int maxPhotosynthesisEnergy        = 30;
-  public int maxPhotosynthesisDepth         = 500 / 4;
-  public float winterDaytimeToWholeDayRatio = 0.4f;
-  public float baseTransparencyCoefficient  = 1f;
-  public int maxMineralEnergy               = 15;
-  public int maxMineralHeight               = 500 / 4;
-  public int maxFoodEnergy                  = 50;
-  public float foodEfficiency               = 0.95f;
-  public float budEfficiency                = 0.95f;
-  public float randomMutationChance         = 0.02f;
-  public float budMutationChance            = 0.05f;
-  public int dayDurationInTicks             = 240;
-  public int seasonDurationInDays           = 92;
-  public float gammaFlashPeriodInDays       = 720f;
-  public float gammaFlashMaxMutationsCount  = 3f;
+  public int genomSize                       = 64;
+  public int maxInstructionsPerTick          = 16;
+  public int maxAkinGenomDifference          = 4;
+  public int minChildEnergy                  = 40;
+  public int maxEnergy                       = 800;
+  public int maxPhotosynthesisEnergy         = 30;
+  public int maxPhotosynthesisDepth          = 700 / scale;
+  public float winterDaytimeToWholeDayRatio  = 0.4f;
+  public float transparencyCoefficientWeight = 0.0f;
+  public int maxMineralEnergy                = 15;
+  public int maxMineralHeight                = 700 / scale;
+  public int maxFoodEnergy                   = 50;
+  public float randomMutationChance          = 0.01f;
+  public float budMutationChance             = 0.25f;
+  public int dayDurationInTicks              = 240;
+  public int seasonDurationInDays            = 92;
+  public int gammaFlashPeriodInDays          = 40;
+  public int gammaFlashMaxMutationsCount     = 10;
 
   // Linked list of cells for quick consequent access
   private LinkedList<Cell> cells;
@@ -73,7 +74,7 @@ class CellController {
   // Photosynthesis and mineral energy buffers for optimization
   private float[][] surgeOfPhotosynthesisEnergy;
   private float[] surgeOfMineralEnergy;
-  private boolean drawCurrentStep;
+  private boolean drawBackgroundAtCurrentStep;
 
   public CellController() {
     randomSeed(this.seed);
@@ -106,14 +107,14 @@ class CellController {
     this.surgeOfMineralEnergy        = new float[this.maxMineralHeight];
   }
 
-  public void act(boolean drawCurrentStep) {
-    this.drawCurrentStep = drawCurrentStep;
+  public void act(boolean drawBackgroundAtCurrentStep) {
+    this.drawBackgroundAtCurrentStep = drawBackgroundAtCurrentStep;
 
     // Updating world time
     this.updateTime();
 
     // Updating photosynthesis and mineral energy buffers if this step must be drown
-    if (this.drawCurrentStep) {
+    if (this.drawBackgroundAtCurrentStep) {
       this.updateEnergy();
     }
 
@@ -406,10 +407,7 @@ class CellController {
     // If there is a cell or food
     if (targetCell != null) {
       // Calculating energy from food
-      int deltaEnergy = (int)(targetCell.energy * foodEfficiency);
-      if (deltaEnergy > this.maxFoodEnergy) {
-        deltaEnergy = this.maxFoodEnergy;
-      }
+      int deltaEnergy = min(targetCell.energy, this.maxFoodEnergy);
 
       // Increasing energy level
       cell.energy += deltaEnergy;
@@ -424,10 +422,9 @@ class CellController {
 
   private void bud(Cell cell) {
     // Checking and updating energy
-    if (cell.energy * this.budEfficiency < this.minChildEnergy * 2f) {
+    if (cell.energy < this.minChildEnergy * 2f) {
       return;
     }
-    cell.energy *= this.budEfficiency;
 
     // Checking each direction clockwise for ability to bud
     for (int i = 0; i < 8; ++i) {
@@ -669,7 +666,7 @@ class CellController {
     float energy;
 
     // If this step must not be drown
-    if (!this.drawCurrentStep) {
+    if (!this.drawBackgroundAtCurrentStep) {
       energy = this.calculatePhotosynthesisEnergy(column, row);
     }
     // If this step must be drown
@@ -697,7 +694,7 @@ class CellController {
     }
 
     // If this step must not be drown
-    if (!this.drawCurrentStep) {
+    if (!this.drawBackgroundAtCurrentStep) {
       return this.calculateMineralEnergy(row);
     }
 
@@ -791,13 +788,17 @@ class CellController {
   }
 
   private float calculateTransparencyCoefficient(int column, int row) {
-    float sumOfTransparencyCoefficients = this.baseTransparencyCoefficient;
+    if (this.transparencyCoefficientWeight == 0f) {
+      return 1f;
+    }
+
+    float sumOfTransparencyCoefficients = 0f;
 
     float topTransparency       = 1f;
     float topCornerTransparency = 1f / cos(PI / 4f);
     float sideTransparency      = 1f / cos(PI / 3f);
 
-    float maxTransparencyCoefficient = this.baseTransparencyCoefficient + 1f * topTransparency + 2f * topCornerTransparency + 2f * sideTransparency;
+    float maxTransparencyCoefficient = 1f * topTransparency + 2f * topCornerTransparency + 2f * sideTransparency;
 
     int[] targetCoordinates;
 
@@ -831,8 +832,14 @@ class CellController {
       sumOfTransparencyCoefficients += sideTransparency;
     }
 
-    // Calculating transparency coefficient adding all coefficients and dividing by maximum of their sum
-    return sumOfTransparencyCoefficients / maxTransparencyCoefficient;
+    // Calculating transparency coefficient adding taking into account transparencyCoefficientWeight
+    return map(
+      this.transparencyCoefficientWeight,
+      0f,
+      1f,
+      1f,
+      sumOfTransparencyCoefficients / maxTransparencyCoefficient
+    );
   }
 
   private int[] calculateCoordinatesByDirection(int column, int row, int direction) {
