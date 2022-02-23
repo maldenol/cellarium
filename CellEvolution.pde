@@ -15,6 +15,8 @@
 
 CellController cellController;
 
+boolean keyIsPressed = false;
+
 int ticksPerDraw = 1;
 int currTick     = 0;
 
@@ -34,13 +36,15 @@ void setup() {
 }
 
 void draw() {
+  boolean drawCurrentStep = draw && currTick % ticksPerDraw == 0;
+
   // Handling next simulation tick
   if (!pause) {
-    cellController.act();
+    cellController.act(drawCurrentStep);
   }
 
   // Rendering the simulation
-  if (draw && currTick % ticksPerDraw == 0) {
+  if (drawCurrentStep) {
     cellController.render(drawBackground, cellRenderingMode);
 
     currTick = 0;
@@ -48,7 +52,13 @@ void draw() {
   ++currTick;
 }
 
-void keyReleased() {
+void keyPressed() {
+  if (keyIsPressed) {
+    return;
+  }
+
+  keyIsPressed = true;
+
   if (key == 'm') {
     // Switch cell rendering mode
     ++cellRenderingMode;
@@ -62,4 +72,8 @@ void keyReleased() {
     // Toggle draw background flag state
     pause = !pause;
   }
+}
+
+void keyReleased() {
+  keyIsPressed = false;
 }

@@ -73,6 +73,7 @@ class CellController {
   // Photosynthesis and mineral energy buffers for optimization
   private float[][] surgeOfPhotosynthesisEnergy;
   private float[] surgeOfMineralEnergy;
+  private boolean drawCurrentStep;
 
   public CellController() {
     randomSeed(this.seed);
@@ -105,12 +106,16 @@ class CellController {
     this.surgeOfMineralEnergy        = new float[this.maxMineralHeight];
   }
 
-  public void act() {
+  public void act(boolean drawCurrentStep) {
+    this.drawCurrentStep = drawCurrentStep;
+
     // Updating world time
     this.updateTime();
 
-    // Updating ppotosynthesis and mineral energy buffers
-    this.updateEnergy();
+    // Updating photosynthesis and mineral energy buffers if this step must be drown
+    if (this.drawCurrentStep) {
+      this.updateEnergy();
+    }
 
     // Going through all cells sequently
     LinkedList<Cell>.ListIterator iter = this.cells.listIterator();
@@ -655,26 +660,22 @@ class CellController {
     return true;
   }
 
-  private int[] calculateCoordinatesByDirection(int column, int row, int direction) {
-    // Calculating column at given direction with overflow handling
-    int c = (column + DIRECTIONS[direction][0] + this.columns) % this.columns;
-
-    // Calculating row at given direction with overflow handling
-    int r = row + DIRECTIONS[direction][1];
-    if (r > this.rows - 1 || r < 0) {
-      r = -1;
-    }
-
-    return new int[]{c, r};
-  }
-
   private float getPhotosynthesisEnergy(int column, int row, boolean calculateTransparency) {
     // If depth is greater than maximal
     if (row >= this.maxPhotosynthesisDepth) {
       return 0f;
     }
 
-    float energy = this.surgeOfPhotosynthesisEnergy[column][row];
+    float energy;
+
+    // If this step must not be drown
+    if (!this.drawCurrentStep) {
+      energy = this.calculatePhotosynthesisEnergy(column, row);
+    }
+    // If this step must be drown
+    else {
+      energy = this.surgeOfPhotosynthesisEnergy[column][row];
+    }
 
     if (calculateTransparency) {
       // Stop if photosynthesis energy is already not enough to feed a cell
@@ -693,6 +694,11 @@ class CellController {
     // If depth is less than minimal
     if (row < this.rows - this.maxMineralHeight) {
       return 0f;
+    }
+
+    // If this step must not be drown
+    if (!this.drawCurrentStep) {
+      return this.calculateMineralEnergy(row);
     }
 
     return this.surgeOfMineralEnergy[this.rows - 1 - row];
@@ -827,6 +833,19 @@ class CellController {
 
     // Calculating transparency coefficient adding all coefficients and dividing by maximum of their sum
     return sumOfTransparencyCoefficients / maxTransparencyCoefficient;
+  }
+
+  private int[] calculateCoordinatesByDirection(int column, int row, int direction) {
+    // Calculating column at given direction with overflow handling
+    int c = (column + DIRECTIONS[direction][0] + this.columns) % this.columns;
+
+    // Calculating row at given direction with overflow handling
+    int r = row + DIRECTIONS[direction][1];
+    if (r > this.rows - 1 || r < 0) {
+      r = -1;
+    }
+
+    return new int[]{c, r};
   }
 
   private void addCell(Cell cell) {
