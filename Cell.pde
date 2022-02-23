@@ -27,6 +27,9 @@ class Cell {
   public int colorG;
   public int colorB;
 
+  public int energyShareBalance;
+  public float lastEnergyShare;
+
   public boolean isAlive;
 
   public Cell(
@@ -52,6 +55,9 @@ class Cell {
     this.colorR = 0;
     this.colorG = 0;
     this.colorB = 0;
+
+    this.energyShareBalance = 0;
+    this.lastEnergyShare    = 0;
 
     this.isAlive = true;
   }

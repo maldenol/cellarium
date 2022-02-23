@@ -17,7 +17,11 @@ CellController cellController;
 
 int ticksPerDraw = 1;
 int currTick     = 0;
-boolean draw     = true;
+
+int cellRenderingMode  = 0;
+boolean drawBackground = true;
+boolean draw           = true;
+boolean pause          = false;
 
 void setup() {
   fullScreen();
@@ -30,12 +34,14 @@ void setup() {
 }
 
 void draw() {
-  // Handling next world tick
-  cellController.act();
+  // Handling next simulation tick
+  if (!pause) {
+    cellController.act();
+  }
 
-  // Rendering cells if needed
+  // Rendering the simulation
   if (draw && currTick % ticksPerDraw == 0) {
-    cellController.render();
+    cellController.render(drawBackground, cellRenderingMode);
 
     currTick = 0;
   }
@@ -43,9 +49,17 @@ void draw() {
 }
 
 void keyReleased() {
-  // If spacebar has been released
-  if (key == ' ') {
-    // Toggle render state
+  if (key == 'm') {
+    // Switch cell rendering mode
+    ++cellRenderingMode;
+  } else if (key == 'b') {
+    // Toggle draw background flag state
+    drawBackground = !drawBackground;
+  } else if (key == 'd') {
+    // Toggle draw flag state
     draw = !draw;
+  } else if (key == 'p') {
+    // Toggle draw background flag state
+    pause = !pause;
   }
 }

@@ -66,7 +66,6 @@ class CellController {
   private int yearsNumber;
 
   // Rendering properties
-  public boolean drawBackground = true;
   private float cellSideLength;
   private float renderWidth;
   private float renderHeight;
@@ -136,6 +135,9 @@ class CellController {
         this.bud(cell);
         continue;
       }
+
+      // Fading last energy share
+      cell.lastEnergyShare *= 0.99f;
 
       // Applying random mutation
       if (random(1f) < this.randomMutationChance) {
@@ -208,9 +210,9 @@ class CellController {
             i = this.maxInstructionsPerTick;
 
             break;
-          // Transferring energy (no more instructions permitted)
+          // Sharing energy (no more instructions permitted)
           case 8:
-            this.transferEnergy(cell);
+            this.shareEnergy(cell);
             this.incrementGenomCounter(cell);
 
             i = this.maxInstructionsPerTick;
@@ -469,7 +471,7 @@ class CellController {
     cell.genom[floor(random(this.genomSize))] = floor(random(this.genomSize));
   }
 
-  private void transferEnergy(Cell cell) {
+  private void shareEnergy(Cell cell) {
     // Calculating coordinates by current direction
     int[] targetCoordinates = this.calculateCoordinatesByDirection(cell.posX, cell.posY, cell.direction);
 
@@ -483,12 +485,20 @@ class CellController {
 
     // If there is a cell
     if (targetCell != null && targetCell.isAlive) {
-      // Calculating shared energy
+      // Calculating energy to share
       int deltaEnergy = (int)(cell.energy * this.getNextNthGen(cell, 1) / (float)this.genomSize);
 
       // Sharing energy
       cell.energy       -= deltaEnergy;
       targetCell.energy += deltaEnergy;
+
+      // Updating energy share balances
+      cell.energyShareBalance       += deltaEnergy;
+      targetCell.energyShareBalance -= deltaEnergy;
+
+      // Updating last energy shares
+      cell.lastEnergyShare       = 1f;
+      targetCell.lastEnergyShare = -1f;
     }
   }
 
@@ -832,9 +842,9 @@ class CellController {
     this.cellsByCoords[cell.posX][cell.posY] = null;
   }
 
-  public void render() {
+  public void render(boolean renderBackground, int cellRenderingMode) {
     // Rendering background
-    if (this.drawBackground) {
+    if (renderBackground) {
       this.renderBackground();
     } else {
       background(255f);
@@ -845,7 +855,7 @@ class CellController {
     while (iter.hasNext()) {
       Cell cell = iter.next();
 
-      this.renderCell(cell);
+      this.renderCell(cell, cellRenderingMode);
     }
   }
 
@@ -881,20 +891,42 @@ class CellController {
     }
   }
 
-  private void renderCell(Cell cell) {
+  private void renderCell(Cell cell, int cellRenderingMode) {
     float colorR, colorG, colorB;
 
     // If cell is alive
     if (cell.isAlive) {
-      colorR = cell.colorR;
-      colorG = cell.colorG;
-      colorB = cell.colorB;
+      // Diet mode
+      if (cellRenderingMode % 4 == 0) {
+        // Normalizing color and reducing it to range from 0 to 255
+        colorR = cell.colorR;
+        colorG = cell.colorG;
+        colorB = cell.colorB;
 
-      // Normalizing color and reducing it to range from 0 to 255
-      float colorVectorLength = sqrt(colorR * colorR + colorG * colorG + colorB * colorB);
-      colorR *= 255f / colorVectorLength;
-      colorG *= 255f / colorVectorLength;
-      colorB *= 255f / colorVectorLength;
+        float colorVectorLength = sqrt(colorR * colorR + colorG * colorG + colorB * colorB);
+
+        colorR *= 255f / colorVectorLength;
+        colorG *= 255f / colorVectorLength;
+        colorB *= 255f / colorVectorLength;
+      }
+      // Energy level mode
+      else if (cellRenderingMode % 4 == 1) {
+        colorR = 255f;
+        colorG = map(cell.energy, 0f, this.maxEnergy, 255f, 0f);
+        colorB = 0f;
+      }
+      // Energy sharing balance mode
+      else if (cellRenderingMode % 4 == 2) {
+        colorR = map(cell.energyShareBalance, -this.maxEnergy, this.maxEnergy, 255f, 0f);
+        colorG = map(cell.energyShareBalance, -this.maxEnergy, this.maxEnergy, 127f, 255f);
+        colorB = map(cell.energyShareBalance, -this.maxEnergy, this.maxEnergy, 0f, 255f);
+      }
+      // Last energy share mode
+      else {
+        colorR = map(cell.lastEnergyShare, -1f, 1f, 255f, 0f);
+        colorG = map(cell.lastEnergyShare, -1f, 1f, 127f, 255f);
+        colorB = map(cell.lastEnergyShare, -1f, 1f, 0f, 255f);
+      }
     }
     // If cell is dead
     else {
