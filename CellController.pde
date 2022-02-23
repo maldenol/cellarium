@@ -37,24 +37,23 @@ class CellController {
   public int columns = width / scale;
 
   // Genom machine and environment properties
-  public int genomSize                       = 64;
-  public int maxInstructionsPerTick          = 16;
-  public int maxAkinGenomDifference          = 4;
-  public int minChildEnergy                  = 40;
-  public int maxEnergy                       = 800;
-  public int maxPhotosynthesisEnergy         = 30;
-  public int maxPhotosynthesisDepth          = 700 / scale;
-  public float winterDaytimeToWholeDayRatio  = 0.4f;
-  public float transparencyCoefficientWeight = 0.0f;
-  public int maxMineralEnergy                = 15;
-  public int maxMineralHeight                = 700 / scale;
-  public int maxFoodEnergy                   = 50;
-  public float randomMutationChance          = 0.01f;
-  public float budMutationChance             = 0.25f;
-  public int dayDurationInTicks              = 240;
-  public int seasonDurationInDays            = 92;
-  public int gammaFlashPeriodInDays          = 40;
-  public int gammaFlashMaxMutationsCount     = 10;
+  public int genomSize                      = 64;
+  public int maxInstructionsPerTick         = 16;
+  public int maxAkinGenomDifference         = 4;
+  public int minChildEnergy                 = 40;
+  public int maxEnergy                      = 800;
+  public int maxPhotosynthesisEnergy        = 30;
+  public int maxPhotosynthesisDepth         = 700 / scale;
+  public float winterDaytimeToWholeDayRatio = 0.4f;
+  public int maxMineralEnergy               = 15;
+  public int maxMineralHeight               = 700 / scale;
+  public int maxFoodEnergy                  = 50;
+  public float randomMutationChance         = 0.01f;
+  public float budMutationChance            = 0.25f;
+  public int dayDurationInTicks             = 240;
+  public int seasonDurationInDays           = 92;
+  public int gammaFlashPeriodInDays         = 40;
+  public int gammaFlashMaxMutationsCount    = 10;
 
   // Linked list of cells for quick consequent access
   private LinkedList<Cell> cells;
@@ -366,7 +365,7 @@ class CellController {
 
   private void getEnergyFromPhotosynthesis(Cell cell) {
     // Calculating energy from photosynthesis at current position
-    int deltaEnergy = (int)getPhotosynthesisEnergy(cell.posX, cell.posY, true);
+    int deltaEnergy = (int)getPhotosynthesisEnergy(cell.posX, cell.posY);
 
     // If energy from photosynthesis is positive
     if (deltaEnergy > 0) {
@@ -581,7 +580,7 @@ class CellController {
     int valueToCompare = (int)(this.maxPhotosynthesisEnergy * this.getNextNthGen(cell, 1) / (float)this.genomSize);
 
     // Calculating surge of photosynthesis energy
-    int surgeOfEnergy = (int)getPhotosynthesisEnergy(cell.posX, cell.posY, true);
+    int surgeOfEnergy = (int)getPhotosynthesisEnergy(cell.posX, cell.posY);
 
     // Less
     if (surgeOfEnergy < valueToCompare) {
@@ -657,7 +656,7 @@ class CellController {
     return true;
   }
 
-  private float getPhotosynthesisEnergy(int column, int row, boolean calculateTransparency) {
+  private float getPhotosynthesisEnergy(int column, int row) {
     // If depth is greater than maximal
     if (row >= this.maxPhotosynthesisDepth) {
       return 0f;
@@ -672,16 +671,6 @@ class CellController {
     // If this step must be drown
     else {
       energy = this.surgeOfPhotosynthesisEnergy[column][row];
-    }
-
-    if (calculateTransparency) {
-      // Stop if photosynthesis energy is already not enough to feed a cell
-      if (energy < 1f) {
-        return 0f;
-      }
-
-      // Applying transparency coefficient
-      energy *= this.calculateTransparencyCoefficient(column, row);
     }
 
     return energy;
@@ -787,61 +776,6 @@ class CellController {
     return dayCoefficientX * dayCoefficientY;
   }
 
-  private float calculateTransparencyCoefficient(int column, int row) {
-    if (this.transparencyCoefficientWeight == 0f) {
-      return 1f;
-    }
-
-    float sumOfTransparencyCoefficients = 0f;
-
-    float topTransparency       = 1f;
-    float topCornerTransparency = 1f / cos(PI / 4f);
-    float sideTransparency      = 1f / cos(PI / 3f);
-
-    float maxTransparencyCoefficient = 1f * topTransparency + 2f * topCornerTransparency + 2f * sideTransparency;
-
-    int[] targetCoordinates;
-
-    // Top coefficient
-    targetCoordinates = this.calculateCoordinatesByDirection(column, row, 0);
-    if (targetCoordinates[1] == -1 || this.cellsByCoords[targetCoordinates[0]][targetCoordinates[1]] == null) {
-      sumOfTransparencyCoefficients += topTransparency;
-    }
-
-    // Top-right coefficient
-    targetCoordinates = this.calculateCoordinatesByDirection(column, row, 1);
-    if (targetCoordinates[1] == -1 || this.cellsByCoords[targetCoordinates[0]][targetCoordinates[1]] == null) {
-      sumOfTransparencyCoefficients += topCornerTransparency;
-    }
-
-    // Top-left coefficient
-    targetCoordinates = this.calculateCoordinatesByDirection(column, row, 7);
-    if (targetCoordinates[1] == -1 || this.cellsByCoords[targetCoordinates[0]][targetCoordinates[1]] == null) {
-      sumOfTransparencyCoefficients += topCornerTransparency;
-    }
-
-    // Right coefficient
-    targetCoordinates = this.calculateCoordinatesByDirection(column, row, 2);
-    if (this.cellsByCoords[targetCoordinates[0]][targetCoordinates[1]] == null) {
-      sumOfTransparencyCoefficients += sideTransparency;
-    }
-
-    // Left coefficient
-    targetCoordinates = this.calculateCoordinatesByDirection(column, row, 6);
-    if (this.cellsByCoords[targetCoordinates[0]][targetCoordinates[1]] == null) {
-      sumOfTransparencyCoefficients += sideTransparency;
-    }
-
-    // Calculating transparency coefficient adding taking into account transparencyCoefficientWeight
-    return map(
-      this.transparencyCoefficientWeight,
-      0f,
-      1f,
-      1f,
-      sumOfTransparencyCoefficients / maxTransparencyCoefficient
-    );
-  }
-
   private int[] calculateCoordinatesByDirection(int column, int row, int direction) {
     // Calculating column at given direction with overflow handling
     int c = (column + DIRECTIONS[direction][0] + this.columns) % this.columns;
@@ -903,7 +837,7 @@ class CellController {
     // Rendering photosynthesis energy density
     for (int x = 0; x < this.columns; ++x) {
       for (int y = 0; y < this.maxPhotosynthesisDepth; ++y) {
-        float colorA = map(this.getPhotosynthesisEnergy(x, y, false), 0f, this.maxPhotosynthesisEnergy, 0f, 127f);
+        float colorA = map(this.getPhotosynthesisEnergy(x, y), 0f, this.maxPhotosynthesisEnergy, 0f, 127f);
 
         // Break if photosynthesis energy is almost zero so underneath cells have no energy at all
         if (colorA < 1f) {
