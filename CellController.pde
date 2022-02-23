@@ -34,23 +34,25 @@ class CellController {
   public int columns = width / 4;
 
   // Genom machine and environment properties
-  public int genomSize                     = 64;
-  public int maxInstructionsPerTick        = 16;
-  public int minChildEnergy                = 40;
-  public int maxEnergy                     = 800;
-  public int dayDurationInTicks            = 240;
-  public int seasonDurationInDays          = 92;
-  public int maxPhotosynthesisEnergy       = 30;
-  public int maxPhotosynthesisDepth        = 750;
-  public int maxMineralEnergy              = 15;
-  public int maxMineralDepth               = 500;
-  public int maxFoodEnergy                 = 50;
-  public float budEfficiency               = 0.95f;
-  public float foodEfficiency              = 0.95f;
-  public float randomMutationChance        = 0.002f;
-  public float budMutationChance           = 0.05f;
-  public float gammaFlashPeriodInDays      = 720f;
-  public float gammaFlashMaxMutationsCount = 3f;
+  public int genomSize                      = 64;
+  public int maxInstructionsPerTick         = 16;
+  public int minChildEnergy                 = 40;
+  public int maxEnergy                      = 800;
+  public int maxPhotosynthesisEnergy        = 30;
+  public int maxPhotosynthesisDepth         = 750 / 4;
+  public float winterDaytimeToWholeDayRatio = 0.4f;
+  public float baseTransparencyCoefficient  = 0f;
+  public int maxMineralEnergy               = 15;
+  public int maxMineralHeight               = 500 / 4;
+  public int maxFoodEnergy                  = 50;
+  public float foodEfficiency               = 0.95f;
+  public float budEfficiency                = 0.95f;
+  public float randomMutationChance         = 0.002f;
+  public float budMutationChance            = 0.05f;
+  public int dayDurationInTicks             = 240;
+  public int seasonDurationInDays           = 92;
+  public float gammaFlashPeriodInDays       = 720f;
+  public float gammaFlashMaxMutationsCount  = 3f;
 
   // Linked list of cells for quick consequent access
   private LinkedList<Cell> cells;
@@ -319,10 +321,10 @@ class CellController {
 
   private void getEnergyFromPhotosynthesis(Cell cell) {
     // Calculating energy from photosynthesis at current position
-    int deltaEnergy = calculatePhotosynthesisEnergy(cell.posX, cell.posY);
+    int deltaEnergy = (int)calculatePhotosynthesisEnergy(cell.posX, cell.posY);
 
     // If energy from photosynthesis is positive
-    if (deltaEnergy > 0f) {
+    if (deltaEnergy > 0) {
       // Increasing energy level
       cell.energy += deltaEnergy;
 
@@ -333,10 +335,10 @@ class CellController {
 
   private void getEnergyFromMinerals(Cell cell) {
     // Calculating energy from minerals at current position
-    int deltaEnergy = calculateMineralEnergy(cell.posY);
+    int deltaEnergy = (int)calculateMineralEnergy(cell.posY);
 
     // If energy from minerals is positive
-    if (deltaEnergy > 0f) {
+    if (deltaEnergy > 0) {
       // Increasing energy level
       cell.energy += deltaEnergy;
 
@@ -523,7 +525,7 @@ class CellController {
     int valueToCompare = (int)(this.maxPhotosynthesisEnergy * this.getNextNthGen(cell, 1) / (float)this.genomSize);
 
     // Calculating surge of photosynthesis energy
-    int surgeOfEnergy = calculatePhotosynthesisEnergy(cell.posX, cell.posY);
+    int surgeOfEnergy = (int)calculatePhotosynthesisEnergy(cell.posX, cell.posY);
 
     // Less
     if (surgeOfEnergy < valueToCompare) {
@@ -544,7 +546,7 @@ class CellController {
     int valueToCompare = (int)(this.maxMineralEnergy * this.getNextNthGen(cell, 1) / (float)this.genomSize);
 
     // Calculating surge of photosynthesis energy
-    int surgeOfEnergy = calculateMineralEnergy(cell.posY);
+    int surgeOfEnergy = (int)calculateMineralEnergy(cell.posY);
 
     // Less
     if (surgeOfEnergy < valueToCompare) {
@@ -601,47 +603,108 @@ class CellController {
     return new int[]{c, r};
   }
 
-  private int calculatePhotosynthesisEnergy(int column, int row) {
+  private float calculatePhotosynthesisEnergy(int column, int row) {
     // Getting base energy from photosynthesis
     float energy = map(
       row,
-      0,
+      0f,
       this.maxPhotosynthesisDepth,
       this.maxPhotosynthesisEnergy,
       0f
     );
 
+    // Stop if photosynthesis energy is already not enough to feed a cell
+    if (energy < 1f) {
+      return 0f;
+    }
+
+    // Applying day coefficient
+    energy *= this.calculateDayCoefficient(column, row, energy);
+
+    // Stop if photosynthesis energy is already not enough to feed a cell
+    if (energy < 1f) {
+      return 0f;
+    }
+
     // Applying transparency coefficient
     energy *= this.calculateTransparencyCoefficient(column, row);
-    // Applying season coefficient
-    energy *= this.calculateSeasonCoefficient();
-    // Applying day coefficient
-    energy *= this.calculateDayCoefficient(column, row);
 
-    return (int)energy;
+    return energy;
   }
 
-  private int calculateMineralEnergy(int row) {
+  private float calculateMineralEnergy(int row) {
     // Getting energy from minerals
-    float energy = map(
+    return map(
       row,
-      this.rows - 1,
-      this.rows - 1 - this.maxMineralDepth,
+      this.rows - 1f,
+      this.rows - 1f - this.maxMineralHeight,
       this.maxMineralEnergy,
       0f
     );
+  }
 
-    return (int)energy;
+  private float calculateDayCoefficient(int column, int row, float energyToCompare) {
+    // Calculating day coefficient by Y-axis
+    float dayCoefficientY = map(
+      row,
+      0f,
+      this.maxPhotosynthesisDepth,
+      1f,
+      0f
+    );
+
+    // Stop if photosynthesis energy is already not enough to feed a cell
+    if (dayCoefficientY * energyToCompare < 1f) {
+      return 0f;
+    }
+
+    // Calculating noon (sun) position on X-axis
+    float noonPositionX = map(
+      this.ticksNumber,
+      0f,
+      this.dayDurationInTicks - 1f,
+      0f,
+      this.columns - 1f
+    );
+    // Calculating smaller ot larger distance to noon on X-axis
+    float possibleNoonDistanceX = abs(noonPositionX - column);
+    // Calculating smaller distance to noon on X-axis
+    float noonDistanceX = min(possibleNoonDistanceX, this.columns - possibleNoonDistanceX);
+    // Calculating season coefficient
+    float seasonCoefficient = sin(
+      map(
+        (float)this.daysNumber / this.seasonDurationInDays,
+        0f,
+        4f,
+        0f,
+        2f * PI
+     )
+    );
+    seasonCoefficient = seasonCoefficient * 0.25f + 0.25f;
+    // Calculating daytime to the whole day ratio
+    float daytimeToWholeDayRatio = this.winterDaytimeToWholeDayRatio + seasonCoefficient;
+    daytimeToWholeDayRatio -= (int)daytimeToWholeDayRatio;
+    // Calculating day coefficient by X-axis
+    float dayCoefficientX = map(
+      noonDistanceX,
+      0f,
+      (this.columns - 1f) * daytimeToWholeDayRatio,
+      1f,
+      0f
+    );
+
+    // Calculating day coefficient as product of coefficients by X and Y axies
+    return dayCoefficientX * dayCoefficientY;
   }
 
   private float calculateTransparencyCoefficient(int column, int row) {
-    float sumOfTransparencyCoefficients = 0f;
+    float sumOfTransparencyCoefficients = this.baseTransparencyCoefficient;
 
     float topTransparency       = 1f;
     float topCornerTransparency = 1f / cos(PI / 4f);
     float sideTransparency      = 1f / cos(PI / 3f);
 
-    float maxTransparencyCoefficient = 1f * topTransparency + 2f * topCornerTransparency + 2f * sideTransparency;
+    float maxTransparencyCoefficient = this.baseTransparencyCoefficient + 1f * topTransparency + 2f * topCornerTransparency + 2f * sideTransparency;
 
     int[] targetCoordinates;
 
@@ -675,56 +738,8 @@ class CellController {
       sumOfTransparencyCoefficients += sideTransparency;
     }
 
-    // Calculating coefficient adding all coefficients and dividing by maximum of their sum
-    float transparencyCoefficient = sumOfTransparencyCoefficients / maxTransparencyCoefficient;
-
-    return transparencyCoefficient;
-  }
-
-  private float calculateSeasonCoefficient() {
-    // Calculating coefficient in range from -1 to 1
-    float seasonCoefficient = sin(
-      map(
-        (float)this.daysNumber / this.seasonDurationInDays,
-        0f,
-        4f,
-        0f,
-        2f * PI
-      )
-    );
-    // Reducing to range from 0.5 to 2
-    seasonCoefficient       = seasonCoefficient * 0.75f + 1.25f;
-
-    return seasonCoefficient;
-  }
-
-  private float calculateDayCoefficient(int column, int row) {
-    // Calculating noon (sun) position on X-axis
-    float noonPositionX         = map(
-      this.ticksNumber,
-      0,
-      this.dayDurationInTicks - 1,
-      0f,
-      this.columns - 1f
-    );
-    // Calculating smaller ot larger distance to noon on X-axis
-    float possibleNoonDistanceX = abs(noonPositionX - column);
-    // Calculating smaller distance to noon on X-axis
-    float noonDistanceX         = min(possibleNoonDistanceX, this.columns - possibleNoonDistanceX);
-    // Calculating smaller distance to noon
-    float noonDistance          = sqrt(noonDistanceX * noonDistanceX + row * row);
-    // Calculating coefficient
-    float dayCoefficient        = pow(
-      map(
-        noonDistance,
-        0,
-        (this.columns - 1) / 2,
-        1f,
-        0f
-      ),
-    2);
-
-    return dayCoefficient;
+    // Calculating transparency coefficient adding all coefficients and dividing by maximum of their sum
+    return sumOfTransparencyCoefficients / maxTransparencyCoefficient;
   }
 
   private void addCell(Cell cell) {
@@ -766,9 +781,12 @@ class CellController {
     // Rendering photosynthesis energy density
     for (int x = 0; x < this.columns; ++x) {
       for (int y = 0; y <= this.maxPhotosynthesisDepth; ++y) {
-        float colorA = map(y, 0, this.maxPhotosynthesisDepth, 127f, 0f);
-        colorA *= this.calculateSeasonCoefficient();
-        colorA *= this.calculateDayCoefficient(x, y);
+        float colorA = map(this.calculatePhotosynthesisEnergy(x, y), 0f, this.maxPhotosynthesisEnergy, 0f, 127f);
+
+        //// Break if photosynthesis energy is almost zero so underneath cells have no energy at all
+        //if (colorA < 1f) {
+        //  break;
+        //}
 
         fill(255f, 255f, 0f, colorA);
         rect(x * this.cellSideLength, y * this.cellSideLength, this.cellSideLength, this.cellSideLength);
@@ -777,8 +795,8 @@ class CellController {
     }
 
     // Rendering minerals energy density
-    for (int y = this.rows - 1 - this.maxMineralDepth; y < this.rows; ++y) {
-      float colorA = map(y, this.rows - 1 - this.maxMineralDepth, this.rows, 0f, 127f);
+    for (int y = this.rows - 1 - this.maxMineralHeight; y < this.rows; ++y) {
+      float colorA = map(this.calculateMineralEnergy(y), 0f, this.maxMineralEnergy, 0f, 127f);
 
       fill(0f, 0f, 255f, colorA);
       rect(0f, y * this.cellSideLength, width, this.cellSideLength);

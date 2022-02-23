@@ -15,9 +15,11 @@
 
 CellController cellController;
 
-int ticksPerDraw = 1;
-int currTick     = 0;
-boolean draw     = true;
+int ticksPerDraw;
+int currTick;
+boolean draw;
+
+int hui = 0;
 
 void setup() {
   fullScreen();
@@ -27,6 +29,10 @@ void setup() {
   rectMode(CORNER);
 
   cellController = new CellController();
+
+  ticksPerDraw = 1;
+  currTick     = 0;
+  draw         = true;
 }
 
 void draw() {
