@@ -28,7 +28,7 @@ void setup() {
 
   cellController = new CellController();
 
-  ticksPerDraw = 10;
+  ticksPerDraw = 1;
   currTick     = 0;
   draw         = true;
 }

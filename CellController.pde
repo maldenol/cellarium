@@ -27,30 +27,30 @@ final int[][] DIRECTIONS = {
 
 class CellController {
   // Random seed
-  private long seed = 1234567890;
+  public long seed = 1234567890;
 
   // Space dimensions
-  private int rows    = height / 4;
-  private int columns = width / 4;
+  public int rows    = height / 4;
+  public int columns = width / 4;
 
   // Genom machine and environment properties
-  private int genomSize                     = 64;
-  private int maxInstructionsPerTick        = 16;
-  private int minChildEnergy                = 40;
-  private int maxEnergy                     = 800;
-  private int dayDurationInTicks            = 240;
-  private int seasonDurationInDays          = 92;
-  private int maxPhotosynthesisEnergy       = 30;
-  private int maxPhotosynthesisDepth        = 750;
-  private int maxMineralEnergy              = 15;
-  private int maxMineralDepth               = 500;
-  private int maxFoodEnergy                 = 50;
-  private float budEfficiency               = 0.95f;
-  private float foodEfficiency              = 0.95f;
-  private float randomMutationChance        = 0.002f;
-  private float budMutationChance           = 0.05f;
-  private float gammaFlashPeriodInDays      = 720f;
-  private float gammaFlashMaxMutationsCount = 3f;
+  public int genomSize                     = 64;
+  public int maxInstructionsPerTick        = 16;
+  public int minChildEnergy                = 40;
+  public int maxEnergy                     = 800;
+  public int dayDurationInTicks            = 240;
+  public int seasonDurationInDays          = 92;
+  public int maxPhotosynthesisEnergy       = 30;
+  public int maxPhotosynthesisDepth        = 750;
+  public int maxMineralEnergy              = 15;
+  public int maxMineralDepth               = 500;
+  public int maxFoodEnergy                 = 50;
+  public float budEfficiency               = 0.95f;
+  public float foodEfficiency              = 0.95f;
+  public float randomMutationChance        = 0.002f;
+  public float budMutationChance           = 0.05f;
+  public float gammaFlashPeriodInDays      = 720f;
+  public float gammaFlashMaxMutationsCount = 3f;
 
   // Linked list of cells for quick consequent access
   private LinkedList<Cell> cells;
@@ -63,6 +63,7 @@ class CellController {
   private int yearsNumber;
 
   // Rendering properties
+  public boolean drawBackground = true;
   private float cellSideLength;
   private float renderWidth;
   private float renderHeight;
@@ -549,7 +550,11 @@ class CellController {
 
   public void render() {
     // Rendering background
-    this.renderBackground();
+    if (this.drawBackground) {
+      this.renderBackground();
+    } else {
+      background(255f);
+    }
 
     // Rendering each cell
     LinkedList<Cell>.ListIterator iter = this.cells.listIterator();
@@ -566,9 +571,8 @@ class CellController {
     rect(0f, 0f, this.renderWidth, this.renderHeight);
     noFill();
 
-    // Rendering photosynthesis and minerals energy density
+    // Rendering photosynthesis energy density
     for (int x = 0; x < this.columns; ++x) {
-      // Photosynthesis
       for (int y = 0; y <= this.maxPhotosynthesisDepth; ++y) {
         float colorA = map(y, 0, this.maxPhotosynthesisDepth, 127f, 0f);
         colorA *= this.calculateSeasonCoefficient();
@@ -578,15 +582,15 @@ class CellController {
         rect(x * this.cellSideLength, y * this.cellSideLength, this.cellSideLength, this.cellSideLength);
         noFill();
       }
+    }
 
-      // Minerals
-      for (int y = this.rows - 1 - this.maxMineralDepth; y < this.rows; ++y) {
-        float colorA = map(y, this.rows - 1 - this.maxMineralDepth, this.rows, 0f, 127f);
+    // Rendering minerals energy density
+    for (int y = this.rows - 1 - this.maxMineralDepth; y < this.rows; ++y) {
+      float colorA = map(y, this.rows - 1 - this.maxMineralDepth, this.rows, 0f, 127f);
 
-        fill(0f, 0f, 255f, colorA);
-        rect(x * this.cellSideLength, y * this.cellSideLength, this.cellSideLength, this.cellSideLength);
-        noFill();
-      }
+      fill(0f, 0f, 255f, colorA);
+      rect(0f, y * this.cellSideLength, width, this.cellSideLength);
+      noFill();
     }
   }
 
