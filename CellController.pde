@@ -39,15 +39,15 @@ class CellController {
   public int minChildEnergy                 = 40;
   public int maxEnergy                      = 800;
   public int maxPhotosynthesisEnergy        = 30;
-  public int maxPhotosynthesisDepth         = 750 / 4;
+  public int maxPhotosynthesisDepth         = 500 / 4;
   public float winterDaytimeToWholeDayRatio = 0.4f;
-  public float baseTransparencyCoefficient  = 0f;
+  public float baseTransparencyCoefficient  = 1f;
   public int maxMineralEnergy               = 15;
   public int maxMineralHeight               = 500 / 4;
   public int maxFoodEnergy                  = 50;
   public float foodEfficiency               = 0.95f;
   public float budEfficiency                = 0.95f;
-  public float randomMutationChance         = 0.002f;
+  public float randomMutationChance         = 0.02f;
   public float budMutationChance            = 0.05f;
   public int dayDurationInTicks             = 240;
   public int seasonDurationInDays           = 92;
@@ -69,6 +69,10 @@ class CellController {
   private float cellSideLength;
   private float renderWidth;
   private float renderHeight;
+
+  // Photosynthesis and mineral energy buffers for optimization
+  private float[][] surgeOfPhotosynthesisEnergy;
+  private float[] surgeOfMineralEnergy;
 
   public CellController() {
     randomSeed(this.seed);
@@ -96,11 +100,17 @@ class CellController {
     this.cellSideLength = min(width / this.columns, height / this.rows);
     this.renderWidth    = this.columns * this.cellSideLength - 1f;
     this.renderHeight   = this.rows * this.cellSideLength - 1f;
+
+    this.surgeOfPhotosynthesisEnergy = new float[this.columns][this.maxPhotosynthesisDepth];
+    this.surgeOfMineralEnergy        = new float[this.maxMineralHeight];
   }
 
   public void act() {
     // Updating world time
     this.updateTime();
+
+    // Updating ppotosynthesis and mineral energy buffers
+    this.updateEnergy();
 
     // Going through all cells sequently
     LinkedList<Cell>.ListIterator iter = this.cells.listIterator();
@@ -265,6 +275,37 @@ class CellController {
     }
   }
 
+  private void updateEnergy() {
+    // Calculating photosynthesis energy
+    for (int x = 0; x < this.columns; ++x) {
+      int y = 0;
+
+      // Filling with values until they are low
+      while (y < this.maxPhotosynthesisDepth) {
+        this.surgeOfPhotosynthesisEnergy[x][y] = this.calculatePhotosynthesisEnergy(x, y);
+
+        // Break if photosynthesis energy is almost zero so underneath cells have no energy at all
+        if (this.surgeOfPhotosynthesisEnergy[x][y] < 1f) {
+          break;
+        }
+
+        ++y;
+      }
+
+      // Filling with zeroes
+      while (y < this.maxPhotosynthesisDepth) {
+        this.surgeOfPhotosynthesisEnergy[x][y] = 0f;
+
+        ++y;
+      }
+    }
+
+    // Calculating mineral energy
+    for (int y = this.rows - this.maxMineralHeight; y < this.rows; ++y) {
+      this.surgeOfMineralEnergy[this.rows - 1 - y] = this.calculateMineralEnergy(y);
+    }
+  }
+
   private void gammaFlash() {
     // If the time has come
     if (this.ticksNumber == 0 && (this.daysNumber + this.yearsNumber * this.seasonDurationInDays * 4) % this.gammaFlashPeriodInDays == 0) {
@@ -321,7 +362,7 @@ class CellController {
 
   private void getEnergyFromPhotosynthesis(Cell cell) {
     // Calculating energy from photosynthesis at current position
-    int deltaEnergy = (int)calculatePhotosynthesisEnergy(cell.posX, cell.posY);
+    int deltaEnergy = (int)getPhotosynthesisEnergy(cell.posX, cell.posY, true);
 
     // If energy from photosynthesis is positive
     if (deltaEnergy > 0) {
@@ -335,7 +376,7 @@ class CellController {
 
   private void getEnergyFromMinerals(Cell cell) {
     // Calculating energy from minerals at current position
-    int deltaEnergy = (int)calculateMineralEnergy(cell.posY);
+    int deltaEnergy = (int)getMineralEnergy(cell.posY);
 
     // If energy from minerals is positive
     if (deltaEnergy > 0) {
@@ -525,7 +566,7 @@ class CellController {
     int valueToCompare = (int)(this.maxPhotosynthesisEnergy * this.getNextNthGen(cell, 1) / (float)this.genomSize);
 
     // Calculating surge of photosynthesis energy
-    int surgeOfEnergy = (int)calculatePhotosynthesisEnergy(cell.posX, cell.posY);
+    int surgeOfEnergy = (int)getPhotosynthesisEnergy(cell.posX, cell.posY, true);
 
     // Less
     if (surgeOfEnergy < valueToCompare) {
@@ -546,7 +587,7 @@ class CellController {
     int valueToCompare = (int)(this.maxMineralEnergy * this.getNextNthGen(cell, 1) / (float)this.genomSize);
 
     // Calculating surge of photosynthesis energy
-    int surgeOfEnergy = (int)calculateMineralEnergy(cell.posY);
+    int surgeOfEnergy = (int)getMineralEnergy(cell.posY);
 
     // Less
     if (surgeOfEnergy < valueToCompare) {
@@ -603,6 +644,36 @@ class CellController {
     return new int[]{c, r};
   }
 
+  private float getPhotosynthesisEnergy(int column, int row, boolean calculateTransparency) {
+    // If depth is greater than maximal
+    if (row >= this.maxPhotosynthesisDepth) {
+      return 0f;
+    }
+
+    float energy = this.surgeOfPhotosynthesisEnergy[column][row];
+
+    if (calculateTransparency) {
+      // Stop if photosynthesis energy is already not enough to feed a cell
+      if (energy < 1f) {
+        return 0f;
+      }
+
+      // Applying transparency coefficient
+      energy *= this.calculateTransparencyCoefficient(column, row);
+    }
+
+    return energy;
+  }
+
+  private float getMineralEnergy(int row) {
+    // If depth is less than minimal
+    if (row < this.rows - this.maxMineralHeight) {
+      return 0f;
+    }
+
+    return this.surgeOfMineralEnergy[this.rows - 1 - row];
+  }
+
   private float calculatePhotosynthesisEnergy(int column, int row) {
     // Getting base energy from photosynthesis
     float energy = map(
@@ -620,14 +691,6 @@ class CellController {
 
     // Applying day coefficient
     energy *= this.calculateDayCoefficient(column, row, energy);
-
-    // Stop if photosynthesis energy is already not enough to feed a cell
-    if (energy < 1f) {
-      return 0f;
-    }
-
-    // Applying transparency coefficient
-    energy *= this.calculateTransparencyCoefficient(column, row);
 
     return energy;
   }
@@ -778,29 +841,29 @@ class CellController {
     rect(0f, 0f, this.renderWidth, this.renderHeight);
     noFill();
 
+    // Rendering minerals energy density
+    for (int y = this.rows - this.maxMineralHeight; y < this.rows; ++y) {
+      float colorA = map(this.getMineralEnergy(y), 0f, this.maxMineralEnergy, 0f, 127f);
+
+      fill(0f, 0f, 255f, colorA);
+      rect(0f, y * this.cellSideLength, width, this.cellSideLength);
+      noFill();
+    }
+
     // Rendering photosynthesis energy density
     for (int x = 0; x < this.columns; ++x) {
-      for (int y = 0; y <= this.maxPhotosynthesisDepth; ++y) {
-        float colorA = map(this.calculatePhotosynthesisEnergy(x, y), 0f, this.maxPhotosynthesisEnergy, 0f, 127f);
+      for (int y = 0; y < this.maxPhotosynthesisDepth; ++y) {
+        float colorA = map(this.getPhotosynthesisEnergy(x, y, false), 0f, this.maxPhotosynthesisEnergy, 0f, 127f);
 
-        //// Break if photosynthesis energy is almost zero so underneath cells have no energy at all
-        //if (colorA < 1f) {
-        //  break;
-        //}
+        // Break if photosynthesis energy is almost zero so underneath cells have no energy at all
+        if (colorA < 1f) {
+          break;
+        }
 
         fill(255f, 255f, 0f, colorA);
         rect(x * this.cellSideLength, y * this.cellSideLength, this.cellSideLength, this.cellSideLength);
         noFill();
       }
-    }
-
-    // Rendering minerals energy density
-    for (int y = this.rows - 1 - this.maxMineralHeight; y < this.rows; ++y) {
-      float colorA = map(this.calculateMineralEnergy(y), 0f, this.maxMineralEnergy, 0f, 127f);
-
-      fill(0f, 0f, 255f, colorA);
-      rect(0f, y * this.cellSideLength, width, this.cellSideLength);
-      noFill();
     }
   }
 
