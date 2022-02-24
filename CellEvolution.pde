@@ -15,10 +15,10 @@
 
 CellController cellController;
 
-int ticksPerDraw = 1;
 int currTick     = 0;
 
 int cellRenderingMode  = 0;
+int ticksPerDraw       = 1;
 boolean drawBackground = true;
 boolean draw           = true;
 boolean pause          = false;
@@ -65,6 +65,12 @@ void keyPressed() {
   if (key == 'm') {
     // Switch cell rendering mode
     ++cellRenderingMode;
+  } else if (key == '-') {
+    // Decrease ticks per draw
+    ticksPerDraw = max(ticksPerDraw - 1, 1);
+  } else if (key == '+') {
+    // Increase ticks per draw
+    ++ticksPerDraw;
   } else if (key == 'b') {
     // Toggle draw background flag state
     drawBackground = !drawBackground;

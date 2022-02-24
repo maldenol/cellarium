@@ -32,6 +32,8 @@ class Cell {
 
   public boolean isAlive;
 
+  public boolean pinned;
+
   public Cell(
     int[] genom,
     int energy,
@@ -60,5 +62,7 @@ class Cell {
     this.lastEnergyShare    = 0;
 
     this.isAlive = true;
+
+    this.pinned = false;
   }
 }

@@ -66,8 +66,6 @@ class CellController {
 
   // Rendering properties
   private float cellSideLength;
-  private float renderWidth;
-  private float renderHeight;
 
   // Photosynthesis and mineral energy buffers for optimization
   private int[][] surgeOfPhotosynthesisEnergy;
@@ -97,8 +95,6 @@ class CellController {
     this.yearsNumber = 0;
 
     this.cellSideLength = min(width / this.columns, height / this.rows);
-    this.renderWidth    = this.columns * this.cellSideLength - 1f;
-    this.renderHeight   = this.rows * this.cellSideLength - 1f;
 
     this.surgeOfPhotosynthesisEnergy = new int[this.columns][this.maxPhotosynthesisDepth];
     this.surgeOfMineralEnergy        = new int[this.maxMineralHeight];
@@ -334,11 +330,19 @@ class CellController {
   private void move(Cell cell) {
     // Calculating coordinates by target direction
     int targetDirection;
+    // If given cell is alive
     if (cell.isAlive) {
       int deltaDirection = this.getNextNthGen(cell, 1);
       targetDirection = (cell.direction + deltaDirection) % 8;
-    } else {
-      // Setting direction to 4 so it will be moving down (sinking) each step if cell is dead
+    }
+    // If given cell is dead
+    else {
+      // If given cell is pinned
+      if (cell.pinned) {
+        return;
+      }
+
+      // Setting direction to 4 so it will be moving down (sinking) each step if cell is dead and not pinned yet
       targetDirection = 4;
     }
     int[] targetCoordinates = this.calculateCoordinatesByDirection(cell.posX, cell.posY, targetDirection);
@@ -355,6 +359,10 @@ class CellController {
 
       cell.posX = targetCoordinates[0];
       cell.posY = targetCoordinates[1];
+    }
+    // If there is an obstalce and given cell is dead
+    else if (!cell.isAlive) {
+      cell.pinned = true;
     }
   }
 
@@ -790,10 +798,8 @@ class CellController {
   }
 
   private void renderBackground() {
-    // White background
-    fill(255f);
-    rect(0f, 0f, this.renderWidth, this.renderHeight);
-    noFill();
+    // Drawing white background
+    background(255f);
 
     // Rendering photosynthesis energy density
     for (int x = 0; x < this.columns; ++x) {
