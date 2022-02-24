@@ -44,7 +44,7 @@ class CellController {
   public int maxEnergy                      = 800;
   public int maxPhotosynthesisEnergy        = 30;
   public int maxPhotosynthesisDepth         = 700 / scale;
-  public float winterDaytimeToWholeDayRatio = 0.4f;
+  public float summerDaytimeToWholeDayRatio = 0.6f;
   public int maxMineralEnergy               = 15;
   public int maxMineralHeight               = 700 / scale;
   public int maxFoodEnergy                  = 50;
@@ -52,8 +52,8 @@ class CellController {
   public float budMutationChance            = 0.25f;
   public int dayDurationInTicks             = 240;
   public int seasonDurationInDays           = 92;
-  public int gammaFlashPeriodInDays         = 40;
-  public int gammaFlashMaxMutationsCount    = 10;
+  public int gammaFlashPeriodInDays         = 46;
+  public int gammaFlashMaxMutationsCount    = 8;
 
   // Linked list of cells for quick consequent access
   private LinkedList<Cell> cells;
@@ -62,7 +62,6 @@ class CellController {
 
   // World time in ticks
   private int ticksNumber;
-  private int daysNumber;
   private int yearsNumber;
 
   // Rendering properties
@@ -71,8 +70,8 @@ class CellController {
   private float renderHeight;
 
   // Photosynthesis and mineral energy buffers for optimization
-  private float[][] surgeOfPhotosynthesisEnergy;
-  private float[] surgeOfMineralEnergy;
+  private int[][] surgeOfPhotosynthesisEnergy;
+  private int[] surgeOfMineralEnergy;
   private boolean drawBackgroundAtCurrentStep;
 
   public CellController() {
@@ -87,7 +86,7 @@ class CellController {
     }
     this.addCell(new Cell(
         genom,
-        this.minChildEnergy,
+        this.minChildEnergy * 3,
         2,
         this.columns / 2,
         2
@@ -95,15 +94,14 @@ class CellController {
     );
 
     this.ticksNumber = 0;
-    this.daysNumber  = 0;
     this.yearsNumber = 0;
 
     this.cellSideLength = min(width / this.columns, height / this.rows);
     this.renderWidth    = this.columns * this.cellSideLength - 1f;
     this.renderHeight   = this.rows * this.cellSideLength - 1f;
 
-    this.surgeOfPhotosynthesisEnergy = new float[this.columns][this.maxPhotosynthesisDepth];
-    this.surgeOfMineralEnergy        = new float[this.maxMineralHeight];
+    this.surgeOfPhotosynthesisEnergy = new int[this.columns][this.maxPhotosynthesisDepth];
+    this.surgeOfMineralEnergy        = new int[this.maxMineralHeight];
   }
 
   public void act(boolean drawBackgroundAtCurrentStep) {
@@ -265,16 +263,10 @@ class CellController {
     // Updating ticks
     ++this.ticksNumber;
 
-    // Updating ticks and days if ticks overflow
-    if (this.ticksNumber == this.dayDurationInTicks) {
+    // Updating ticks and years if ticks overflow
+    if (this.ticksNumber == this.dayDurationInTicks * this.seasonDurationInDays * 4) {
       this.ticksNumber = 0;
-      ++this.daysNumber;
-
-      // Updating days and years if days overflow
-      if (this.daysNumber == this.seasonDurationInDays * 4) {
-        this.daysNumber = 0;
-        ++this.yearsNumber;
-      }
+      ++this.yearsNumber;
     }
   }
 
@@ -297,7 +289,7 @@ class CellController {
 
       // Filling with zeroes
       while (y < this.maxPhotosynthesisDepth) {
-        this.surgeOfPhotosynthesisEnergy[x][y] = 0f;
+        this.surgeOfPhotosynthesisEnergy[x][y] = 0;
 
         ++y;
       }
@@ -311,7 +303,10 @@ class CellController {
 
   private void gammaFlash() {
     // If the time has come
-    if (this.ticksNumber == 0 && (this.daysNumber + this.yearsNumber * this.seasonDurationInDays * 4) % this.gammaFlashPeriodInDays == 0) {
+    if (
+      this.ticksNumber % this.dayDurationInTicks == 0 &&
+      (this.ticksNumber / this.dayDurationInTicks + this.yearsNumber * this.seasonDurationInDays * 4) % this.gammaFlashPeriodInDays == 0
+    ) {
       // For each cell
       LinkedList<Cell>.ListIterator iter = this.cells.listIterator();
       while (iter.hasNext()) {
@@ -656,13 +651,13 @@ class CellController {
     return true;
   }
 
-  private float getPhotosynthesisEnergy(int column, int row) {
+  private int getPhotosynthesisEnergy(int column, int row) {
     // If depth is greater than maximal
     if (row >= this.maxPhotosynthesisDepth) {
-      return 0f;
+      return 0;
     }
 
-    float energy;
+    int energy;
 
     // If this step must not be drown
     if (!this.drawBackgroundAtCurrentStep) {
@@ -676,10 +671,10 @@ class CellController {
     return energy;
   }
 
-  private float getMineralEnergy(int row) {
+  private int getMineralEnergy(int row) {
     // If depth is less than minimal
     if (row < this.rows - this.maxMineralHeight) {
-      return 0f;
+      return 0;
     }
 
     // If this step must not be drown
@@ -690,40 +685,44 @@ class CellController {
     return this.surgeOfMineralEnergy[this.rows - 1 - row];
   }
 
-  private float calculatePhotosynthesisEnergy(int column, int row) {
-    // Getting base energy from photosynthesis
-    float energy = map(
-      row,
+  private int calculatePhotosynthesisEnergy(int column, int row) {
+    // Calculation sun epicenter position along X-axis
+    int sunPosition = (int)map(
+      this.ticksNumber % this.dayDurationInTicks,
       0f,
-      this.maxPhotosynthesisDepth,
-      this.maxPhotosynthesisEnergy,
-      0f
+      this.dayDurationInTicks - 1f,
+      0f,
+      this.columns - 1f
     );
+    // Calculation minimal or maximal distance to sun epicenter along X-axis
+    int distanceToSun = abs(sunPosition - column);
+    // Calculation minimal distance to sun epicenter along X-axis
+    int minDistanceToSun = min(distanceToSun, this.columns - 1 - distanceToSun);
+    // Calculation sunny area width based on current season
+    float daytimeWidthRatio = map(
+      sin(
+        map(
+          this.ticksNumber / this.dayDurationInTicks / this.seasonDurationInDays,
+          0f,
+          4f,
+          0f,
+          TWO_PI
+        )
+      ),
+      -1f,
+      1f,
+      1f - this.summerDaytimeToWholeDayRatio,
+      this.summerDaytimeToWholeDayRatio
+    );
+    // Calculating day coefficient along X-axis
+    float dayCoefficientX = (minDistanceToSun < (this.columns - 1) / 2f * daytimeWidthRatio) ? 1f : 0f;
 
-    // Stop if photosynthesis energy is already not enough to feed a cell
-    if (energy < 1f) {
-      return 0f;
+    // If it is night here
+    if (dayCoefficientX < 1f) {
+      return 0;
     }
 
-    // Applying day coefficient
-    energy *= this.calculateDayCoefficient(column, row, energy);
-
-    return energy;
-  }
-
-  private float calculateMineralEnergy(int row) {
-    // Getting energy from minerals
-    return map(
-      row,
-      this.rows - 1f,
-      this.rows - 1f - this.maxMineralHeight,
-      this.maxMineralEnergy,
-      0f
-    );
-  }
-
-  private float calculateDayCoefficient(int column, int row, float energyToCompare) {
-    // Calculating day coefficient by Y-axis
+    // Calculating day coefficient along Y-axis
     float dayCoefficientY = map(
       row,
       0f,
@@ -732,48 +731,19 @@ class CellController {
       0f
     );
 
-    // Stop if photosynthesis energy is already not enough to feed a cell
-    if (dayCoefficientY * energyToCompare < 1f) {
-      return 0f;
-    }
+    // Getting energy from photosynthesis
+    return (int)(this.maxPhotosynthesisEnergy * dayCoefficientX * dayCoefficientY);
+  }
 
-    // Calculating noon (sun) position on X-axis
-    float noonPositionX = map(
-      this.ticksNumber,
-      0f,
-      this.dayDurationInTicks - 1f,
-      0f,
-      this.columns - 1f
-    );
-    // Calculating smaller ot larger distance to noon on X-axis
-    float possibleNoonDistanceX = abs(noonPositionX - column);
-    // Calculating smaller distance to noon on X-axis
-    float noonDistanceX = min(possibleNoonDistanceX, this.columns - possibleNoonDistanceX);
-    // Calculating season coefficient
-    float seasonCoefficient = sin(
-      map(
-        (float)this.daysNumber / this.seasonDurationInDays,
-        0f,
-        4f,
-        0f,
-        2f * PI
-     )
-    );
-    seasonCoefficient = seasonCoefficient * 0.25f + 0.25f;
-    // Calculating daytime to the whole day ratio
-    float daytimeToWholeDayRatio = this.winterDaytimeToWholeDayRatio + seasonCoefficient;
-    daytimeToWholeDayRatio -= (int)daytimeToWholeDayRatio;
-    // Calculating day coefficient by X-axis
-    float dayCoefficientX = map(
-      noonDistanceX,
-      0f,
-      (this.columns - 1f) * daytimeToWholeDayRatio,
-      1f,
+  private int calculateMineralEnergy(int row) {
+    // Getting energy from minerals
+    return (int)map(
+      row,
+      this.rows - 1f,
+      this.rows - 1f - this.maxMineralHeight,
+      this.maxMineralEnergy,
       0f
     );
-
-    // Calculating day coefficient as product of coefficients by X and Y axies
-    return dayCoefficientX * dayCoefficientY;
   }
 
   private int[] calculateCoordinatesByDirection(int column, int row, int direction) {
@@ -825,15 +795,6 @@ class CellController {
     rect(0f, 0f, this.renderWidth, this.renderHeight);
     noFill();
 
-    // Rendering minerals energy density
-    for (int y = this.rows - this.maxMineralHeight; y < this.rows; ++y) {
-      float colorA = map(this.getMineralEnergy(y), 0f, this.maxMineralEnergy, 0f, 127f);
-
-      fill(0f, 0f, 255f, colorA);
-      rect(0f, y * this.cellSideLength, width, this.cellSideLength);
-      noFill();
-    }
-
     // Rendering photosynthesis energy density
     for (int x = 0; x < this.columns; ++x) {
       for (int y = 0; y < this.maxPhotosynthesisDepth; ++y) {
@@ -848,6 +809,15 @@ class CellController {
         rect(x * this.cellSideLength, y * this.cellSideLength, this.cellSideLength, this.cellSideLength);
         noFill();
       }
+    }
+
+    // Rendering minerals energy density
+    for (int y = this.rows - this.maxMineralHeight; y < this.rows; ++y) {
+      float colorA = map(this.getMineralEnergy(y), 0f, this.maxMineralEnergy, 0f, 127f);
+
+      fill(0f, 0f, 255f, colorA);
+      rect(0f, y * this.cellSideLength, width, this.cellSideLength);
+      noFill();
     }
   }
 
