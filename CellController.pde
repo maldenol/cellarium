@@ -55,6 +55,22 @@ class CellController {
   public int gammaFlashPeriodInDays         = 46;
   public int gammaFlashMaxMutationsCount    = 8;
 
+  // Flags for enabling/disabling cell genom instructions and other parameters
+  public boolean enableTurnInstruction                          = true;
+  public boolean enableMoveInstruction                          = true;
+  public boolean enablePhotosynthesisEnergyInstruction          = true;
+  public boolean enableMineralEnergyInstruction                 = true;
+  public boolean enableFoodEnergyInstruction                    = true;
+  public boolean enableBudInstruction                           = true;
+  public boolean enableMutateInstruction                        = true;
+  public boolean enableShareEnergyInstruction                   = true;
+  public boolean enableLookInstruction                          = true;
+  public boolean enableDetermineEnergyLevelInstruction          = true;
+  public boolean enableDetermineDepthInstruction                = true;
+  public boolean enableDeterminePhotosynthesisEnergyInstruction = true;
+  public boolean enableDetermineMineralEnergyInstruction        = true;
+  public boolean enableDeadCellPinningOnSinking                 = true;
+
   // Linked list of cells for quick consequent access
   private LinkedList<Cell> cells;
   // Two-dimensional array of same cells for quick access by coordinates
@@ -157,89 +173,133 @@ class CellController {
             break;
           // Turning
           case 1:
-            this.turn(cell);
+            if (this.enableTurnInstruction) {
+              this.turn(cell);
+            }
+
             this.incrementGenomCounter(cell);
 
             break;
           // Moving (no more instructions permitted)
           case 2:
-            this.move(cell);
-            this.incrementGenomCounter(cell);
+            if (this.enableMoveInstruction) {
+              this.move(cell);
 
-            i = this.maxInstructionsPerTick;
+              i = this.maxInstructionsPerTick;
+            }
+
+            this.incrementGenomCounter(cell);
 
             break;
           // Getting energy from photosynthesis (no more instructions permitted)
           case 3:
-            this.getEnergyFromPhotosynthesis(cell);
-            this.incrementGenomCounter(cell);
+            if (this.enablePhotosynthesisEnergyInstruction) {
+              this.getEnergyFromPhotosynthesis(cell);
 
-            i = this.maxInstructionsPerTick;
+              i = this.maxInstructionsPerTick;
+            }
+
+            this.incrementGenomCounter(cell);
 
             break;
           // Getting energy from minerals (no more instructions permitted)
           case 4:
-            this.getEnergyFromMinerals(cell);
-            this.incrementGenomCounter(cell);
+            if (this.enableMineralEnergyInstruction) {
+              this.getEnergyFromMinerals(cell);
 
-            i = this.maxInstructionsPerTick;
+              i = this.maxInstructionsPerTick;
+            }
+
+            this.incrementGenomCounter(cell);
 
             break;
           // Getting energy from food (no more instructions permitted)
           case 5:
-            this.getEnergyFromFood(cell);
-            this.incrementGenomCounter(cell);
+            if (this.enableFoodEnergyInstruction) {
+              this.getEnergyFromFood(cell);
 
-            i = this.maxInstructionsPerTick;
+              i = this.maxInstructionsPerTick;
+            }
+
+            this.incrementGenomCounter(cell);
 
             break;
           // Budding (no more instructions permitted)
           case 6:
-            this.bud(cell);
-            this.incrementGenomCounter(cell);
+            if (this.enableBudInstruction) {
+              this.bud(cell);
 
-            i = this.maxInstructionsPerTick;
+              i = this.maxInstructionsPerTick;
+            }
+
+            this.incrementGenomCounter(cell);
 
             break;
           // Making random gen mutate (no more instructions permitted)
           case 7:
-            this.mutateRandomGen(cell);
-            this.incrementGenomCounter(cell);
+            if (this.enableMutateInstruction) {
+              this.mutateRandomGen(cell);
 
-            i = this.maxInstructionsPerTick;
+              i = this.maxInstructionsPerTick;
+            }
+
+            this.incrementGenomCounter(cell);
 
             break;
           // Sharing energy (no more instructions permitted)
           case 8:
-            this.shareEnergy(cell);
-            this.incrementGenomCounter(cell);
+            if (this.enableShareEnergyInstruction) {
+              this.shareEnergy(cell);
 
-            i = this.maxInstructionsPerTick;
+              i = this.maxInstructionsPerTick;
+            }
+
+            this.incrementGenomCounter(cell);
 
             break;
           // Looking forward (conditional instruction)
           case 9:
-            this.lookForward(cell);
+            if (this.enableLookInstruction) {
+              this.lookForward(cell);
+            } else {
+              this.incrementGenomCounter(cell);
+            }
 
             break;
           // Determining own energy level (conditional instruction)
           case 10:
-            this.determineEnergyLevel(cell);
+            if (this.enableDetermineEnergyLevelInstruction) {
+              this.determineEnergyLevel(cell);
+            } else {
+              this.incrementGenomCounter(cell);
+            }
 
             break;
           // Determining own depth (conditional instruction)
           case 11:
-            this.determineDepth(cell);
+            if (this.enableDetermineDepthInstruction) {
+              this.determineDepth(cell);
+            } else {
+              this.incrementGenomCounter(cell);
+            }
 
             break;
           // Determining energy surge from photosynthesis (conditional instruction)
           case 12:
-            this.determinePhotosynthesisEnergy(cell);
+            if (this.enableDeterminePhotosynthesisEnergyInstruction) {
+              this.determinePhotosynthesisEnergy(cell);
+            } else {
+              this.incrementGenomCounter(cell);
+            }
 
             break;
           // Determining energy surge from minerals (conditional instruction)
           case 13:
-            this.determineMineralEnergy(cell);
+            if (this.enableDetermineMineralEnergyInstruction) {
+              this.determineMineralEnergy(cell);
+            } else {
+              this.incrementGenomCounter(cell);
+            }
 
             break;
           // Unconditional jump
@@ -338,7 +398,7 @@ class CellController {
     // If given cell is dead
     else {
       // If given cell is pinned
-      if (cell.pinned) {
+      if (enableDeadCellPinningOnSinking && cell.pinned) {
         return;
       }
 
@@ -723,15 +783,15 @@ class CellController {
       this.summerDaytimeToWholeDayRatio
     );
     // Calculating day coefficient along X-axis
-    float dayCoefficientX = (minDistanceToSun < (this.columns - 1) / 2f * daytimeWidthRatio) ? 1f : 0f;
+    float daytimeCoefficient = (minDistanceToSun < (this.columns - 1) / 2f * daytimeWidthRatio) ? 1f : 0f;
 
     // If it is night here
-    if (dayCoefficientX < 1f) {
+    if (daytimeCoefficient < 1f) {
       return 0;
     }
 
     // Calculating day coefficient along Y-axis
-    float dayCoefficientY = map(
+    float depthCoefficient = map(
       row,
       0f,
       this.maxPhotosynthesisDepth,
@@ -740,7 +800,7 @@ class CellController {
     );
 
     // Getting energy from photosynthesis
-    return (int)(this.maxPhotosynthesisEnergy * dayCoefficientX * dayCoefficientY);
+    return (int)(this.maxPhotosynthesisEnergy * depthCoefficient * daytimeCoefficient);
   }
 
   private int calculateMineralEnergy(int row) {

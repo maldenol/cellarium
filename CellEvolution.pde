@@ -15,7 +15,7 @@
 
 CellController cellController;
 
-int currTick     = 0;
+int currTick = 0;
 
 int cellRenderingMode  = 0;
 int ticksPerDraw       = 1;
