@@ -45,6 +45,8 @@ class CellController {
   public int maxPhotosynthesisEnergy        = 30;
   public int maxPhotosynthesisDepth         = 700 / scale;
   public float summerDaytimeToWholeDayRatio = 0.6f;
+  public boolean enableDaytimes             = true;
+  public boolean enableSeasons              = true;
   public int maxMineralEnergy               = 15;
   public int maxMineralHeight               = 700 / scale;
   public int maxFoodEnergy                  = 50;
@@ -754,43 +756,50 @@ class CellController {
   }
 
   private int calculatePhotosynthesisEnergy(int column, int row) {
-    // Calculation sun epicenter position along X-axis
-    int sunPosition = (int)map(
-      this.ticksNumber % this.dayDurationInTicks,
-      0f,
-      this.dayDurationInTicks - 1f,
-      0f,
-      this.columns - 1f
-    );
-    // Calculation minimal or maximal distance to sun epicenter along X-axis
-    int distanceToSun = abs(sunPosition - column);
-    // Calculation minimal distance to sun epicenter along X-axis
-    int minDistanceToSun = min(distanceToSun, this.columns - 1 - distanceToSun);
-    // Calculation sunny area width based on current season
-    float daytimeWidthRatio = map(
-      sin(
-        map(
-          this.ticksNumber / this.dayDurationInTicks / this.seasonDurationInDays,
-          0f,
-          4f,
-          0f,
-          TWO_PI
-        )
-      ),
-      -1f,
-      1f,
-      1f - this.summerDaytimeToWholeDayRatio,
-      this.summerDaytimeToWholeDayRatio
-    );
-    // Calculating day coefficient along X-axis
-    float daytimeCoefficient = (minDistanceToSun < (this.columns - 1) / 2f * daytimeWidthRatio) ? 1f : 0f;
+    // Calculating daytime coefficient if needed
+    float daytimeCoefficient = 1f;
+    if (this.enableDaytimes) {
+      // Calculation sun epicenter position along X-axis
+      int sunPosition = (int)map(
+        this.ticksNumber % this.dayDurationInTicks,
+        0f,
+        this.dayDurationInTicks - 1f,
+        0f,
+        this.columns - 1f
+      );
+      // Calculation minimal or maximal distance to sun epicenter along X-axis
+      int distanceToSun = abs(sunPosition - column);
+      // Calculation minimal distance to sun epicenter along X-axis
+      int minDistanceToSun = min(distanceToSun, this.columns - 1 - distanceToSun);
+      // Calculation sunny area width based on current season if needed
+      float daytimeWidthRatio = 1f - this.summerDaytimeToWholeDayRatio;
+      if (this.enableSeasons) {
+        daytimeWidthRatio = map(
+          sin(
+            map(
+              this.ticksNumber / this.dayDurationInTicks / this.seasonDurationInDays,
+              0f,
+              4f,
+              0f,
+              TWO_PI
+            )
+          ),
+          -1f,
+          1f,
+          1f - this.summerDaytimeToWholeDayRatio,
+          this.summerDaytimeToWholeDayRatio
+        );
+      }
+      // Calculating daytime coefficient
+      daytimeCoefficient = (minDistanceToSun < (this.columns - 1) / 2f * daytimeWidthRatio) ? 1f : 0f;
 
-    // If it is night here
-    if (daytimeCoefficient < 1f) {
-      return 0;
+      // If it is night here
+      if (daytimeCoefficient < 1f) {
+        return 0;
+      }
     }
 
-    // Calculating day coefficient along Y-axis
+    // Calculating depth coefficient
     float depthCoefficient = map(
       row,
       0f,
