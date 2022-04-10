@@ -1,0 +1,13 @@
+---
+Language: Cpp
+BasedOnStyle: Google
+AlignArrayOfStructures: Right
+AlignConsecutiveAssignments: Consecutive
+AlignConsecutiveBitFields: Consecutive
+AlignConsecutiveDeclarations: Consecutive
+AlignConsecutiveMacros: Consecutive
+AlignEscapedNewlines: Left
+AlignOperands: Align
+AlignTrailingComments: true
+SortIncludes: false
+CommentPragmas: '^[^ ]'
