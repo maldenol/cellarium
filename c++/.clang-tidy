@@ -1,6 +1,6 @@
 ---
 Checks: 'readability-identifier-naming,clang-diagnostic-*,clang-analyzer-*,cppcoreguidelines-*,performance-*,portability-*'
-WarningsAsErrors: true
+WarningsAsErrors: false
 CheckOptions:
   - { key: readability-identifier-naming.VariableCase,                value: camelBack  }
   - { key: readability-identifier-naming.GlobalVariableCase,          value: CamelCase  }
