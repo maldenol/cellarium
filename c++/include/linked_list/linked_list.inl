@@ -21,6 +21,16 @@ template<typename T>
 LinkedList<T>::LinkedList() noexcept {}
 
 template<typename T>
+LinkedList<T>::LinkedList(const LinkedList &linkedList) noexcept : _first{linkedList._first} {}
+
+template<typename T>
+LinkedList<T> &LinkedList<T>::operator=(const LinkedList &linkedList) noexcept {
+  _first = linkedList._first;
+
+  return *this;
+}
+
+template<typename T>
 LinkedList<T>::LinkedList(LinkedList &&linkedList) noexcept : _first{std::exchange(linkedList._first, nullptr)} {}
 
 template<typename T>
@@ -61,14 +71,12 @@ void LinkedList<T>::remove(const T &value) noexcept {
       // If current element is not the first one
       if (prevElem != nullptr) {
         // Removing current element
-        currElem->value = nullptr;
-        prevElem->next = currElem->next;
+        prevElem->next  = currElem->next;
       }
       // If current element is the first one
       else {
         // Removing current element
-        currElem->value = nullptr;
-        _first = currElem->next;
+        _first          = currElem->next;
       }
 
       return;
@@ -76,10 +84,27 @@ void LinkedList<T>::remove(const T &value) noexcept {
 
     // Keep searching
     prevElem = currElem;
-    currElem  = currElem->next;
+    currElem = currElem->next;
   }
 
   // Value is not found
+}
+
+template<typename T>
+size_t LinkedList<T>::count() const noexcept {
+  size_t elementCount{};
+
+  std::shared_ptr<Element> currElem{_first};
+
+  // Until current is not null
+  while (currElem != nullptr) {
+    ++elementCount;
+
+    // Keep looking
+    currElem = currElem->next;
+  }
+
+  return elementCount;
 }
 
 template<typename T>

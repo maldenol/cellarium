@@ -9,5 +9,9 @@ AlignConsecutiveMacros: Consecutive
 AlignEscapedNewlines: Left
 AlignOperands: Align
 AlignTrailingComments: true
-SortIncludes: false
 CommentPragmas: '^[^ ]'
+ColumnLimit: 100
+DerivePointerAlignment: false
+PointerAlignment: Right
+ReferenceAlignment: Right
+SortIncludes: false

@@ -47,14 +47,16 @@ class LinkedList {
   };
 
   LinkedList() noexcept;
-  LinkedList(const LinkedList &linkedList) = delete;
-  LinkedList &operator=(const LinkedList &linkedList) = delete;
+  LinkedList(const LinkedList &linkedList) noexcept;
+  LinkedList &operator=(const LinkedList &linkedList) noexcept;
   LinkedList(LinkedList &&linkedList) noexcept;
   LinkedList &operator=(LinkedList &&linkedList) noexcept;
   ~LinkedList() noexcept;
 
   void pushFront(const T &value) noexcept;
   void remove(const T &value) noexcept;
+
+  size_t count() const noexcept;
 
   const Iterator getIterator() const noexcept;
   Iterator       getIterator() noexcept;

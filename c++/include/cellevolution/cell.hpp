@@ -20,19 +20,19 @@
 
 class Cell {
  private:
-  std::vector<short> _genom{};
-  short              _counter{};
+  std::vector<int> _genom{};
+  int              _counter{};
 
-  short _energy{};
+  int _energy{};
 
-  short _direction{};
-  int   _index{};
+  int _direction{};
+  int _index{};
 
-  short _colorR{};
-  short _colorG{};
-  short _colorB{};
+  int _colorR{};
+  int _colorG{};
+  int _colorB{};
 
-  short _energyShareBalance{};
+  int   _energyShareBalance{};
   float _lastEnergyShare{};
 
   bool _isAlive{};
@@ -41,8 +41,7 @@ class Cell {
 
  public:
   Cell() noexcept;
-  Cell(const std::vector<short> &genom, short energy, short direction,
-       int index) noexcept;
+  Cell(const std::vector<int> &genom, int energy, int direction, int index);
   Cell(const Cell &cell) noexcept;
   Cell &operator=(const Cell &cell) noexcept;
   Cell(Cell &&cell) noexcept;

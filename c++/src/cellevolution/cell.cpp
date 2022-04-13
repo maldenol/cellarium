@@ -19,13 +19,8 @@
 
 Cell::Cell() noexcept : _index{-1} {};
 
-Cell::Cell(const std::vector<short> &genom, short energy, short direction,
-           int index) noexcept
-    : _genom{genom},
-      _energy{energy},
-      _direction{direction},
-      _index{index},
-      _isAlive{true} {}
+Cell::Cell(const std::vector<int> &genom, int energy, int direction, int index)
+    : _genom{genom}, _energy{energy}, _direction{direction}, _index{index}, _isAlive{true} {}
 
 Cell::Cell(const Cell &cell) noexcept
     : _genom{cell._genom},
@@ -59,7 +54,7 @@ Cell &Cell::operator=(const Cell &cell) noexcept {
 }
 
 Cell::Cell(Cell &&cell) noexcept
-    : _genom{std::exchange(cell._genom, std::vector<short>{})},
+    : _genom{std::exchange(cell._genom, std::vector<int>{})},
       _counter{std::exchange(cell._counter, 0)},
       _energy{std::exchange(cell._energy, 0)},
       _direction{std::exchange(cell._direction, 0)},
@@ -91,10 +86,6 @@ Cell &Cell::operator=(Cell &&cell) noexcept {
 
 Cell::~Cell() noexcept {};
 
-bool Cell::operator==(const Cell &cell) noexcept {
-  return _index == cell._index;
-}
+bool Cell::operator==(const Cell &cell) noexcept { return _index == cell._index; }
 
-bool Cell::operator!=(const Cell &cell) noexcept {
-  return _index != cell._index;
-}
+bool Cell::operator!=(const Cell &cell) noexcept { return _index != cell._index; }

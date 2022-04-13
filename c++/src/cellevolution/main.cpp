@@ -22,33 +22,41 @@
 
 #include <cellevolution/cell_controller.hpp>
 
-int gCurrTick = 0;
-
-int  gCellRenderingMode = 0;
-int  gTicksPerDraw      = 1;
-bool gDrawBackground    = true;
-bool gDraw              = true;
-bool gPause             = false;
+// Controls constants
+static constexpr int  kCellRenderingMode{0};
+static constexpr int  kTicksPerRender{1};
+static constexpr bool kEnableRenderingBackground{true};
+static constexpr bool kEnableRendering{true};
+static constexpr bool kEnablePause{false};
 
 int main(int argc, char *argv[]) {
+  // Initializing simulation
   CellController cellController{};
 
+  // Initializing ticks left value
+  int ticksLeft{};
+
+  // Render cycle
   while (true) {
-    bool drawCurrTick = gDraw && (gCurrTick % gTicksPerDraw == 0);
+    // Checking if current tick should be rendered
+    bool renderCurrTick = kEnableRendering && (ticksLeft % kTicksPerRender == 0);
 
-    // Handling next simulation tick
-    if (!gPause) {
-      cellController.act(drawCurrTick && gDrawBackground);
+    // If simulation is not paused
+    if (!kEnablePause) {
+      // Computing next simulation tick
+      cellController.act(renderCurrTick && kEnableRenderingBackground);
     }
 
-    // Rendering the simulation
-    if (drawCurrTick) {
-      gCurrTick = 0;
+    // If current tick should be rendern
+    if (renderCurrTick) {
+      // Zeroing ticks left value
+      ticksLeft = 0;
 
-      //cellController.render(drawBackground, cellRenderingMode);
+      // Rendering the simulation
     }
 
-    ++gCurrTick;
+    // Updating ticks left value
+    ++ticksLeft;
   }
 
   return 0;
