@@ -49,8 +49,8 @@ class Cell {
   Cell &operator=(Cell &&cell) noexcept;
   ~Cell() noexcept;
 
-  bool operator==(const Cell &cell) noexcept;
-  bool operator!=(const Cell &cell) noexcept;
+  bool operator==(const Cell &cell) const noexcept;
+  bool operator!=(const Cell &cell) const noexcept;
 
   friend class CellController;
 };

@@ -17,7 +17,7 @@
 #include <cmath>
 #include <utility>
 
-#include <cellevolution/cell_controller.hpp>
+#include "./cell_controller.hpp"
 
 // Position offsets per 2D direction
 static constexpr int                                             kDirectionCount{8};
@@ -582,7 +582,7 @@ void CellController::gammaFlash() noexcept {
   }
 }
 
-void CellController::turn(Cell &cell) noexcept {
+void CellController::turn(Cell &cell) const noexcept {
   // Updating direction with overflow handling
   int deltaDirection = getNextNthGen(cell, 1);
   cell._direction    = (cell._direction + deltaDirection) % kDirectionCount;
@@ -626,7 +626,7 @@ void CellController::move(Cell &cell) noexcept {
   }
 }
 
-void CellController::getEnergyFromPhotosynthesis(Cell &cell) noexcept {
+void CellController::getEnergyFromPhotosynthesis(Cell &cell) const noexcept {
   // Calculating energy from photosynthesis at current position
   int deltaEnergy = getPhotosynthesisEnergy(cell._index);
 
@@ -640,7 +640,7 @@ void CellController::getEnergyFromPhotosynthesis(Cell &cell) noexcept {
   }
 }
 
-void CellController::getEnergyFromMinerals(Cell &cell) noexcept {
+void CellController::getEnergyFromMinerals(Cell &cell) const noexcept {
   // Calculating energy from minerals at current position
   int deltaEnergy = getMineralEnergy(cell._index);
 
@@ -817,7 +817,7 @@ void CellController::lookForward(Cell &cell) noexcept {
   }
 }
 
-void CellController::determineEnergyLevel(Cell &cell) noexcept {
+void CellController::determineEnergyLevel(Cell &cell) const noexcept {
   // Calculating value to compare
   int valueToCompare = static_cast<int>(static_cast<float>(_maxEnergy * getNextNthGen(cell, 1)) /
                                         static_cast<float>(_genomSize));
@@ -836,7 +836,7 @@ void CellController::determineEnergyLevel(Cell &cell) noexcept {
   }
 }
 
-void CellController::determineDepth(Cell &cell) noexcept {
+void CellController::determineDepth(Cell &cell) const noexcept {
   // Calculating values to compare
   int row            = calculateRowByIndex(cell._index);
   int valueToCompare = static_cast<int>(static_cast<float>(_rows * getNextNthGen(cell, 1)) /
@@ -856,7 +856,7 @@ void CellController::determineDepth(Cell &cell) noexcept {
   }
 }
 
-void CellController::determinePhotosynthesisEnergy(Cell &cell) noexcept {
+void CellController::determinePhotosynthesisEnergy(Cell &cell) const noexcept {
   // Calculating value to compare
   int valueToCompare =
       static_cast<int>(static_cast<float>(_maxPhotosynthesisEnergy * getNextNthGen(cell, 1)) /
@@ -879,7 +879,7 @@ void CellController::determinePhotosynthesisEnergy(Cell &cell) noexcept {
   }
 }
 
-void CellController::determineMineralEnergy(Cell &cell) noexcept {
+void CellController::determineMineralEnergy(Cell &cell) const noexcept {
   // Calculating value to compare
   int valueToCompare =
       static_cast<int>(static_cast<float>(_maxMineralEnergy * getNextNthGen(cell, 1)) /
@@ -917,14 +917,14 @@ void CellController::jumpCounter(Cell &cell, int offset) const noexcept {
   cell._counter = (cell._counter + offset) % _genomSize;
 }
 
-int CellController::getNextNthGen(Cell &cell, int n) const noexcept {
+int CellController::getNextNthGen(const Cell &cell, int n) const noexcept {
   // Getting (counter + n)'th gen
   return cell._genom[(cell._counter + n) % _genomSize];
 }
 
 void CellController::turnIntoFood(Cell &cell) const noexcept { cell._isAlive = false; }
 
-bool CellController::areAkin(Cell &cell1, Cell &cell2) const noexcept {
+bool CellController::areAkin(const Cell &cell1, const Cell &cell2) const noexcept {
   int diff{};
 
   for (int i = 0; i < _genomSize; ++i) {

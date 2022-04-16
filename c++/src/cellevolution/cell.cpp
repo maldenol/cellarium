@@ -15,7 +15,7 @@
 
 #include <utility>
 
-#include <cellevolution/cell.hpp>
+#include "./cell.hpp"
 
 Cell::Cell() noexcept : _index{-1} {};
 
@@ -86,6 +86,6 @@ Cell &Cell::operator=(Cell &&cell) noexcept {
 
 Cell::~Cell() noexcept {};
 
-bool Cell::operator==(const Cell &cell) noexcept { return _index == cell._index; }
+bool Cell::operator==(const Cell &cell) const noexcept { return _index == cell._index; }
 
-bool Cell::operator!=(const Cell &cell) noexcept { return _index != cell._index; }
+bool Cell::operator!=(const Cell &cell) const noexcept { return _index != cell._index; }

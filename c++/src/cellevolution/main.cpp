@@ -13,22 +13,29 @@
 // You should have received a copy of the GNU General Public License
 // along with cellevolution.  If not, see <https://www.gnu.org/licenses/>.
 
+// STD
 #include <algorithm>
-#include <cmath>
-#include <iostream>
+#include <string>
 
+// Qt
 #include <QGuiApplication>
 
+// OpenGL
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include <cellevolution/cell_controller.hpp>
+// "extra" internal library
+#include "extra/extra.hpp"
+
+// CellController
+#include "./cell_controller.hpp"
 
 // Global constants
-static constexpr int kInitWindowWidth    = 800;
-static constexpr int kInitWindowHeight   = 600;
-static constexpr int kOpenGLVersionMajor = 4;
-static constexpr int kOpenGLVersionMinor = 6;
+static constexpr int     kInitWindowWidth  = 800;
+static constexpr int     kInitWindowHeight = 600;
+static const std::string kWindowTitle{"cellevolution"};
+static constexpr int     kOpenGLVersionMajor = 4;
+static constexpr int     kOpenGLVersionMinor = 6;
 
 // Global variables
 int  gCellRenderingMode{0};
@@ -41,84 +48,49 @@ bool gEnablePause{false};
 void processUserInput(GLFWwindow *window);
 
 int main(int argc, char *argv[]) {
-  // Initializing GLFW
-  if (glfwInit() == GL_FALSE) {
-    std::cout << "error: failed to initialize GLFW" << std::endl;
-
-    return -1;
-  }
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, kOpenGLVersionMajor);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, kOpenGLVersionMinor);
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-  // Creating GLFW window
-  GLFWwindow *window =
-      glfwCreateWindow(kInitWindowWidth, kInitWindowHeight, "cellevolution", nullptr, nullptr);
-  if (window == nullptr) {
-    std::cout << "error: failed to create GLFW window" << std::endl;
-
-    glfwTerminate();
-    return -1;
-  }
+  // Initializing GLFW and getting configured window with OpenGL context
+  GLFWwindow *window = createWindow(kInitWindowWidth, kInitWindowHeight, kWindowTitle,
+                                    kOpenGLVersionMajor, kOpenGLVersionMinor);
 
   // Capturing OpenGL context
   glfwMakeContextCurrent(window);
 
-  // Loading OpenGL functions with GLAD
-  if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress))) {
-    std::cout << "error: failed to load OpenGL functions using GLAD" << std::endl;
-
-    glfwMakeContextCurrent(nullptr);
-    glfwTerminate();
-    return -1;
-  }
-
-  // Creating and configuring shader program for rendering cells
-  constexpr char *kVertexShaderSource{
-      "#version 460 core\n"
-      "\n"
-      "uniform int kColumns = 1;\n"
-      "uniform int kRows = 1;\n"
-      "\n"
-      "layout (location = 0) in int  aIndex;\n"
-      "layout (location = 1) in vec4 aColor;\n"
-      "\n"
-      "out vec4 fColor;\n"
-      "\n"
-      "void main() {\n"
-      "  int c = aIndex - aIndex / kColumns * kColumns;\n"
-      "  int r = aIndex / kColumns;\n"
-      "  float x = 2.0f * c / kColumns - 1.0f;\n"
-      "  float y = 1.0f - 2.0f * r / kRows;\n"
-      "  gl_Position = vec4(x, y, 0.0f, 1.0f);\n"
-      "  fColor = aColor;\n"
-      "}\n"};
-  GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-  glShaderSource(vertexShader, 1, &kVertexShaderSource, nullptr);
-  glCompileShader(vertexShader);
-
-  constexpr char *kFragmentShaderSource{
-      "#version 460 core\n"
-      "\n"
-      "in vec4 fColor;\n"
-      "\n"
-      "out vec4 FragColor;\n"
-      "\n"
-      "void main() {\n"
-      "  FragColor = fColor;\n"
-      "}\n"};
-  GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(fragmentShader, 1, &kFragmentShaderSource, nullptr);
-  glCompileShader(fragmentShader);
-
-  GLuint shaderProgram = glCreateProgram();
-  glAttachShader(shaderProgram, vertexShader);
-  glAttachShader(shaderProgram, fragmentShader);
-  glLinkProgram(shaderProgram);
-  glDetachShader(shaderProgram, vertexShader);
-  glDetachShader(shaderProgram, fragmentShader);
-  glDeleteShader(vertexShader);
-  glDeleteShader(fragmentShader);
+  // Creating, compiling and linking shader program
+  const std::vector<GLenum> shaderTypes{
+      GL_VERTEX_SHADER,
+      GL_FRAGMENT_SHADER,
+  };
+  const std::vector<std::string> shaderSources{
+      std::string{"#version 460 core\n"
+                  "\n"
+                  "uniform int kColumns = 1;\n"
+                  "uniform int kRows = 1;\n"
+                  "\n"
+                  "layout (location = 0) in int  aIndex;\n"
+                  "layout (location = 1) in vec4 aColor;\n"
+                  "\n"
+                  "out vec4 fColor;\n"
+                  "\n"
+                  "void main() {\n"
+                  "  int c = aIndex - aIndex / kColumns * kColumns;\n"
+                  "  int r = aIndex / kColumns;\n"
+                  "  float x = 2.0f * c / kColumns - 1.0f;\n"
+                  "  float y = 1.0f - 2.0f * r / kRows;\n"
+                  "  gl_Position = vec4(x, y, 0.0f, 1.0f);\n"
+                  "  fColor = aColor;\n"
+                  "}\n"},
+      std::string{"#version 460 core\n"
+                  "\n"
+                  "in vec4 fColor;\n"
+                  "\n"
+                  "out vec4 FragColor;\n"
+                  "\n"
+                  "void main() {\n"
+                  "  FragColor = fColor;\n"
+                  "}\n"},
+  };
+  const GLuint shaderProgram{createShaderProgram(shaderTypes, shaderSources)};
+  // Using shader program
   glUseProgram(shaderProgram);
 
   // Initializing simulation parameters and simulation itself
@@ -142,8 +114,8 @@ int main(int argc, char *argv[]) {
   glGenBuffers(1, &vbo);
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
   glBufferData(GL_ARRAY_BUFFER,
-               cellControllerParams.columns * cellControllerParams.rows *
-                   sizeof(CellController::RenderingData),
+               static_cast<long>(cellControllerParams.columns * cellControllerParams.rows *
+                                 sizeof(CellController::RenderingData)),
                nullptr, GL_DYNAMIC_DRAW);
   glVertexAttribIPointer(0, 1, GL_INT, sizeof(CellController::RenderingData),
                          reinterpret_cast<void *>(0));
@@ -205,7 +177,9 @@ int main(int argc, char *argv[]) {
     ++ticksPassed;
   }
 
-  glfwTerminate();
+  // Terminating window with OpenGL context and GLFW
+  terminateWindow(window);
+
   return 0;
 }
 

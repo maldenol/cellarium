@@ -244,27 +244,27 @@ class CellController {
   void gammaFlash() noexcept;
 
   // Perform appropriate cell genom instructions
-  void turn(Cell &cell) noexcept;
+  void turn(Cell &cell) const noexcept;
   void move(Cell &cell) noexcept;
-  void getEnergyFromPhotosynthesis(Cell &cell) noexcept;
-  void getEnergyFromMinerals(Cell &cell) noexcept;
+  void getEnergyFromPhotosynthesis(Cell &cell) const noexcept;
+  void getEnergyFromMinerals(Cell &cell) const noexcept;
   void getEnergyFromFood(Cell &cell) noexcept;
   void bud(Cell &cell) noexcept;
   void mutateRandomGen(Cell &cell) noexcept;
   void shareEnergy(Cell &cell) noexcept;
   void lookForward(Cell &cell) noexcept;
-  void determineEnergyLevel(Cell &cell) noexcept;
-  void determineDepth(Cell &cell) noexcept;
-  void determinePhotosynthesisEnergy(Cell &cell) noexcept;
-  void determineMineralEnergy(Cell &cell) noexcept;
+  void determineEnergyLevel(Cell &cell) const noexcept;
+  void determineDepth(Cell &cell) const noexcept;
+  void determinePhotosynthesisEnergy(Cell &cell) const noexcept;
+  void determineMineralEnergy(Cell &cell) const noexcept;
   void incrementGenomCounter(Cell &cell) const noexcept;
 
   // Perform cell genom calculations
   void addGenToCounter(Cell &cell) const noexcept;
   void jumpCounter(Cell &cell, int offset) const noexcept;
-  int  getNextNthGen(Cell &cell, int n) const noexcept;
+  int  getNextNthGen(const Cell &cell, int n) const noexcept;
   void turnIntoFood(Cell &cell) const noexcept;
-  bool areAkin(Cell &cell1, Cell &cell2) const noexcept;
+  bool areAkin(const Cell &cell1, const Cell &cell2) const noexcept;
 
   // Get surge of energy
   int getPhotosynthesisEnergy(int index) const noexcept;
