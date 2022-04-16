@@ -8,8 +8,8 @@
 #include <glad/glad.h>
 
 // Initializes GLFW and returns configured window with OpenGL context
-GLFWwindow *createWindow(int width, int height, const std::string &title, int openGLVersionMajor,
-                         int openGLVersionMinor) {
+GLFWwindow *extra::createWindow(int width, int height, const std::string &title,
+                                int openGLVersionMajor, int openGLVersionMinor) {
   // Initializing GLFW
   if (glfwInit() == GL_FALSE) {
     std::cout << "error: failed to initialize GLFW" << std::endl;
@@ -51,7 +51,7 @@ GLFWwindow *createWindow(int width, int height, const std::string &title, int op
 }
 
 // Terminates window with OpenGL context and GLFW
-void terminateWindow(GLFWwindow *window) {
+void extra::terminateWindow(GLFWwindow *window) {
   // Closing GLFW window
   glfwSetWindowShouldClose(window, true);
 

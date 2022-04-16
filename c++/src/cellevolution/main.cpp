@@ -49,8 +49,8 @@ void processUserInput(GLFWwindow *window);
 
 int main(int argc, char *argv[]) {
   // Initializing GLFW and getting configured window with OpenGL context
-  GLFWwindow *window = createWindow(kInitWindowWidth, kInitWindowHeight, kWindowTitle,
-                                    kOpenGLVersionMajor, kOpenGLVersionMinor);
+  GLFWwindow *window = extra::createWindow(kInitWindowWidth, kInitWindowHeight, kWindowTitle,
+                                           kOpenGLVersionMajor, kOpenGLVersionMinor);
 
   // Capturing OpenGL context
   glfwMakeContextCurrent(window);
@@ -89,13 +89,13 @@ int main(int argc, char *argv[]) {
                   "  FragColor = fColor;\n"
                   "}\n"},
   };
-  const GLuint shaderProgram{createShaderProgram(shaderTypes, shaderSources)};
+  const GLuint shaderProgram{extra::createShaderProgram(shaderTypes, shaderSources)};
   // Using shader program
   glUseProgram(shaderProgram);
 
   // Initializing simulation parameters and simulation itself
-  CellController::Params cellControllerParams{};
-  CellController         cellController{cellControllerParams};
+  CellEvolution::CellController::Params cellControllerParams{};
+  CellEvolution::CellController         cellController{cellControllerParams};
   // Setting OpenGL viewport
   glViewport(0, 0, cellControllerParams.width, cellControllerParams.height);
   // Setting values of shaderProgram uniform variables
@@ -104,7 +104,8 @@ int main(int argc, char *argv[]) {
   // Setting gl_PointSize value
   glPointSize(cellControllerParams.cellSize);
   // Getting CellController::RenderingData
-  const CellController::RenderingData *renderingData = cellController.getRenderingData();
+  const CellEvolution::CellController::RenderingData *renderingData =
+      cellController.getRenderingData();
 
   // Initializing and configuring OpenGL Vertex Array and Buffer Objects for rendering simulation
   GLuint vao{};
@@ -115,12 +116,13 @@ int main(int argc, char *argv[]) {
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
   glBufferData(GL_ARRAY_BUFFER,
                static_cast<long>(cellControllerParams.columns * cellControllerParams.rows *
-                                 sizeof(CellController::RenderingData)),
+                                 sizeof(CellEvolution::CellController::RenderingData)),
                nullptr, GL_DYNAMIC_DRAW);
-  glVertexAttribIPointer(0, 1, GL_INT, sizeof(CellController::RenderingData),
+  glVertexAttribIPointer(0, 1, GL_INT, sizeof(CellEvolution::CellController::RenderingData),
                          reinterpret_cast<void *>(0));
   glEnableVertexAttribArray(0);
-  glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(CellController::RenderingData),
+  glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE,
+                        sizeof(CellEvolution::CellController::RenderingData),
                         reinterpret_cast<void *>(sizeof(int)));
   glEnableVertexAttribArray(1);
 
@@ -165,7 +167,8 @@ int main(int argc, char *argv[]) {
       // Rendering simulation
       int renderingDataSize = cellController.getRenderingDataSize();
       glBufferSubData(GL_ARRAY_BUFFER, 0,
-                      renderingDataSize * static_cast<long>(sizeof(CellController::RenderingData)),
+                      renderingDataSize *
+                          static_cast<long>(sizeof(CellEvolution::CellController::RenderingData)),
                       renderingData);
       glDrawArrays(GL_POINTS, 0, renderingDataSize);
 
@@ -178,7 +181,7 @@ int main(int argc, char *argv[]) {
   }
 
   // Terminating window with OpenGL context and GLFW
-  terminateWindow(window);
+  extra::terminateWindow(window);
 
   return 0;
 }

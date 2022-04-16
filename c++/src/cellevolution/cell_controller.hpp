@@ -16,14 +16,19 @@
 #ifndef CELL_CONTROLLER_HPP
 #define CELL_CONTROLLER_HPP
 
+// STD
 #include <algorithm>
 #include <memory>
 #include <random>
 #include <vector>
 
+// "LinkedList" internal library
 #include <linked_list/linked_list.hpp>
 
+// "cell" internal header
 #include "./cell.hpp"
+
+namespace CellEvolution {
 
 // CellController::Params property initial values
 static constexpr unsigned int kInitRandomSeed{1234567890};
@@ -285,5 +290,7 @@ class CellController {
   // Pushes rendering data to its vector
   void pushRenderingData(const Cell &cell, int cellRenderingMode);
 };
+
+}
 
 #endif

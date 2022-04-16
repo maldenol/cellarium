@@ -13,11 +13,16 @@
 // You should have received a copy of the GNU General Public License
 // along with cellevolution.  If not, see <https://www.gnu.org/licenses/>.
 
+// Header file
+#include "./cell_controller.hpp"
+
+// STD
 #include <array>
 #include <cmath>
 #include <utility>
 
-#include "./cell_controller.hpp"
+// Using header file namespace
+using namespace CellEvolution;
 
 // Position offsets per 2D direction
 static constexpr int                                             kDirectionCount{8};

@@ -16,7 +16,10 @@
 #ifndef CELL_HPP
 #define CELL_HPP
 
+// STD
 #include <vector>
+
+namespace CellEvolution {
 
 // Class for storing cell properties
 class Cell {
@@ -54,5 +57,7 @@ class Cell {
 
   friend class CellController;
 };
+
+}
 
 #endif

@@ -13,9 +13,14 @@
 // You should have received a copy of the GNU General Public License
 // along with cellevolution.  If not, see <https://www.gnu.org/licenses/>.
 
+// Header file
+#include "./cell.hpp"
+
+// STD
 #include <utility>
 
-#include "./cell.hpp"
+// Using header file namespace
+using namespace CellEvolution;
 
 Cell::Cell() noexcept : _index{-1} {};
 

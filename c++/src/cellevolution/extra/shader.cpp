@@ -5,7 +5,7 @@
 #include <iostream>
 
 // Compiles shader with source code
-void compileShader(GLuint shader, const std::string &source) {
+void extra::compileShader(GLuint shader, const std::string &source) {
   // Setting shader's source and compiling it
   const char *sourceBuffer = source.c_str();
   glShaderSource(shader, 1, &sourceBuffer, nullptr);
@@ -37,8 +37,8 @@ void compileShader(GLuint shader, const std::string &source) {
 }
 
 // Creates shader program compiling and linking given shaders
-GLuint createShaderProgram(const std::vector<GLenum>      &shaderTypes,
-                           const std::vector<std::string> &shaderSources) {
+GLuint extra::createShaderProgram(const std::vector<GLenum>      &shaderTypes,
+                                  const std::vector<std::string> &shaderSources) {
   GLuint shaderProgram = glCreateProgram();
 
   // Getting shader count

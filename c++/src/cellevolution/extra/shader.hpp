@@ -10,10 +10,14 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+namespace extra {
+
 // Compiles shader with source code
 void compileShader(GLuint shader, const std::string &source);
 
 // Creates shader program compiling and linking given shaders
 GLuint createShaderProgram(const std::vector<GLenum> &shaderTypes, const std::vector<std::string> &shaderSources);
+
+}
 
 #endif
