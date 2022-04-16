@@ -16,6 +16,7 @@
 #ifndef CELL_CONTROLLER_HPP
 #define CELL_CONTROLLER_HPP
 
+#include <algorithm>
 #include <memory>
 #include <random>
 #include <vector>
@@ -27,12 +28,12 @@
 // CellController::Params property initial values
 static constexpr unsigned int kInitRandomSeed{1234567890};
 
-static constexpr int kInitWidth{800};
-static constexpr int kInitHeight{600};
-static constexpr int kInitScale{8};
+static constexpr int   kInitWidth{800};
+static constexpr int   kInitHeight{600};
+static constexpr float kInitCellSize{8.0f};
 
-static constexpr int kInitRows{kInitHeight / kInitScale};
-static constexpr int kInitColumns{kInitWidth / kInitScale};
+static constexpr int kInitColumns{static_cast<int>(static_cast<float>(kInitWidth) / kInitCellSize)};
+static constexpr int kInitRows{static_cast<int>(static_cast<float>(kInitHeight) / kInitCellSize)};
 static constexpr int kInitGenomSize{64};
 static constexpr int kInitMaxInstructionsPerTick{16};
 static constexpr int kInitMaxAkinGenomDifference{4};
@@ -83,20 +84,79 @@ static constexpr int kInstructionDetermineDepth{11};
 static constexpr int kInstructionDeterminePhotosynthesisEnergy{12};
 static constexpr int kInstructionDetermineMineralEnergy{13};
 
+// Class for stroring simulation parameters and state, computing it and filling data for rendering
 class CellController {
+ public:
+  // Auxiliary structure for class construction
+  struct Params {
+    std::mt19937 mersenneTwisterEngine{kInitRandomSeed};
+    unsigned int randomSeed{kInitRandomSeed};
+
+    int   width{kInitWidth};
+    int   height{kInitHeight};
+    float cellSize{kInitCellSize};
+
+    int   columns{kInitColumns};
+    int   rows{kInitRows};
+    int   genomSize{kInitGenomSize};
+    int   maxInstructionsPerTick{kInitMaxInstructionsPerTick};
+    int   maxAkinGenomDifference{kInitMaxAkinGenomDifference};
+    int   minChildEnergy{kInitMinChildEnergy};
+    int   maxEnergy{kInitMaxEnergy};
+    int   maxPhotosynthesisEnergy{kInitMaxPhotosynthesisEnergy};
+    int   maxPhotosynthesisDepth{kInitMaxPhotosynthesisDepth};
+    float summerDaytimeToWholeDayRatio{kInitSummerDaytimeToWholeDayRatio};
+    bool  enableDaytimes{kInitEnableDaytimes};
+    bool  enableSeasons{kInitEnableSeasons};
+    int   maxMineralEnergy{kInitMaxMineralEnergy};
+    int   maxMineralHeight{kInitMaxMineralHeight};
+    int   maxFoodEnergy{kInitMaxFoodEnergy};
+    float randomMutationChance{kInitRandomMutationChance};
+    float budMutationChance{kInitBudMutationChance};
+    int   dayDurationInTicks{kInitDayDurationInTicks};
+    int   seasonDurationInDays{kInitSeasonDurationInDays};
+    int   gammaFlashPeriodInDays{kInitGammaFlashPeriodInDays};
+    int   gammaFlashMaxMutationsCount{kInitGammaFlashMaxMutationsCount};
+    bool  enableInstructionTurn{kInitEnableInstructionTurn};
+    bool  enableInstructionMove{kInitEnableInstructionMove};
+    bool  enableInstructionGetEnergyFromPhotosynthesis{
+        kInitEnableInstructionGetEnergyFromPhotosynthesis};
+    bool enableInstructionGetEnergyFromMinerals{kInitEnableInstructionGetEnergyFromMinerals};
+    bool enableInstructionGetEnergyFromFood{kInitEnableInstructionGetEnergyFromFood};
+    bool enableInstructionBud{kInitEnableInstructionBud};
+    bool enableInstructionMutateRandomGen{kInitEnableInstructionMutateRandomGen};
+    bool enableInstructionShareEnergy{kInitEnableInstructionShareEnergy};
+    bool enableInstructionLookForward{kInitEnableInstructionLookForward};
+    bool enableInstructionDetermineEnergyLevel{kInitEnableInstructionDetermineEnergyLevel};
+    bool enableInstructionDetermineDepth{kInitEnableInstructionDetermineDepth};
+    bool enableInstructionDeterminePhotosynthesisEnergy{
+        kInitenableInstructionDeterminePhotosynthesisEnergy};
+    bool enableInstructionDetermineMineralEnergy{kInitEnableInstructionDetermineMineralEnergy};
+    bool enableDeadCellPinningOnSinking{kInitEnableDeadCellPinningOnSinking};
+  };
+
+  // Struct for storing position and color for rendering
+  struct RenderingData {
+    int   index;
+    float colorR;
+    float colorG;
+    float colorB;
+    float colorA;
+  };
+
  private:
   // Pseufo-random numbers generation
-  unsigned int _randomSeed{};
   std::mt19937 _mersenneTwisterEngine{};
+  unsigned int _randomSeed{};
 
-  // Window size and scale
-  int _width{};
-  int _height{};
-  int _scale{};
+  // Simulation world and cell sizes
+  int   _width{};
+  int   _height{};
+  float _cellSize{};
 
   // Simulation discrete space size
-  int _rows{};
   int _columns{};
+  int _rows{};
 
   // Genom machine and simulation environment properties
   int   _genomSize{};
@@ -135,69 +195,25 @@ class CellController {
   bool _enableInstructionDetermineMineralEnergy{};
   bool _enableDeadCellPinningOnSinking{};
 
-  // Linked list of cells for quick consequent access
-  LinkedList<std::shared_ptr<Cell>> _cellList{};
-  // Buffer of cells for quick random access
-  std::vector<Cell> _cellBuffer{};
+  // Linked list of cell pointers for quick consequent access
+  LinkedList<std::shared_ptr<Cell>> _cellPtrList{};
+  // Vector of cells for quick random access
+  std::vector<Cell> _cellVector{};
 
   // Simulation clock (counts ticks)
   int _ticksNumber{};
   int _yearsNumber{};
 
-  // Photosynthesis and mineral energy buffers for optimization when rendering
+  // Photosynthesis and mineral energy surge vectors for optimization when rendering environment
   std::vector<int> _surgeOfPhotosynthesisEnergy{};
   std::vector<int> _surgeOfMineralEnergy{};
-  bool             _renderBackground{};
+  bool             _enableRenderingEnvironment{};
+
+  // Vector of cell rendering data and its size
+  std::vector<RenderingData> _renderingDataVector{};
+  int                        _renderingDataVectorSize{};
 
  public:
-  // Auxiliary structure for class construction
-  struct Params {
-    unsigned int randomSeed{kInitRandomSeed};
-    std::mt19937 mersenneTwisterEngine{randomSeed};
-
-    int width{kInitWidth};
-    int height{kInitHeight};
-    int scale{kInitScale};
-
-    int   rows{kInitRows};
-    int   columns{kInitColumns};
-    int   genomSize{kInitGenomSize};
-    int   maxInstructionsPerTick{kInitMaxInstructionsPerTick};
-    int   maxAkinGenomDifference{kInitMaxAkinGenomDifference};
-    int   minChildEnergy{kInitMinChildEnergy};
-    int   maxEnergy{kInitMaxEnergy};
-    int   maxPhotosynthesisEnergy{kInitMaxPhotosynthesisEnergy};
-    int   maxPhotosynthesisDepth{kInitMaxPhotosynthesisDepth};
-    float summerDaytimeToWholeDayRatio{kInitSummerDaytimeToWholeDayRatio};
-    bool  enableDaytimes{kInitEnableDaytimes};
-    bool  enableSeasons{kInitEnableSeasons};
-    int   maxMineralEnergy{kInitMaxMineralEnergy};
-    int   maxMineralHeight{kInitMaxMineralHeight};
-    int   maxFoodEnergy{kInitMaxFoodEnergy};
-    float randomMutationChance{kInitRandomMutationChance};
-    float budMutationChance{kInitBudMutationChance};
-    int   dayDurationInTicks{kInitDayDurationInTicks};
-    int   seasonDurationInDays{kInitSeasonDurationInDays};
-    int   gammaFlashPeriodInDays{kInitGammaFlashPeriodInDays};
-    int   gammaFlashMaxMutationsCount{kInitGammaFlashMaxMutationsCount};
-    bool  enableInstructionTurn{kInitEnableInstructionTurn};
-    bool  enableInstructionMove{kInitEnableInstructionMove};
-    bool  enableInstructionGetEnergyFromPhotosynthesis{
-        kInitEnableInstructionGetEnergyFromPhotosynthesis};
-    bool enableInstructionGetEnergyFromMinerals{kInitEnableInstructionGetEnergyFromMinerals};
-    bool enableInstructionGetEnergyFromFood{kInitEnableInstructionGetEnergyFromFood};
-    bool enableInstructionBud{kInitEnableInstructionBud};
-    bool enableInstructionMutateRandomGen{kInitEnableInstructionMutateRandomGen};
-    bool enableInstructionShareEnergy{kInitEnableInstructionShareEnergy};
-    bool enableInstructionLookForward{kInitEnableInstructionLookForward};
-    bool enableInstructionDetermineEnergyLevel{kInitEnableInstructionDetermineEnergyLevel};
-    bool enableInstructionDetermineDepth{kInitEnableInstructionDetermineDepth};
-    bool enableInstructionDeterminePhotosynthesisEnergy{
-        kInitenableInstructionDeterminePhotosynthesisEnergy};
-    bool enableInstructionDetermineMineralEnergy{kInitEnableInstructionDetermineMineralEnergy};
-    bool enableDeadCellPinningOnSinking{kInitEnableDeadCellPinningOnSinking};
-  };
-
   // Constructors
   CellController();
   explicit CellController(const Params &params);
@@ -208,13 +224,20 @@ class CellController {
   ~CellController() noexcept;
 
   // Computes one simulation tick
-  void act(bool renderBackground) noexcept;
+  void act(bool enableRenderingEnvironment) noexcept;
+
+  // Updates rendering data vector
+  void updateRenderingData(bool enableRenderingEnvironment, int cellRenderingMode);
+
+  // Gets rendering data vector and its size
+  const RenderingData *getRenderingData() const noexcept;
+  int                  getRenderingDataSize() const noexcept;
 
  private:
   // Updates tick counters
   void updateTime() noexcept;
 
-  // Updates energy surge buffers for optimization when rendering
+  // Updates energy surge vectors for optimization when rendering environment
   void updateEnergy() noexcept;
 
   // Makes every cell mutate
@@ -250,13 +273,17 @@ class CellController {
   int calculateMineralEnergy(int index) const noexcept;
 
   // Calculate indices, columns and rows
-  int calculateColumn(int index) const noexcept;
-  int calculateRow(int index) const noexcept;
-  int calculateIndexByDirection(int index, int direction) const noexcept;
+  int calculateColumnByIndex(int index) const noexcept;
+  int calculateRowByIndex(int index) const noexcept;
+  int calculateIndexByColumnAndRow(int column, int row) const noexcept;
+  int calculateIndexByIndexAndDirection(int index, int direction) const noexcept;
 
   // Add and remove cells
   void addCell(const std::shared_ptr<Cell> &cellPtr) noexcept;
   void removeCell(const std::shared_ptr<Cell> &cellPtr) noexcept;
+
+  // Pushes rendering data to its vector
+  void pushRenderingData(const Cell &cell, int cellRenderingMode);
 };
 
 #endif

@@ -18,6 +18,7 @@
 
 #include <vector>
 
+// Class for storing cell properties
 class Cell {
  private:
   std::vector<int> _genom{};

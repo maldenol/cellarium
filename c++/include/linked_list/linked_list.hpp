@@ -18,9 +18,11 @@
 
 #include <memory>
 
+// Linked list implementation class
 template <typename T>
 class LinkedList {
  private:
+  // Linked list element structure
   struct Element {
     std::shared_ptr<Element> next{};
     T                        value{};
@@ -29,6 +31,7 @@ class LinkedList {
   std::shared_ptr<Element> _first{};
 
  public:
+  // Linked list iterator implementation class
   class Iterator {
    private:
     std::weak_ptr<Element> _next{};

@@ -54,13 +54,13 @@ float map(T1 value, T2 inMin, T3 inMax, T4 outMin, T5 outMax) {
 CellController::CellController() : CellController{Params{}} {}
 
 CellController::CellController(const Params &params)
-    : _randomSeed{params.randomSeed},
-      _mersenneTwisterEngine{params.mersenneTwisterEngine},
+    : _mersenneTwisterEngine{params.mersenneTwisterEngine},
+      _randomSeed{params.randomSeed},
       _width{params.width},
       _height{params.height},
-      _scale{params.scale},
-      _rows{params.rows},
+      _cellSize{params.cellSize},
       _columns{params.columns},
+      _rows{params.rows},
       _genomSize{params.genomSize},
       _maxInstructionsPerTick{params.maxInstructionsPerTick},
       _maxAkinGenomDifference{params.maxAkinGenomDifference},
@@ -96,28 +96,39 @@ CellController::CellController(const Params &params)
           params.enableInstructionDeterminePhotosynthesisEnergy},
       _enableInstructionDetermineMineralEnergy{params.enableInstructionDetermineMineralEnergy},
       _enableDeadCellPinningOnSinking{params.enableDeadCellPinningOnSinking} {
-  _cellBuffer.assign(_columns * _rows, Cell{});
+  // Allocating memory for vector of cells
+  _cellVector.assign(_columns * _rows, Cell{});
+  _cellVector.reserve(_columns * _rows);
 
+  // Creating the first cell
   std::vector<int> firstCellGenom;
   firstCellGenom.assign(_genomSize, kFirstCellGenomInstructions);
+  firstCellGenom.reserve(_genomSize);
   addCell(std::make_shared<Cell>(
       firstCellGenom,
       static_cast<int>(static_cast<float>(_minChildEnergy) * kFirstCellEnergyMultiplier),
       kFirstCellDirection,
       static_cast<int>(static_cast<float>(_columns) * kFirstCellIndexMultiplier)));
 
+  // Allocating memory for vectors of energy surge for optimization when rendering environment
   _surgeOfPhotosynthesisEnergy.assign(_columns * _maxPhotosynthesisDepth, 0);
+  _surgeOfPhotosynthesisEnergy.reserve(_columns * _maxPhotosynthesisDepth);
   _surgeOfMineralEnergy.assign(_maxMineralHeight, 0);
+  _surgeOfMineralEnergy.reserve(_maxMineralHeight);
+
+  // Allocating memory for vector of cell positions and colors for rendering
+  _renderingDataVector.assign(_columns * _rows, RenderingData{});
+  _renderingDataVector.reserve(_columns * _rows);
 }
 
 CellController::CellController(const CellController &cellController) noexcept
-    : _randomSeed{cellController._randomSeed},
-      _mersenneTwisterEngine{cellController._mersenneTwisterEngine},
+    : _mersenneTwisterEngine{cellController._mersenneTwisterEngine},
+      _randomSeed{cellController._randomSeed},
       _width{cellController._width},
       _height{cellController._height},
-      _scale{cellController._scale},
-      _rows{cellController._rows},
+      _cellSize{cellController._cellSize},
       _columns{cellController._columns},
+      _rows{cellController._rows},
       _genomSize{cellController._genomSize},
       _maxInstructionsPerTick{cellController._maxInstructionsPerTick},
       _maxAkinGenomDifference{cellController._maxAkinGenomDifference},
@@ -157,13 +168,13 @@ CellController::CellController(const CellController &cellController) noexcept
       _enableDeadCellPinningOnSinking{cellController._enableDeadCellPinningOnSinking} {}
 
 CellController &CellController::operator=(const CellController &cellController) noexcept {
-  _randomSeed                   = cellController._randomSeed;
   _mersenneTwisterEngine        = cellController._mersenneTwisterEngine;
+  _randomSeed                   = cellController._randomSeed;
   _width                        = cellController._width;
   _height                       = cellController._height;
-  _scale                        = cellController._scale;
-  _rows                         = cellController._rows;
+  _cellSize                     = cellController._cellSize;
   _columns                      = cellController._columns;
+  _rows                         = cellController._rows;
   _genomSize                    = cellController._genomSize;
   _maxInstructionsPerTick       = cellController._maxInstructionsPerTick;
   _maxAkinGenomDifference       = cellController._maxAkinGenomDifference;
@@ -205,13 +216,13 @@ CellController &CellController::operator=(const CellController &cellController) 
 }
 
 CellController::CellController(CellController &&cellController) noexcept
-    : _randomSeed{std::exchange(cellController._randomSeed, 0)},
-      _mersenneTwisterEngine{std::exchange(cellController._mersenneTwisterEngine, std::mt19937{})},
+    : _mersenneTwisterEngine{std::exchange(cellController._mersenneTwisterEngine, std::mt19937{})},
+      _randomSeed{std::exchange(cellController._randomSeed, 0)},
       _width{std::exchange(cellController._width, 0)},
       _height{std::exchange(cellController._height, 0)},
-      _scale{std::exchange(cellController._scale, 0)},
-      _rows{std::exchange(cellController._rows, 0)},
+      _cellSize{std::exchange(cellController._cellSize, 0.0f)},
       _columns{std::exchange(cellController._columns, 0)},
+      _rows{std::exchange(cellController._rows, 0)},
       _genomSize{std::exchange(cellController._genomSize, 0)},
       _maxInstructionsPerTick{std::exchange(cellController._maxInstructionsPerTick, 0)},
       _maxAkinGenomDifference{std::exchange(cellController._maxAkinGenomDifference, 0)},
@@ -259,13 +270,13 @@ CellController::CellController(CellController &&cellController) noexcept
           std::exchange(cellController._enableDeadCellPinningOnSinking, false)} {}
 
 CellController &CellController::operator=(CellController &&cellController) noexcept {
-  std::swap(_randomSeed, cellController._randomSeed);
   std::swap(_mersenneTwisterEngine, cellController._mersenneTwisterEngine);
+  std::swap(_randomSeed, cellController._randomSeed);
   std::swap(_width, cellController._width);
   std::swap(_height, cellController._height);
-  std::swap(_scale, cellController._scale);
-  std::swap(_rows, cellController._rows);
+  std::swap(_cellSize, cellController._cellSize);
   std::swap(_columns, cellController._columns);
+  std::swap(_rows, cellController._rows);
   std::swap(_genomSize, cellController._genomSize);
   std::swap(_maxInstructionsPerTick, cellController._maxInstructionsPerTick);
   std::swap(_maxAkinGenomDifference, cellController._maxAkinGenomDifference);
@@ -311,19 +322,19 @@ CellController &CellController::operator=(CellController &&cellController) noexc
 
 CellController::~CellController() noexcept {}
 
-void CellController::act(bool renderBackground) noexcept {
-  _renderBackground = renderBackground;
+void CellController::act(bool enableRenderingEnvironment) noexcept {
+  _enableRenderingEnvironment = enableRenderingEnvironment;
 
   // Updating world time
   updateTime();
 
-  // Updating photosynthesis and mineral energy buffers if this tick must be drown
-  if (_renderBackground) {
+  // Updating photosynthesis and mineral energy surge vectors if this tick must be drown
+  if (_enableRenderingEnvironment) {
     updateEnergy();
   }
 
   // Going through all cells sequently
-  LinkedList<std::shared_ptr<Cell>>::Iterator iter{_cellList.getIterator()};
+  LinkedList<std::shared_ptr<Cell>>::Iterator iter{_cellPtrList.getIterator()};
   while (iter.hasNext()) {
     std::shared_ptr<Cell> &cellPtr{iter.next()};
     Cell                  &cell = *cellPtr;
@@ -483,6 +494,25 @@ void CellController::act(bool renderBackground) noexcept {
   gammaFlash();
 }
 
+void CellController::updateRenderingData(bool enableRenderingEnvironment, int cellRenderingMode) {
+  // Resetting _renderingDataVectorSize
+  _renderingDataVectorSize = 0;
+
+  // Rendering each cell
+  LinkedList<std::shared_ptr<Cell>>::Iterator iter{_cellPtrList.getIterator()};
+  while (iter.hasNext()) {
+    const Cell &cell = *iter.next();
+
+    pushRenderingData(cell, cellRenderingMode);
+  }
+}
+
+const CellController::RenderingData *CellController::getRenderingData() const noexcept {
+  return &_renderingDataVector[0];
+}
+
+int CellController::getRenderingDataSize() const noexcept { return _renderingDataVectorSize; }
+
 void CellController::updateTime() noexcept {
   // Updating ticks
   ++_ticksNumber;
@@ -501,11 +531,11 @@ void CellController::updateEnergy() noexcept {
 
     // Filling with values until they are low
     while (y < _maxPhotosynthesisDepth) {
-      _surgeOfPhotosynthesisEnergy[y * _columns + x] =
-          calculatePhotosynthesisEnergy(y * _columns + x);
+      _surgeOfPhotosynthesisEnergy[calculateIndexByColumnAndRow(x, y)] =
+          calculatePhotosynthesisEnergy(calculateIndexByColumnAndRow(x, y));
 
       // Break if photosynthesis energy is almost zero so underneath cells have no energy at all
-      if (_surgeOfPhotosynthesisEnergy[y * _columns + x] < 1) {
+      if (_surgeOfPhotosynthesisEnergy[calculateIndexByColumnAndRow(x, y)] < 1) {
         break;
       }
 
@@ -514,7 +544,7 @@ void CellController::updateEnergy() noexcept {
 
     // Filling with zeroes
     while (y < _maxPhotosynthesisDepth) {
-      _surgeOfPhotosynthesisEnergy[y * _columns + x] = 0;
+      _surgeOfPhotosynthesisEnergy[calculateIndexByColumnAndRow(x, y)] = 0;
 
       ++y;
     }
@@ -533,7 +563,7 @@ void CellController::gammaFlash() noexcept {
               _gammaFlashPeriodInDays ==
           0) {
     // For each cell
-    LinkedList<std::shared_ptr<Cell>>::Iterator iter{_cellList.getIterator()};
+    LinkedList<std::shared_ptr<Cell>>::Iterator iter{_cellPtrList.getIterator()};
     while (iter.hasNext()) {
       Cell &cell = *iter.next();
 
@@ -576,7 +606,7 @@ void CellController::move(Cell &cell) noexcept {
     // Setting direction to 4 so it will be moving down (sinking) each tick if cell is dead and not pinned yet
     targetDirection = 4;
   }
-  int targetIndex = calculateIndexByDirection(cell._index, targetDirection);
+  int targetIndex = calculateIndexByIndexAndDirection(cell._index, targetDirection);
 
   // If coordinates are beyond simulation world (above top or below bottom)
   if (targetIndex == -1) {
@@ -584,9 +614,9 @@ void CellController::move(Cell &cell) noexcept {
   }
 
   // If there is nothing at this direction
-  if (_cellBuffer[targetIndex] == Cell{}) {
-    _cellBuffer[targetIndex] = cell;
-    _cellBuffer[cell._index] = Cell{};
+  if (_cellVector[targetIndex] == Cell{}) {
+    _cellVector[targetIndex] = cell;
+    _cellVector[cell._index] = Cell{};
 
     cell._index = targetIndex;
   }
@@ -626,7 +656,7 @@ void CellController::getEnergyFromMinerals(Cell &cell) noexcept {
 
 void CellController::getEnergyFromFood(Cell &cell) noexcept {
   // Calculating coordinates by current direction
-  int targetIndex = calculateIndexByDirection(cell._index, cell._direction);
+  int targetIndex = calculateIndexByIndexAndDirection(cell._index, cell._direction);
 
   // If coordinates are beyond simulation world (above top or below bottom)
   if (targetIndex == -1) {
@@ -634,7 +664,7 @@ void CellController::getEnergyFromFood(Cell &cell) noexcept {
   }
 
   // Getting cell at this direction
-  Cell &targetCell = _cellBuffer[targetIndex];
+  Cell &targetCell = _cellVector[targetIndex];
 
   // If there is a cell or food
   if (targetCell != Cell{}) {
@@ -662,7 +692,7 @@ void CellController::bud(Cell &cell) noexcept {
   for (int i = 0; i < kDirectionCount; ++i) {
     // Calculating coordinates by current direction
     int targetIndex =
-        calculateIndexByDirection(cell._index, (cell._direction + i) % kDirectionCount);
+        calculateIndexByIndexAndDirection(cell._index, (cell._direction + i) % kDirectionCount);
 
     // If coordinates are beyond simulation world (above top or below bottom)
     if (targetIndex == -1) {
@@ -670,7 +700,7 @@ void CellController::bud(Cell &cell) noexcept {
     }
 
     // If there is nothing at this direction
-    if (_cellBuffer[targetIndex] == Cell{}) {
+    if (_cellVector[targetIndex] == Cell{}) {
       // Creating new cell
       std::shared_ptr<Cell> buddedCell{
           std::make_shared<Cell>(cell._genom, cell._energy / 2, cell._direction, targetIndex)};
@@ -721,7 +751,7 @@ void CellController::mutateRandomGen(Cell &cell) noexcept {
 
 void CellController::shareEnergy(Cell &cell) noexcept {
   // Calculating coordinates by current direction
-  int targetIndex = calculateIndexByDirection(cell._index, cell._direction);
+  int targetIndex = calculateIndexByIndexAndDirection(cell._index, cell._direction);
 
   // If coordinates are beyond simulation world (above top or below bottom)
   if (targetIndex == -1) {
@@ -729,7 +759,7 @@ void CellController::shareEnergy(Cell &cell) noexcept {
   }
 
   // Getting cell at this direction
-  Cell &targetCell = _cellBuffer[targetIndex];
+  Cell &targetCell = _cellVector[targetIndex];
 
   // If there is a cell
   if (targetCell != Cell{} && targetCell._isAlive) {
@@ -753,7 +783,7 @@ void CellController::shareEnergy(Cell &cell) noexcept {
 
 void CellController::lookForward(Cell &cell) noexcept {
   // Calculating coordinates by current direction
-  int targetIndex = calculateIndexByDirection(cell._index, cell._direction);
+  int targetIndex = calculateIndexByIndexAndDirection(cell._index, cell._direction);
 
   // If coordinates are beyond simulation world (above top or below bottom)
   if (targetIndex == -1) {
@@ -761,7 +791,7 @@ void CellController::lookForward(Cell &cell) noexcept {
   }
 
   // Getting cell at this direction
-  Cell &targetCell = _cellBuffer[targetIndex];
+  Cell &targetCell = _cellVector[targetIndex];
 
   // If there is a cell or food
   if (targetCell != Cell{}) {
@@ -808,7 +838,7 @@ void CellController::determineEnergyLevel(Cell &cell) noexcept {
 
 void CellController::determineDepth(Cell &cell) noexcept {
   // Calculating values to compare
-  int row            = calculateRow(cell._index);
+  int row            = calculateRowByIndex(cell._index);
   int valueToCompare = static_cast<int>(static_cast<float>(_rows * getNextNthGen(cell, 1)) /
                                         static_cast<float>(_genomSize));
 
@@ -911,7 +941,7 @@ bool CellController::areAkin(Cell &cell1, Cell &cell2) const noexcept {
 
 int CellController::getPhotosynthesisEnergy(int index) const noexcept {
   // Calculating cell row
-  int row = calculateRow(index);
+  int row = calculateRowByIndex(index);
 
   // If depth is greater than maximal
   if (row >= _maxPhotosynthesisDepth) {
@@ -921,7 +951,7 @@ int CellController::getPhotosynthesisEnergy(int index) const noexcept {
   int energy{};
 
   // If this tick must not be drown
-  if (!_renderBackground) {
+  if (!_enableRenderingEnvironment) {
     energy = calculatePhotosynthesisEnergy(index);
   }
   // If this tick must be drown
@@ -934,7 +964,7 @@ int CellController::getPhotosynthesisEnergy(int index) const noexcept {
 
 int CellController::getMineralEnergy(int index) const noexcept {
   // Calculating cell row
-  int row = calculateRow(index);
+  int row = calculateRowByIndex(index);
 
   // If depth is less than minimal
   if (row < _rows - _maxMineralHeight) {
@@ -942,7 +972,7 @@ int CellController::getMineralEnergy(int index) const noexcept {
   }
 
   // If this tick must not be drown
-  if (!_renderBackground) {
+  if (!_enableRenderingEnvironment) {
     return calculateMineralEnergy(row);
   }
 
@@ -955,8 +985,8 @@ int CellController::calculatePhotosynthesisEnergy(int index) const noexcept {
   static constexpr float kHalfOfDay   = 0.5f;
 
   // Calculating cell column and row
-  int column = calculateColumn(index);
-  int row    = calculateRow(index);
+  int column = calculateColumnByIndex(index);
+  int row    = calculateRowByIndex(index);
 
   // Calculating daytime coefficient if needed
   float daytimeCoefficient = 1.0f;
@@ -998,45 +1028,107 @@ int CellController::calculatePhotosynthesisEnergy(int index) const noexcept {
 
 int CellController::calculateMineralEnergy(int index) const noexcept {
   // Calculating cell row
-  int row = calculateRow(index);
+  int row = calculateRowByIndex(index);
 
   // Getting energy from minerals
   return static_cast<int>(
       map(row, _rows - 1, _rows - 1 - _maxMineralHeight, _maxMineralEnergy, 0.0f));
 }
 
-int CellController::calculateColumn(int index) const noexcept {
+int CellController::calculateColumnByIndex(int index) const noexcept {
   return index - index / _columns * _columns;
 }
 
-int CellController::calculateRow(int index) const noexcept { return index / _columns; }
+int CellController::calculateRowByIndex(int index) const noexcept { return index / _columns; }
 
-int CellController::calculateIndexByDirection(int index, int direction) const noexcept {
-  // Calculating column at given direction with overflow handling
-  int column = calculateColumn(index);
-  int c      = (column + kDirectionOffsets.at(direction).at(0) + _columns) % _columns;
+int CellController::calculateIndexByColumnAndRow(int column, int row) const noexcept {
+  return row * _columns + column;
+}
 
+int CellController::calculateIndexByIndexAndDirection(int index, int direction) const noexcept {
   // Calculating row at given direction with overflow handling
-  int row = calculateColumn(index);
+  int row = calculateRowByIndex(index);
   int r   = row + kDirectionOffsets.at(direction).at(1);
   if (r > _rows - 1 || r < 0) {
     return -1;
   }
 
-  return r * _columns + c;
+  // Calculating column at given direction with overflow handling
+  int column = calculateColumnByIndex(index);
+  int c      = (column + kDirectionOffsets.at(direction).at(0) + _columns) % _columns;
+
+  return calculateIndexByColumnAndRow(c, r);
 }
 
 void CellController::addCell(const std::shared_ptr<Cell> &cellPtr) noexcept {
-  _cellBuffer[cellPtr->_index] = *cellPtr;
+  _cellVector[cellPtr->_index] = *cellPtr;
 
   // Pushing cell to the front of the linked list
   // so it will be processed not earlier than the next tick
   // and before older cells (younger cells have smaller "reaction time")
-  _cellList.pushFront(cellPtr);
+  _cellPtrList.pushFront(cellPtr);
 }
 
 void CellController::removeCell(const std::shared_ptr<Cell> &cellPtr) noexcept {
-  _cellBuffer[cellPtr->_index] = Cell{};
+  _cellVector[cellPtr->_index] = Cell{};
 
-  _cellList.remove(cellPtr);
+  _cellPtrList.remove(cellPtr);
+}
+
+void CellController::pushRenderingData(const Cell &cell, int cellRenderingMode) {
+  float colorR{}, colorG{}, colorB{};
+
+  // If cell is alive
+  if (cell._isAlive) {
+    // Diet mode
+    if (cellRenderingMode % 4 == 0) {
+      // Normalizing color and reducing it to range from 0 to 255
+      colorR = static_cast<float>(cell._colorR);
+      colorG = static_cast<float>(cell._colorG);
+      colorB = static_cast<float>(cell._colorB);
+
+      float colorVectorLength = std::sqrt(colorR * colorR + colorG * colorG + colorB * colorB);
+
+      if (colorVectorLength < 1.0f) {
+        colorR *= 0.0f;
+        colorG *= 0.0f;
+        colorB *= 0.0f;
+      } else {
+        colorR *= colorVectorLength;
+        colorG *= colorVectorLength;
+        colorB *= colorVectorLength;
+      }
+    }
+    // Energy level mode
+    else if (cellRenderingMode % 4 == 1) {
+      colorR = 1.0f;
+      colorG = map(cell._energy, 0.0f, _maxEnergy, 1.0f, 0.0f);
+      colorB = 0.0f;
+    }
+    // Energy sharing balance mode
+    else if (cellRenderingMode % 4 == 2) {
+      colorR = map(cell._energyShareBalance, -_maxEnergy, _maxEnergy, 1.0f, 0.0f);
+      colorG = map(cell._energyShareBalance, -_maxEnergy, _maxEnergy, 0.5f, 1.0f);
+      colorB = map(cell._energyShareBalance, -_maxEnergy, _maxEnergy, 0.0f, 1.0f);
+    }
+    // Last energy share mode
+    else {
+      colorR = map(cell._lastEnergyShare, -1.0f, 1.0f, 1.0f, 0.0f);
+      colorG = map(cell._lastEnergyShare, -1.0f, 1.0f, 0.5f, 1.0f);
+      colorB = map(cell._lastEnergyShare, -1.0f, 1.0f, 0.0f, 1.0f);
+    }
+  }
+  // If cell is dead
+  else {
+    colorR = 0.75f;
+    colorG = 0.75f;
+    colorB = 0.75f;
+  }
+
+  // Updating cell rendering data
+  _renderingDataVector[_renderingDataVectorSize] =
+      RenderingData{cell._index, colorR, colorG, colorB, 1.0f};
+
+  // Increment _renderingDataVectorSize
+  ++_renderingDataVectorSize;
 }
