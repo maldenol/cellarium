@@ -13,19 +13,42 @@
 // You should have received a copy of the GNU General Public License
 // along with cellevolution.  If not, see <https://www.gnu.org/licenses/>.
 
-#include <utility>
-
+// Header file
 #include "./linked_list.hpp"
+
+// STD
+#include <utility>
+#include <vector>
 
 template<typename T>
 LinkedList<T>::LinkedList() noexcept {}
 
 template<typename T>
-LinkedList<T>::LinkedList(const LinkedList &linkedList) noexcept : _first{linkedList._first} {}
+LinkedList<T>::LinkedList(const LinkedList &linkedList) noexcept {
+  operator=(linkedList);
+}
 
 template<typename T>
 LinkedList<T> &LinkedList<T>::operator=(const LinkedList &linkedList) noexcept {
-  _first = linkedList._first;
+  // Values to push to front
+  std::vector<T> valuesToCopy{};
+
+  std::shared_ptr<Element> currElem{linkedList._first};
+
+  // Until current is not null
+  while (currElem != nullptr) {
+    // Pushing value to vector
+    valuesToCopy.push_back(currElem->value);
+
+    // Keep looking
+    currElem = currElem->next;
+  }
+
+  // For each value
+  for (int i = valuesToCopy.size() - 1; i >= 0; --i) {
+    // Pushing value to front
+    pushFront(valuesToCopy[i]);
+  }
 
   return *this;
 }

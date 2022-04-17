@@ -174,7 +174,16 @@ CellController::CellController(const CellController &cellController) noexcept
           cellController._enableInstructionDeterminePhotosynthesisEnergy},
       _enableInstructionDetermineMineralEnergy{
           cellController._enableInstructionDetermineMineralEnergy},
-      _enableDeadCellPinningOnSinking{cellController._enableDeadCellPinningOnSinking} {}
+      _enableDeadCellPinningOnSinking{cellController._enableDeadCellPinningOnSinking},
+      _cellIndexList{cellController._cellIndexList},
+      _cellVector{cellController._cellVector},
+      _ticksNumber{cellController._ticksNumber},
+      _yearsNumber{cellController._yearsNumber},
+      _surgeOfPhotosynthesisEnergy{cellController._surgeOfPhotosynthesisEnergy},
+      _surgeOfMineralEnergy{cellController._surgeOfMineralEnergy},
+      _enableRenderingEnvironment{cellController._enableRenderingEnvironment},
+      _renderingDataVector{cellController._renderingDataVector},
+      _renderingDataVectorSize{cellController._renderingDataVectorSize} {}
 
 CellController &CellController::operator=(const CellController &cellController) noexcept {
   _mersenneTwisterEngine        = cellController._mersenneTwisterEngine;
@@ -220,6 +229,15 @@ CellController &CellController::operator=(const CellController &cellController) 
   _enableInstructionDetermineMineralEnergy =
       cellController._enableInstructionDetermineMineralEnergy;
   _enableDeadCellPinningOnSinking = cellController._enableDeadCellPinningOnSinking;
+  _cellIndexList                  = cellController._cellIndexList;
+  _cellVector                     = cellController._cellVector;
+  _ticksNumber                    = cellController._ticksNumber;
+  _yearsNumber                    = cellController._yearsNumber;
+  _surgeOfPhotosynthesisEnergy    = cellController._surgeOfPhotosynthesisEnergy;
+  _surgeOfMineralEnergy           = cellController._surgeOfMineralEnergy;
+  _enableRenderingEnvironment     = cellController._enableRenderingEnvironment;
+  _renderingDataVector            = cellController._renderingDataVector;
+  _renderingDataVectorSize        = cellController._renderingDataVectorSize;
 
   return *this;
 }
@@ -276,7 +294,19 @@ CellController::CellController(CellController &&cellController) noexcept
       _enableInstructionDetermineMineralEnergy{
           std::exchange(cellController._enableInstructionDetermineMineralEnergy, false)},
       _enableDeadCellPinningOnSinking{
-          std::exchange(cellController._enableDeadCellPinningOnSinking, false)} {}
+          std::exchange(cellController._enableDeadCellPinningOnSinking, false)},
+      _cellIndexList{std::exchange(cellController._cellIndexList, LinkedList<int>{})},
+      _cellVector{std::exchange(cellController._cellVector, std::vector<Cell>{})},
+      _ticksNumber{std::exchange(cellController._ticksNumber, 0)},
+      _yearsNumber{std::exchange(cellController._yearsNumber, 0)},
+      _surgeOfPhotosynthesisEnergy{
+          std::exchange(cellController._surgeOfPhotosynthesisEnergy, std::vector<int>{})},
+      _surgeOfMineralEnergy{
+          std::exchange(cellController._surgeOfMineralEnergy, std::vector<int>{})},
+      _enableRenderingEnvironment{std::exchange(cellController._enableRenderingEnvironment, false)},
+      _renderingDataVector{
+          std::exchange(cellController._renderingDataVector, std::vector<RenderingData>{})},
+      _renderingDataVectorSize{std::exchange(cellController._renderingDataVectorSize, 0)} {}
 
 CellController &CellController::operator=(CellController &&cellController) noexcept {
   std::swap(_mersenneTwisterEngine, cellController._mersenneTwisterEngine);
@@ -325,6 +355,15 @@ CellController &CellController::operator=(CellController &&cellController) noexc
   std::swap(_enableInstructionDetermineMineralEnergy,
             cellController._enableInstructionDetermineMineralEnergy);
   std::swap(_enableDeadCellPinningOnSinking, cellController._enableDeadCellPinningOnSinking);
+  std::swap(_cellIndexList, cellController._cellIndexList);
+  std::swap(_cellVector, cellController._cellVector);
+  std::swap(_ticksNumber, cellController._ticksNumber);
+  std::swap(_yearsNumber, cellController._yearsNumber);
+  std::swap(_surgeOfPhotosynthesisEnergy, cellController._surgeOfPhotosynthesisEnergy);
+  std::swap(_surgeOfMineralEnergy, cellController._surgeOfMineralEnergy);
+  std::swap(_enableRenderingEnvironment, cellController._enableRenderingEnvironment);
+  std::swap(_renderingDataVector, cellController._renderingDataVector);
+  std::swap(_renderingDataVectorSize, cellController._renderingDataVectorSize);
 
   return *this;
 }
@@ -623,6 +662,7 @@ void CellController::move(Cell &cell) noexcept {
 
   // If there is nothing at this direction
   if (_cellVector[targetIndex] == Cell{}) {
+    // Moving cell
     _cellVector[targetIndex] = std::move(cell);
 
     _cellIndexList.replace(cell._index, targetIndex);
@@ -631,6 +671,7 @@ void CellController::move(Cell &cell) noexcept {
   }
   // If there is an obstalce and given cell is dead
   else if (!cell._isAlive) {
+    // Making cell pinned
     cell._pinned = true;
   }
 }

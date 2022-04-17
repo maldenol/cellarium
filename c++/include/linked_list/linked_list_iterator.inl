@@ -13,9 +13,11 @@
 // You should have received a copy of the GNU General Public License
 // along with cellevolution.  If not, see <https://www.gnu.org/licenses/>.
 
-#include <utility>
-
+// Header file
 #include "./linked_list.hpp"
+
+// STD
+#include <utility>
 
 template<typename T>
 LinkedList<T>::Iterator::Iterator(std::shared_ptr<Element> next) noexcept : _next{next} {}

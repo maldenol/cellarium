@@ -31,12 +31,15 @@
 #include "./cell_controller.hpp"
 
 // Global constants
-static constexpr int     kInitWindowWidth  = 800;
-static constexpr int     kInitWindowHeight = 600;
+static constexpr int     kInitWindowWidth  = 1920;
+static constexpr int     kInitWindowHeight = 1080;
 static const std::string kWindowTitle{"cellevolution"};
-static constexpr int     kOpenGLVersionMajor = 4;
-static constexpr int     kOpenGLVersionMinor = 6;
-static constexpr int     kMaxTicksPerRender  = 1000;
+static constexpr int     kOpenGLVersionMajor               = 4;
+static constexpr int     kOpenGLVersionMinor               = 6;
+static constexpr int     kMaxTicksPerRender                = 1000;
+static constexpr float   kCellSize                         = 8.0f;
+static constexpr float   kMaxPhotosynthesisDepthMultiplier = 8.0f;
+static constexpr float   kMaxMineralHeightMultiplier       = 8.0f;
 
 // Global variables
 int  gCellRenderingMode{0};
@@ -64,8 +67,10 @@ int main(int argc, char *argv[]) {
   const std::vector<std::string> shaderSources{
       std::string{"#version 460 core\n"
                   "\n"
-                  "uniform int kColumns = 1;\n"
-                  "uniform int kRows = 1;\n"
+                  "uniform int   kColumns                = 1;\n"
+                  "uniform int   kRows                   = 1;\n"
+                  "uniform float kPointSizeInViewport    = 10.0f;\n"
+                  "uniform float kPointSizeInClipSpace   = 0.02f;\n"
                   "\n"
                   "layout (location = 0) in int  aIndex;\n"
                   "layout (location = 1) in vec4 aColor;\n"
@@ -73,12 +78,15 @@ int main(int argc, char *argv[]) {
                   "out vec4 fColor;\n"
                   "\n"
                   "void main() {\n"
-                  "  int c = aIndex - aIndex / kColumns * kColumns;\n"
-                  "  int r = aIndex / kColumns;\n"
+                  "  int c   = aIndex - aIndex / kColumns * kColumns;\n"
+                  "  int r   = aIndex / kColumns;\n"
                   "  float x = 2.0f * c / kColumns - 1.0f;\n"
-                  "  float y = 1.0f - 2.0f * r / kRows;\n"
-                  "  gl_Position = vec4(x, y, 0.0f, 1.0f);\n"
-                  "  fColor = aColor;\n"
+                  "  float y = 2.0f * r / kRows - 1.0f;\n"
+                  "  x += kPointSizeInClipSpace;\n"
+                  "  y += kPointSizeInClipSpace;\n"
+                  "  gl_Position  = vec4(x, -y, 0.0f, 1.0f);\n"
+                  "  gl_PointSize = kPointSizeInViewport;\n"
+                  "  fColor       = aColor;\n"
                   "}\n"},
       std::string{"#version 460 core\n"
                   "\n"
@@ -96,14 +104,29 @@ int main(int argc, char *argv[]) {
 
   // Initializing simulation parameters and simulation itself
   CellEvolution::CellController::Params cellControllerParams{};
-  CellEvolution::CellController         cellController{cellControllerParams};
+  cellControllerParams.width    = kInitWindowWidth;
+  cellControllerParams.height   = kInitWindowHeight;
+  cellControllerParams.cellSize = kCellSize;
+  cellControllerParams.columns  = static_cast<int>(static_cast<float>(cellControllerParams.width) /
+                                                  cellControllerParams.cellSize);
+  cellControllerParams.rows     = static_cast<int>(static_cast<float>(cellControllerParams.height) /
+                                               cellControllerParams.cellSize);
+  cellControllerParams.maxPhotosynthesisDepth = static_cast<int>(
+      static_cast<float>(cellControllerParams.rows) * kMaxPhotosynthesisDepthMultiplier);
+  cellControllerParams.maxMineralHeight =
+      static_cast<int>(static_cast<float>(cellControllerParams.rows) * kMaxMineralHeightMultiplier);
+  CellEvolution::CellController cellController{cellControllerParams};
   // Setting OpenGL viewport
   glViewport(0, 0, cellControllerParams.width, cellControllerParams.height);
   // Setting values of shaderProgram uniform variables
   glUniform1i(glGetUniformLocation(shaderProgram, "kColumns"), cellControllerParams.columns);
   glUniform1i(glGetUniformLocation(shaderProgram, "kRows"), cellControllerParams.rows);
-  // Setting gl_PointSize value
-  glPointSize(cellControllerParams.cellSize);
+  glUniform1f(glGetUniformLocation(shaderProgram, "kPointSizeInViewport"),
+              cellControllerParams.cellSize);
+  glUniform1f(
+      glGetUniformLocation(shaderProgram, "kPointSizeInClipSpace"),
+      cellControllerParams.cellSize /
+          static_cast<float>(std::min(cellControllerParams.width, cellControllerParams.height)));
   // Getting CellController::RenderingData
   const CellEvolution::CellController::RenderingData *renderingData =
       cellController.getRenderingData();
@@ -247,6 +270,34 @@ void processUserInput(GLFWwindow *window) {
     if (!sPressed) {
       sPressed     = true;
       gEnablePause = !gEnablePause;
+    }
+  }
+
+  // Toggling window fullscreen mode
+  if (glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS) {
+    released = false;
+    if (!sPressed) {
+      sPressed                   = true;
+      GLFWmonitor       *monitor = glfwGetPrimaryMonitor();
+      const GLFWvidmode *mode    = glfwGetVideoMode(monitor);
+      if (glfwGetWindowMonitor(window) == nullptr) {
+        glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+      } else {
+        glfwSetWindowMonitor(window, nullptr, 0, 0, mode->width, mode->height, mode->refreshRate);
+      }
+    }
+  }
+
+  // Disabling window fullscreen mode if ESC is pressed
+  if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+    released = false;
+    if (!sPressed) {
+      sPressed                   = true;
+      GLFWmonitor       *monitor = glfwGetPrimaryMonitor();
+      const GLFWvidmode *mode    = glfwGetVideoMode(monitor);
+      if (glfwGetWindowMonitor(window) != nullptr) {
+        glfwSetWindowMonitor(window, nullptr, 0, 0, mode->width, mode->height, mode->refreshRate);
+      }
     }
   }
 
