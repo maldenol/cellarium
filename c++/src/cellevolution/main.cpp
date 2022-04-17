@@ -215,11 +215,14 @@ void processUserInput(GLFWwindow *window) {
   static bool sPressed{};
   bool        released{true};
 
+  static int sPosX{}, sPosY{}, sWidth{}, sHeight{};
+
   // Switching cell rendering mode
   if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) {
     released = false;
     if (!sPressed) {
       sPressed = true;
+
       ++gCellRenderingMode;
     }
   }
@@ -229,7 +232,8 @@ void processUserInput(GLFWwindow *window) {
       glfwGetKey(window, GLFW_KEY_KP_SUBTRACT) == GLFW_PRESS) {
     released = false;
     if (!sPressed) {
-      sPressed        = true;
+      sPressed = true;
+
       gTicksPerRender = std::max(gTicksPerRender - 1, 1);
     }
   }
@@ -241,7 +245,8 @@ void processUserInput(GLFWwindow *window) {
       glfwGetKey(window, GLFW_KEY_KP_ADD) == GLFW_PRESS) {
     released = false;
     if (!sPressed) {
-      sPressed        = true;
+      sPressed = true;
+
       gTicksPerRender = std::min(gTicksPerRender + 1, kMaxTicksPerRender);
     }
   }
@@ -250,7 +255,8 @@ void processUserInput(GLFWwindow *window) {
   if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS) {
     released = false;
     if (!sPressed) {
-      sPressed                    = true;
+      sPressed = true;
+
       gEnableRenderingEnvironment = !gEnableRenderingEnvironment;
     }
   }
@@ -259,7 +265,8 @@ void processUserInput(GLFWwindow *window) {
   if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
     released = false;
     if (!sPressed) {
-      sPressed         = true;
+      sPressed = true;
+
       gEnableRendering = !gEnableRendering;
     }
   }
@@ -268,7 +275,8 @@ void processUserInput(GLFWwindow *window) {
   if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
     released = false;
     if (!sPressed) {
-      sPressed     = true;
+      sPressed = true;
+
       gEnablePause = !gEnablePause;
     }
   }
@@ -277,13 +285,12 @@ void processUserInput(GLFWwindow *window) {
   if (glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS) {
     released = false;
     if (!sPressed) {
-      sPressed                   = true;
-      GLFWmonitor       *monitor = glfwGetPrimaryMonitor();
-      const GLFWvidmode *mode    = glfwGetVideoMode(monitor);
+      sPressed = true;
+
       if (glfwGetWindowMonitor(window) == nullptr) {
-        glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+        extra::enableFullscreenMode(window, sPosX, sPosY, sWidth, sHeight);
       } else {
-        glfwSetWindowMonitor(window, nullptr, 0, 0, mode->width, mode->height, mode->refreshRate);
+        extra::disableFullscreenMode(window, sPosX, sPosY, sWidth, sHeight);
       }
     }
   }
@@ -292,11 +299,10 @@ void processUserInput(GLFWwindow *window) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
     released = false;
     if (!sPressed) {
-      sPressed                   = true;
-      GLFWmonitor       *monitor = glfwGetPrimaryMonitor();
-      const GLFWvidmode *mode    = glfwGetVideoMode(monitor);
+      sPressed = true;
+
       if (glfwGetWindowMonitor(window) != nullptr) {
-        glfwSetWindowMonitor(window, nullptr, 0, 0, mode->width, mode->height, mode->refreshRate);
+        extra::disableFullscreenMode(window, sPosX, sPosY, sWidth, sHeight);
       }
     }
   }
