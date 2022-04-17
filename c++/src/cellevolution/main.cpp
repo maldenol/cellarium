@@ -36,6 +36,7 @@ static constexpr int     kInitWindowHeight = 600;
 static const std::string kWindowTitle{"cellevolution"};
 static constexpr int     kOpenGLVersionMajor = 4;
 static constexpr int     kOpenGLVersionMinor = 6;
+static constexpr int     kMaxTicksPerRender  = 1000;
 
 // Global variables
 int  gCellRenderingMode{0};
@@ -218,7 +219,7 @@ void processUserInput(GLFWwindow *window) {
     released = false;
     if (!sPressed) {
       sPressed        = true;
-      gTicksPerRender = std::min(gTicksPerRender + 1, 1000);
+      gTicksPerRender = std::min(gTicksPerRender + 1, kMaxTicksPerRender);
     }
   }
 

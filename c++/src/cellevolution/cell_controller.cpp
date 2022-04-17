@@ -45,6 +45,11 @@ static constexpr float kFirstCellIndexMultiplier{2.5f};
 static constexpr float kLastEnergyShareFadeMultiplier{0.99f};
 // Budded cell parent color multiplier
 static constexpr float kBuddedCellParentColorMultiplier{2.0f};
+// Color constants
+static constexpr float kMinColor           = 0.0f;
+static constexpr float kHalfColor          = 0.5f;
+static constexpr float kThreeQuartersColor = 0.75f;
+static constexpr float kMaxColor           = 1.0f;
 
 // Mathematical constant
 static constexpr float kTwoPi{6.28318530f};
@@ -668,7 +673,7 @@ void CellController::getEnergyFromFood(Cell &cell) noexcept {
   }
 
   // Getting cell at this direction
-  Cell &targetCell = _cellVector[targetIndex];
+  const Cell &targetCell = _cellVector[targetIndex];
 
   // If there is a cell or food
   if (targetCell != Cell{}) {
@@ -740,7 +745,7 @@ void CellController::bud(Cell &cell) noexcept {
   }
 
   // Turning cell into food if it have to but not able to bud
-  turnIntoFood(cell);
+  cell._isAlive = false;
 }
 
 void CellController::mutateRandomGen(Cell &cell) noexcept {
@@ -784,7 +789,7 @@ void CellController::shareEnergy(Cell &cell) noexcept {
   }
 }
 
-void CellController::lookForward(Cell &cell) noexcept {
+void CellController::lookForward(Cell &cell) const noexcept {
   // Calculating coordinates by current direction
   int targetIndex = calculateIndexByIndexAndDirection(cell._index, cell._direction);
 
@@ -794,7 +799,7 @@ void CellController::lookForward(Cell &cell) noexcept {
   }
 
   // Getting cell at this direction
-  Cell &targetCell = _cellVector[targetIndex];
+  const Cell &targetCell = _cellVector[targetIndex];
 
   // If there is a cell or food
   if (targetCell != Cell{}) {
@@ -924,8 +929,6 @@ int CellController::getNextNthGen(const Cell &cell, int n) const noexcept {
   // Getting (counter + n)'th gen
   return cell._genom[(cell._counter + n) % _genomSize];
 }
-
-void CellController::turnIntoFood(Cell &cell) const noexcept { cell._isAlive = false; }
 
 bool CellController::areAkin(const Cell &cell1, const Cell &cell2) const noexcept {
   int diff{};
@@ -1093,9 +1096,9 @@ void CellController::pushRenderingData(const Cell &cell, int cellRenderingMode) 
       float colorVectorLength = std::sqrt(colorR * colorR + colorG * colorG + colorB * colorB);
 
       if (colorVectorLength < 1.0f) {
-        colorR *= 0.0f;
-        colorG *= 0.0f;
-        colorB *= 0.0f;
+        colorR = kMinColor;
+        colorG = kMinColor;
+        colorB = kMinColor;
       } else {
         colorR *= colorVectorLength;
         colorG *= colorVectorLength;
@@ -1105,32 +1108,32 @@ void CellController::pushRenderingData(const Cell &cell, int cellRenderingMode) 
     // Energy level mode
     else if (cellRenderingMode % 4 == 1) {
       colorR = 1.0f;
-      colorG = map(cell._energy, 0.0f, _maxEnergy, 1.0f, 0.0f);
-      colorB = 0.0f;
+      colorG = map(cell._energy, 0.0f, _maxEnergy, kMaxColor, kMinColor);
+      colorB = kMinColor;
     }
     // Energy sharing balance mode
     else if (cellRenderingMode % 4 == 2) {
-      colorR = map(cell._energyShareBalance, -_maxEnergy, _maxEnergy, 1.0f, 0.0f);
-      colorG = map(cell._energyShareBalance, -_maxEnergy, _maxEnergy, 0.5f, 1.0f);
-      colorB = map(cell._energyShareBalance, -_maxEnergy, _maxEnergy, 0.0f, 1.0f);
+      colorR = map(cell._energyShareBalance, -_maxEnergy, _maxEnergy, kMaxColor, kMinColor);
+      colorG = map(cell._energyShareBalance, -_maxEnergy, _maxEnergy, kHalfColor, kMaxColor);
+      colorB = map(cell._energyShareBalance, -_maxEnergy, _maxEnergy, kMinColor, kMaxColor);
     }
     // Last energy share mode
     else {
-      colorR = map(cell._lastEnergyShare, -1.0f, 1.0f, 1.0f, 0.0f);
-      colorG = map(cell._lastEnergyShare, -1.0f, 1.0f, 0.5f, 1.0f);
-      colorB = map(cell._lastEnergyShare, -1.0f, 1.0f, 0.0f, 1.0f);
+      colorR = map(cell._lastEnergyShare, -1.0f, 1.0f, kMaxColor, kMinColor);
+      colorG = map(cell._lastEnergyShare, -1.0f, 1.0f, kHalfColor, kMaxColor);
+      colorB = map(cell._lastEnergyShare, -1.0f, 1.0f, kMinColor, kMaxColor);
     }
   }
   // If cell is dead
   else {
-    colorR = 0.75f;
-    colorG = 0.75f;
-    colorB = 0.75f;
+    colorR = kThreeQuartersColor;
+    colorG = kThreeQuartersColor;
+    colorB = kThreeQuartersColor;
   }
 
   // Updating cell rendering data
   _renderingDataVector[_renderingDataVectorSize] =
-      RenderingData{cell._index, colorR, colorG, colorB, 1.0f};
+      RenderingData{cell._index, colorR, colorG, colorB, kMaxColor};
 
   // Increment _renderingDataVectorSize
   ++_renderingDataVectorSize;

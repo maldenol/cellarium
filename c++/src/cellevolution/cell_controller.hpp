@@ -257,7 +257,7 @@ class CellController {
   void bud(Cell &cell) noexcept;
   void mutateRandomGen(Cell &cell) noexcept;
   void shareEnergy(Cell &cell) noexcept;
-  void lookForward(Cell &cell) noexcept;
+  void lookForward(Cell &cell) const noexcept;
   void determineEnergyLevel(Cell &cell) const noexcept;
   void determineDepth(Cell &cell) const noexcept;
   void determinePhotosynthesisEnergy(Cell &cell) const noexcept;
@@ -268,7 +268,6 @@ class CellController {
   void addGenToCounter(Cell &cell) const noexcept;
   void jumpCounter(Cell &cell, int offset) const noexcept;
   int  getNextNthGen(const Cell &cell, int n) const noexcept;
-  void turnIntoFood(Cell &cell) const noexcept;
   bool areAkin(const Cell &cell1, const Cell &cell2) const noexcept;
 
   // Get surge of energy
