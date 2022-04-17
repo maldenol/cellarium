@@ -56,8 +56,9 @@ class LinkedList {
   LinkedList &operator=(LinkedList &&linkedList) noexcept;
   ~LinkedList() noexcept;
 
-  void pushFront(const T &value) noexcept;
-  void remove(const T &value) noexcept;
+  int pushFront(const T &value) noexcept;
+  int replace(const T &value, const T &newValue) noexcept;
+  int remove(const T &value) noexcept;
 
   size_t count() const noexcept;
 

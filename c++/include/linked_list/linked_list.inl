@@ -47,39 +47,78 @@ LinkedList<T>::~LinkedList() noexcept {
   // Until current is not null
   while (currElem != nullptr) {
     // Removing current element
-    currElem->value = nullptr;
     currElem = currElem->next;
   }
 }
 
 template<typename T>
-void LinkedList<T>::pushFront(const T &value) noexcept {
+int LinkedList<T>::pushFront(const T &value) noexcept {
   // Considering the value is not in the list yet
-  _first = std::make_shared<Element>(Element{_first, value});
+
+  // Creating new element with given value
+  Element *newElementPtr = new(std::nothrow) Element{_first, value};
+
+  // If failed to allocate memory
+  if (newElementPtr == nullptr) {
+    // Value is not added
+    return -1;
+  }
+
+  _first = std::shared_ptr<Element>(newElementPtr);
+  // Value is added
+  return 0;
 }
 
 template<typename T>
-void LinkedList<T>::remove(const T &value) noexcept {
+int LinkedList<T>::replace(const T &value, const T &newValue) noexcept {
+  // Considering the value is unique
+
+  std::shared_ptr<Element> currElem{_first};
+
+  // Until current is not null
+  while (currElem != nullptr) {
+    // If value is found
+
+    if (currElem->value == value) {
+      // Replacing value of current element with the new one
+      currElem->value = newValue;
+
+      // Value is found
+      return 0;
+    }
+
+    // Keep searching
+    currElem = currElem->next;
+  }
+
+  // Value is not found
+  return -1;
+}
+
+template<typename T>
+int LinkedList<T>::remove(const T &value) noexcept {
+  // Considering the value is unique
+
   std::shared_ptr<Element> prevElem{};
   std::shared_ptr<Element> currElem{_first};
 
   // Until current is not null
   while (currElem != nullptr) {
     // If value is found
-    // Considering the value is unique
     if (currElem->value == value) {
-      // If current element is not the first one
-      if (prevElem != nullptr) {
-        // Removing current element
-        prevElem->next  = currElem->next;
-      }
       // If current element is the first one
+      if (prevElem == nullptr) {
+        // Removing current element
+        _first = currElem->next;
+      }
+      // If current element is not the first one
       else {
         // Removing current element
-        _first          = currElem->next;
+        prevElem->next = currElem->next;
       }
 
-      return;
+      // Value is found
+      return 0;
     }
 
     // Keep searching
@@ -88,6 +127,7 @@ void LinkedList<T>::remove(const T &value) noexcept {
   }
 
   // Value is not found
+  return -1;
 }
 
 template<typename T>

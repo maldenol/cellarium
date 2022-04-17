@@ -109,11 +109,10 @@ CellController::CellController(const Params &params)
   std::vector<int> firstCellGenom;
   firstCellGenom.assign(_genomSize, kFirstCellGenomInstructions);
   firstCellGenom.reserve(_genomSize);
-  addCell(std::make_shared<Cell>(
-      firstCellGenom,
-      static_cast<int>(static_cast<float>(_minChildEnergy) * kFirstCellEnergyMultiplier),
-      kFirstCellDirection,
-      static_cast<int>(static_cast<float>(_columns) * kFirstCellIndexMultiplier)));
+  addCell(Cell{firstCellGenom,
+               static_cast<int>(static_cast<float>(_minChildEnergy) * kFirstCellEnergyMultiplier),
+               kFirstCellDirection,
+               static_cast<int>(static_cast<float>(_columns) * kFirstCellIndexMultiplier)});
 
   // Allocating memory for vectors of energy surge for optimization when rendering environment
   _surgeOfPhotosynthesisEnergy.assign(_columns * _maxPhotosynthesisDepth, 0);
@@ -339,10 +338,9 @@ void CellController::act(bool enableRenderingEnvironment) noexcept {
   }
 
   // Going through all cells sequently
-  LinkedList<std::shared_ptr<Cell>>::Iterator iter{_cellPtrList.getIterator()};
+  LinkedList<int>::Iterator iter{_cellIndexList.getIterator()};
   while (iter.hasNext()) {
-    std::shared_ptr<Cell> &cellPtr{iter.next()};
-    Cell                  &cell = *cellPtr;
+    Cell &cell = _cellVector[iter.next()];
 
     // Moving cell if it is dead
     if (!cell._isAlive) {
@@ -354,7 +352,7 @@ void CellController::act(bool enableRenderingEnvironment) noexcept {
     cell._energy--;
     // Removing cell if its energy is less than one
     if (cell._energy <= 0) {
-      removeCell(cellPtr);
+      removeCell(cell);
       continue;
     }
     // Making cell bud if its energy greater or equals to maximal
@@ -504,9 +502,9 @@ void CellController::updateRenderingData(bool enableRenderingEnvironment, int ce
   _renderingDataVectorSize = 0;
 
   // Rendering each cell
-  LinkedList<std::shared_ptr<Cell>>::Iterator iter{_cellPtrList.getIterator()};
+  LinkedList<int>::Iterator iter{_cellIndexList.getIterator()};
   while (iter.hasNext()) {
-    const Cell &cell = *iter.next();
+    const Cell &cell = _cellVector[iter.next()];
 
     pushRenderingData(cell, cellRenderingMode);
   }
@@ -568,9 +566,9 @@ void CellController::gammaFlash() noexcept {
               _gammaFlashPeriodInDays ==
           0) {
     // For each cell
-    LinkedList<std::shared_ptr<Cell>>::Iterator iter{_cellPtrList.getIterator()};
+    LinkedList<int>::Iterator iter{_cellIndexList.getIterator()};
     while (iter.hasNext()) {
-      Cell &cell = *iter.next();
+      Cell &cell = _cellVector[iter.next()];
 
       // Ignoring if cell is dead
       if (!cell._isAlive) {
@@ -620,8 +618,9 @@ void CellController::move(Cell &cell) noexcept {
 
   // If there is nothing at this direction
   if (_cellVector[targetIndex] == Cell{}) {
-    _cellVector[targetIndex] = cell;
-    _cellVector[cell._index] = Cell{};
+    _cellVector[targetIndex] = std::move(cell);
+
+    _cellIndexList.replace(cell._index, targetIndex);
 
     cell._index = targetIndex;
   }
@@ -683,7 +682,7 @@ void CellController::getEnergyFromFood(Cell &cell) noexcept {
     ++cell._colorR;
 
     // Removing prey or food
-    removeCell(std::shared_ptr<Cell>{&targetCell});
+    removeCell(targetCell);
   }
 }
 
@@ -707,24 +706,23 @@ void CellController::bud(Cell &cell) noexcept {
     // If there is nothing at this direction
     if (_cellVector[targetIndex] == Cell{}) {
       // Creating new cell
-      std::shared_ptr<Cell> buddedCell{
-          std::make_shared<Cell>(cell._genom, cell._energy / 2, cell._direction, targetIndex)};
+      Cell buddedCell{cell._genom, cell._energy / 2, cell._direction, targetIndex};
 
       // Assigning cell color
       float colorVectorLength = static_cast<float>(std::sqrt(
           cell._colorR * cell._colorR + cell._colorG * cell._colorG + cell._colorB * cell._colorB));
-      buddedCell->_colorR     = static_cast<int>(static_cast<float>(cell._colorR) *
-                                             kBuddedCellParentColorMultiplier / colorVectorLength);
-      buddedCell->_colorG     = static_cast<int>(static_cast<float>(cell._colorG) *
-                                             kBuddedCellParentColorMultiplier / colorVectorLength);
-      buddedCell->_colorB     = static_cast<int>(static_cast<float>(cell._colorB) *
-                                             kBuddedCellParentColorMultiplier / colorVectorLength);
+      buddedCell._colorR      = static_cast<int>(static_cast<float>(cell._colorR) *
+                                            kBuddedCellParentColorMultiplier / colorVectorLength);
+      buddedCell._colorG      = static_cast<int>(static_cast<float>(cell._colorG) *
+                                            kBuddedCellParentColorMultiplier / colorVectorLength);
+      buddedCell._colorB      = static_cast<int>(static_cast<float>(cell._colorB) *
+                                            kBuddedCellParentColorMultiplier / colorVectorLength);
 
       // Applying random bud mutation to the budded cell
       if (static_cast<float>(_mersenneTwisterEngine()) /
               static_cast<float>(_mersenneTwisterEngine.max()) <
           _budMutationChance) {
-        mutateRandomGen(*buddedCell);
+        mutateRandomGen(buddedCell);
       }
 
       // Applying random bud mutation to current cell
@@ -1065,19 +1063,19 @@ int CellController::calculateIndexByIndexAndDirection(int index, int direction) 
   return calculateIndexByColumnAndRow(c, r);
 }
 
-void CellController::addCell(const std::shared_ptr<Cell> &cellPtr) noexcept {
-  _cellVector[cellPtr->_index] = *cellPtr;
+void CellController::addCell(const Cell &cell) noexcept {
+  _cellVector[cell._index] = cell;
 
   // Pushing cell to the front of the linked list
   // so it will be processed not earlier than the next tick
   // and before older cells (younger cells have smaller "reaction time")
-  _cellPtrList.pushFront(cellPtr);
+  _cellIndexList.pushFront(cell._index);
 }
 
-void CellController::removeCell(const std::shared_ptr<Cell> &cellPtr) noexcept {
-  _cellVector[cellPtr->_index] = Cell{};
+void CellController::removeCell(const Cell &cell) noexcept {
+  _cellVector[cell._index] = Cell{};
 
-  _cellPtrList.remove(cellPtr);
+  _cellIndexList.remove(cell._index);
 }
 
 void CellController::pushRenderingData(const Cell &cell, int cellRenderingMode) {

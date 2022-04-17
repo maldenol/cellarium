@@ -200,8 +200,8 @@ class CellController {
   bool _enableInstructionDetermineMineralEnergy{};
   bool _enableDeadCellPinningOnSinking{};
 
-  // Linked list of cell pointers for quick consequent access
-  LinkedList<std::shared_ptr<Cell>> _cellPtrList{};
+  // Linked list of cell indices for quick consequent access
+  LinkedList<int> _cellIndexList{};
   // Vector of cells for quick random access
   std::vector<Cell> _cellVector{};
 
@@ -284,8 +284,8 @@ class CellController {
   int calculateIndexByIndexAndDirection(int index, int direction) const noexcept;
 
   // Add and remove cells
-  void addCell(const std::shared_ptr<Cell> &cellPtr) noexcept;
-  void removeCell(const std::shared_ptr<Cell> &cellPtr) noexcept;
+  void addCell(const Cell &cell) noexcept;
+  void removeCell(const Cell &cell) noexcept;
 
   // Pushes rendering data to its vector
   void pushRenderingData(const Cell &cell, int cellRenderingMode);

@@ -22,7 +22,10 @@
 // Using header file namespace
 using namespace CellEvolution;
 
-Cell::Cell() noexcept : _index{-1} {};
+// Global constants
+constexpr int kInitIndex{-1};
+
+Cell::Cell() noexcept : _index{kInitIndex} {};
 
 Cell::Cell(const std::vector<int> &genom, int energy, int direction, int index)
     : _genom{genom}, _energy{energy}, _direction{direction}, _index{index}, _isAlive{true} {}
@@ -63,7 +66,7 @@ Cell::Cell(Cell &&cell) noexcept
       _counter{std::exchange(cell._counter, 0)},
       _energy{std::exchange(cell._energy, 0)},
       _direction{std::exchange(cell._direction, 0)},
-      _index{std::exchange(cell._index, 0)},
+      _index{std::exchange(cell._index, kInitIndex)},
       _colorR{std::exchange(cell._colorR, 0)},
       _colorG{std::exchange(cell._colorG, 0)},
       _colorB{std::exchange(cell._colorB, 0)},
