@@ -38,8 +38,8 @@ static constexpr int     kOpenGLVersionMajor               = 4;
 static constexpr int     kOpenGLVersionMinor               = 6;
 static constexpr int     kMaxTicksPerRender                = 1000;
 static constexpr float   kCellSize                         = 8.0f;
-static constexpr float   kMaxPhotosynthesisDepthMultiplier = 8.0f;
-static constexpr float   kMaxMineralHeightMultiplier       = 8.0f;
+static constexpr float   kMaxPhotosynthesisDepthMultiplier = 0.7f;
+static constexpr float   kMaxMineralHeightMultiplier       = 0.7f;
 
 // Global variables
 int  gCellRenderingMode{0};
@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
                   "  int r   = aIndex / kColumns;\n"
                   "  float x = 2.0f * c / kColumns - 1.0f;\n"
                   "  float y = 2.0f * r / kRows - 1.0f;\n"
-                  "  x += kPointSizeInClipSpace;\n"
+                  "  x += kPointSizeInClipSpace / 2.0f;\n"
                   "  y += kPointSizeInClipSpace;\n"
                   "  gl_Position  = vec4(x, -y, 0.0f, 1.0f);\n"
                   "  gl_PointSize = kPointSizeInViewport;\n"

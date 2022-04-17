@@ -87,8 +87,11 @@ int LinkedList<T>::pushFront(const T &value) noexcept {
     return -1;
   }
 
+  // Adding value
   _first = std::shared_ptr<Element>(newElementPtr);
+
   // Value is added
+  ++_elementCount;
   return 0;
 }
 
@@ -141,6 +144,7 @@ int LinkedList<T>::remove(const T &value) noexcept {
       }
 
       // Value is found
+      --_elementCount;
       return 0;
     }
 
@@ -154,21 +158,7 @@ int LinkedList<T>::remove(const T &value) noexcept {
 }
 
 template<typename T>
-size_t LinkedList<T>::count() const noexcept {
-  size_t elementCount{};
-
-  std::shared_ptr<Element> currElem{_first};
-
-  // Until current is not null
-  while (currElem != nullptr) {
-    ++elementCount;
-
-    // Keep looking
-    currElem = currElem->next;
-  }
-
-  return elementCount;
-}
+size_t LinkedList<T>::count() const noexcept { return _elementCount; }
 
 template<typename T>
 const typename LinkedList<T>::Iterator LinkedList<T>::getIterator() const noexcept { return Iterator{_first}; }

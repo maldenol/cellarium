@@ -45,11 +45,6 @@ static constexpr float kFirstCellIndexMultiplier{2.5f};
 static constexpr float kLastEnergyShareFadeMultiplier{0.99f};
 // Budded cell parent color multiplier
 static constexpr float kBuddedCellParentColorMultiplier{2.0f};
-// Color constants
-static constexpr float kMinColor           = 0.0f;
-static constexpr float kHalfColor          = 0.5f;
-static constexpr float kThreeQuartersColor = 0.75f;
-static constexpr float kMaxColor           = 1.0f;
 
 // Mathematical constant
 static constexpr float kTwoPi{6.28318530f};
@@ -705,7 +700,7 @@ void CellController::getEnergyFromMinerals(Cell &cell) const noexcept {
 }
 
 void CellController::getEnergyFromFood(Cell &cell) noexcept {
-  // Calculating coordinates by current direction
+  // Calculating coordinates by current index and direction
   int targetIndex = calculateIndexByIndexAndDirection(cell._index, cell._direction);
 
   // If coordinates are beyond simulation world (above top or below bottom)
@@ -740,7 +735,7 @@ void CellController::bud(Cell &cell) noexcept {
 
   // Checking each direction clockwise for ability to bud
   for (int i = 0; i < kDirectionCount; ++i) {
-    // Calculating coordinates by current direction
+    // Calculating coordinates by current index and direction
     int targetIndex =
         calculateIndexByIndexAndDirection(cell._index, (cell._direction + i) % kDirectionCount);
 
@@ -799,7 +794,7 @@ void CellController::mutateRandomGen(Cell &cell) noexcept {
 }
 
 void CellController::shareEnergy(Cell &cell) noexcept {
-  // Calculating coordinates by current direction
+  // Calculating coordinates by current index and direction
   int targetIndex = calculateIndexByIndexAndDirection(cell._index, cell._direction);
 
   // If coordinates are beyond simulation world (above top or below bottom)
@@ -831,7 +826,7 @@ void CellController::shareEnergy(Cell &cell) noexcept {
 }
 
 void CellController::lookForward(Cell &cell) const noexcept {
-  // Calculating coordinates by current direction
+  // Calculating coordinates by current index and direction
   int targetIndex = calculateIndexByIndexAndDirection(cell._index, cell._direction);
 
   // If coordinates are beyond simulation world (above top or below bottom)
@@ -1108,21 +1103,25 @@ int CellController::calculateIndexByIndexAndDirection(int index, int direction) 
 }
 
 void CellController::addCell(const Cell &cell) noexcept {
-  _cellVector[cell._index] = cell;
-
   // Pushing cell to the front of the linked list
   // so it will be processed not earlier than the next tick
   // and before older cells (younger cells have smaller "reaction time")
   _cellIndexList.pushFront(cell._index);
+  _cellVector[cell._index] = cell;
 }
 
 void CellController::removeCell(const Cell &cell) noexcept {
-  _cellVector[cell._index] = Cell{};
-
   _cellIndexList.remove(cell._index);
+  _cellVector[cell._index] = Cell{};
 }
 
 void CellController::pushRenderingData(const Cell &cell, int cellRenderingMode) {
+  // Local constants
+  static constexpr float kMinColor           = 0.0f;
+  static constexpr float kHalfColor          = 0.5f;
+  static constexpr float kThreeQuartersColor = 0.75f;
+  static constexpr float kMaxColor           = 1.0f;
+
   float colorR{}, colorG{}, colorB{};
 
   // If cell is alive
@@ -1141,9 +1140,9 @@ void CellController::pushRenderingData(const Cell &cell, int cellRenderingMode) 
         colorG = kMinColor;
         colorB = kMinColor;
       } else {
-        colorR *= colorVectorLength;
-        colorG *= colorVectorLength;
-        colorB *= colorVectorLength;
+        colorR /= colorVectorLength;
+        colorG /= colorVectorLength;
+        colorB /= colorVectorLength;
       }
     }
     // Energy level mode

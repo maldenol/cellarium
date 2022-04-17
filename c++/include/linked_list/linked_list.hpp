@@ -30,6 +30,8 @@ class LinkedList {
 
   std::shared_ptr<Element> _first{};
 
+  int _elementCount{};
+
  public:
   // Linked list iterator implementation class
   class Iterator {
