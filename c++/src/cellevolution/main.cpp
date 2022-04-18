@@ -67,10 +67,10 @@ int main(int argc, char *argv[]) {
   const std::vector<std::string> shaderSources{
       std::string{"#version 460 core\n"
                   "\n"
-                  "uniform int   kColumns                = 1;\n"
-                  "uniform int   kRows                   = 1;\n"
-                  "uniform float kPointSizeInViewport    = 10.0f;\n"
-                  "uniform float kPointSizeInClipSpace   = 0.02f;\n"
+                  "uniform int   kColumns              = 1;\n"
+                  "uniform int   kRows                 = 1;\n"
+                  "uniform float kPointSizeInViewport  = 10.0f;\n"
+                  "uniform float kPointSizeInClipSpace = 0.02f;\n"
                   "\n"
                   "layout (location = 0) in int  aIndex;\n"
                   "layout (location = 1) in vec4 aColor;\n"
@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
   // Using shader program
   glUseProgram(shaderProgram);
 
-  // Initializing simulation parameters and simulation itself
+  // Initializing simulation parameters
   CellEvolution::CellController::Params cellControllerParams{};
   cellControllerParams.width    = kInitWindowWidth;
   cellControllerParams.height   = kInitWindowHeight;
@@ -115,9 +115,17 @@ int main(int argc, char *argv[]) {
       static_cast<float>(cellControllerParams.rows) * kMaxPhotosynthesisDepthMultiplier);
   cellControllerParams.maxMineralHeight =
       static_cast<int>(static_cast<float>(cellControllerParams.rows) * kMaxMineralHeightMultiplier);
+  // Initializing simulation itself
   CellEvolution::CellController cellController{cellControllerParams};
+
+  // Initializing maxEnvironmentRenderDataCount constant
+  const int maxEnvironmentRenderDataCount{
+      cellControllerParams.columns *
+      (cellControllerParams.maxPhotosynthesisDepth + cellControllerParams.maxMineralHeight)};
+
   // Setting OpenGL viewport
   glViewport(0, 0, cellControllerParams.width, cellControllerParams.height);
+
   // Setting values of shaderProgram uniform variables
   glUniform1i(glGetUniformLocation(shaderProgram, "kColumns"), cellControllerParams.columns);
   glUniform1i(glGetUniformLocation(shaderProgram, "kRows"), cellControllerParams.rows);
@@ -135,10 +143,11 @@ int main(int argc, char *argv[]) {
   GLuint vbo{};
   glGenBuffers(1, &vbo);
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  glBufferData(GL_ARRAY_BUFFER,
-               static_cast<long>(cellControllerParams.columns * cellControllerParams.rows *
-                                 sizeof(CellEvolution::CellController::RenderingData)),
-               nullptr, GL_DYNAMIC_DRAW);
+  const long maxRenderingDataCount =
+      static_cast<long>(cellControllerParams.columns * cellControllerParams.rows +
+                        maxEnvironmentRenderDataCount) *
+      static_cast<long>(sizeof(CellEvolution::CellController::RenderingData));
+  glBufferData(GL_ARRAY_BUFFER, maxRenderingDataCount, nullptr, GL_DYNAMIC_DRAW);
   glVertexAttribIPointer(0, 1, GL_INT, sizeof(CellEvolution::CellController::RenderingData),
                          reinterpret_cast<void *>(0));
   glEnableVertexAttribArray(0);
@@ -152,6 +161,10 @@ int main(int argc, char *argv[]) {
 
   // Setting OpenGL clear color
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+  // Enable blending for environment rendering
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnable(GL_BLEND);
 
   // Removing FPS limit
   glfwSwapInterval(0);
@@ -168,8 +181,7 @@ int main(int argc, char *argv[]) {
     processUserInput(window);
 
     // Checking if current tick should be rendered
-    bool renderCurrTick             = gEnableRendering && (ticksPassed % gTicksPerRender == 0);
-    bool enableRenderingEnvironment = renderCurrTick && gEnableRenderingEnvironment;
+    bool renderCurrTick = gEnableRendering && (ticksPassed % gTicksPerRender == 0);
 
     // If simulation is not paused
     if (!gEnablePause) {
@@ -186,13 +198,16 @@ int main(int argc, char *argv[]) {
       glClear(GL_COLOR_BUFFER_BIT);
 
       // Getting current count of cells in simulation
-      int renderingDataSize{cellController.getCellCount()};
+      int renderingDataSize{static_cast<int>(cellController.getCellCount())};
+      if (gEnableRenderingEnvironment) {
+        renderingDataSize += maxEnvironmentRenderDataCount;
+      }
       // Mapping VBO buffer partly
       CellEvolution::CellController::RenderingData *renderingData =
           reinterpret_cast<CellEvolution::CellController::RenderingData *>(
               glMapBufferRange(GL_ARRAY_BUFFER, 0, renderingDataSize, GL_MAP_WRITE_BIT));
       // Passing VBO buffer to CellController that fills it with rendering data
-      cellController.render(renderingData, gCellRenderingMode);
+      cellController.render(renderingData, gCellRenderingMode, gEnableRenderingEnvironment);
       // Rendering cells
       glDrawArrays(GL_POINTS, 0, renderingDataSize);
       // Unmapping VBO buffer
@@ -254,7 +269,7 @@ void processUserInput(GLFWwindow *window) {
   }
 
   // Toggling rendering environment flag
-  if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS) {
+  if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
     released = false;
     if (!sPressed) {
       sPressed = true;

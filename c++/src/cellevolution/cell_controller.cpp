@@ -527,19 +527,56 @@ void CellController::act() noexcept {
   gammaFlash();
 }
 
-void CellController::render(RenderingData *renderingData, int cellRenderingMode) {
+void CellController::render(RenderingData *renderingData, int cellRenderingMode,
+                            bool renderEnvironment) {
+  // Local constants
+  static constexpr float kMinColor           = 0.0f;
+  static constexpr float kHalfColor          = 0.5f;
+  static constexpr float kThreeQuartersColor = 0.75f;
+  static constexpr float kMaxColor           = 1.0f;
+
   // Initializing count of RenderingData objects
   int renderingDataCount{};
+
+  // If environment rendering is enabled
+  if (renderEnvironment) {
+    // For each column
+    for (int c = 0; c < _columns; ++c) {
+      // For each row where photosynthesis energy can be gotten
+      for (int r = 0; r < _maxPhotosynthesisDepth; ++r) {
+        int index = calculateIndexByColumnAndRow(c, r);
+
+        float colorA = map(calculatePhotosynthesisEnergy(index), 0.0f, _maxPhotosynthesisEnergy,
+                           kMinColor, kThreeQuartersColor);
+
+        // Putting environment rendering data to array
+        renderingData[renderingDataCount] =
+            RenderingData{index, kMaxColor, kMaxColor, kMinColor, colorA};
+
+        // Incrementing count of RenderingData objects
+        ++renderingDataCount;
+      }
+
+      // For each row where mineral energy can be gotten
+      for (int r = _rows - _maxMineralHeight; r < _rows; ++r) {
+        int index = calculateIndexByColumnAndRow(c, r);
+
+        float colorA = map(calculateMineralEnergy(index), 0.0f, _maxMineralEnergy, kMinColor,
+                           kThreeQuartersColor);
+
+        // Putting environment rendering data to array
+        renderingData[renderingDataCount] =
+            RenderingData{index, kMinColor, kMinColor, kMaxColor, colorA};
+
+        // Incrementing count of RenderingData objects
+        ++renderingDataCount;
+      }
+    }
+  }
 
   // Rendering each cell and putting its rendering data to array
   LinkedList<int>::Iterator iter{_cellIndexList.getIterator()};
   while (iter.hasNext()) {
-    // Local constants
-    static constexpr float kMinColor           = 0.0f;
-    static constexpr float kHalfColor          = 0.5f;
-    static constexpr float kThreeQuartersColor = 0.75f;
-    static constexpr float kMaxColor           = 1.0f;
-
     const Cell &cell = _cellVector[iter.next()];
 
     float colorR{}, colorG{}, colorB{};
@@ -600,7 +637,7 @@ void CellController::render(RenderingData *renderingData, int cellRenderingMode)
   }
 }
 
-int CellController::getCellCount() const noexcept { return _cellIndexList.count(); }
+size_t CellController::getCellCount() const noexcept { return _cellIndexList.count(); }
 
 void CellController::updateTime() noexcept {
   // Updating ticks

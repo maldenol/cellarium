@@ -205,7 +205,7 @@ class CellController {
   // Vector of cells for quick random access
   std::vector<Cell> _cellVector{};
 
-  // Simulation clock (counts ticks)
+  // Simulation time counters
   int _ticksNumber{};
   int _yearsNumber{};
 
@@ -222,11 +222,11 @@ class CellController {
   // Computes one simulation tick
   void act() noexcept;
 
-  // Puts RenderingData of each cell according to cellRenderingMode to given array
-  void render(RenderingData *renderingData, int cellRenderingMode);
+  // Puts RenderingData of each cell to given array
+  void render(RenderingData *renderingData, int cellRenderingMode = 0, bool renderEnvironment = false);
 
   // Returns count of cells
-  int getCellCount() const noexcept;
+  size_t getCellCount() const noexcept;
 
  private:
   // Updates tick counters
