@@ -209,10 +209,6 @@ class CellController {
   int _ticksNumber{};
   int _yearsNumber{};
 
-  // Vector of cell rendering data and its size
-  std::vector<RenderingData> _renderingDataVector{};
-  int                        _renderingDataVectorSize{};
-
  public:
   // Constructors
   CellController();
@@ -226,12 +222,11 @@ class CellController {
   // Computes one simulation tick
   void act() noexcept;
 
-  // Updates rendering data vector
-  void updateRenderingData(int cellRenderingMode);
+  // Puts RenderingData of each cell according to cellRenderingMode to given array
+  void render(RenderingData *renderingData, int cellRenderingMode);
 
-  // Gets rendering data vector and its size
-  const RenderingData *getRenderingData() const noexcept;
-  int                  getRenderingDataSize() const noexcept;
+  // Returns count of cells
+  int getCellCount() const noexcept;
 
  private:
   // Updates tick counters
@@ -275,9 +270,6 @@ class CellController {
   // Add and remove cells
   void addCell(const Cell &cell) noexcept;
   void removeCell(const Cell &cell) noexcept;
-
-  // Pushes rendering data to its vector
-  void pushRenderingData(const Cell &cell, int cellRenderingMode);
 };
 
 }

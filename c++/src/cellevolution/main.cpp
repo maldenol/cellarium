@@ -127,9 +127,6 @@ int main(int argc, char *argv[]) {
       glGetUniformLocation(shaderProgram, "kPointSizeInClipSpace"),
       cellControllerParams.cellSize /
           static_cast<float>(std::min(cellControllerParams.width, cellControllerParams.height)));
-  // Getting CellController::RenderingData
-  const CellEvolution::CellController::RenderingData *renderingData =
-      cellController.getRenderingData();
 
   // Initializing and configuring OpenGL Vertex Array and Buffer Objects for rendering simulation
   GLuint vao{};
@@ -155,6 +152,9 @@ int main(int argc, char *argv[]) {
 
   // Setting OpenGL clear color
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+  // Removing FPS limit
+  glfwSwapInterval(0);
 
   // Initializing ticks passed value
   int ticksPassed{};
@@ -185,16 +185,18 @@ int main(int argc, char *argv[]) {
       // Clearing color buffer
       glClear(GL_COLOR_BUFFER_BIT);
 
-      // Updating rendering data of simulation
-      cellController.updateRenderingData(gCellRenderingMode);
-
-      // Rendering simulation
-      int renderingDataSize = cellController.getRenderingDataSize();
-      glBufferSubData(GL_ARRAY_BUFFER, 0,
-                      renderingDataSize *
-                          static_cast<long>(sizeof(CellEvolution::CellController::RenderingData)),
-                      renderingData);
+      // Getting current count of cells in simulation
+      int renderingDataSize{cellController.getCellCount()};
+      // Mapping VBO buffer partly
+      CellEvolution::CellController::RenderingData *renderingData =
+          reinterpret_cast<CellEvolution::CellController::RenderingData *>(
+              glMapBufferRange(GL_ARRAY_BUFFER, 0, renderingDataSize, GL_MAP_WRITE_BIT));
+      // Passing VBO buffer to CellController that fills it with rendering data
+      cellController.render(renderingData, gCellRenderingMode);
+      // Rendering cells
       glDrawArrays(GL_POINTS, 0, renderingDataSize);
+      // Unmapping VBO buffer
+      glUnmapBuffer(GL_ARRAY_BUFFER);
 
       // Swapping front and back buffers
       glfwSwapBuffers(window);

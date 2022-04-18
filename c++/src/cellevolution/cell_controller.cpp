@@ -144,10 +144,6 @@ CellController::CellController(const Params &params)
                static_cast<int>(static_cast<float>(_minChildEnergy) * kFirstCellEnergyMultiplier),
                kFirstCellDirection,
                static_cast<int>(static_cast<float>(_columns) * kFirstCellIndexMultiplier)});
-
-  // Allocating memory for vector of cell positions and colors for rendering
-  _renderingDataVector.assign(_columns * _rows, RenderingData{});
-  _renderingDataVector.reserve(_columns * _rows);
 }
 
 CellController::CellController(const CellController &cellController) noexcept
@@ -198,9 +194,7 @@ CellController::CellController(const CellController &cellController) noexcept
       _cellIndexList{cellController._cellIndexList},
       _cellVector{cellController._cellVector},
       _ticksNumber{cellController._ticksNumber},
-      _yearsNumber{cellController._yearsNumber},
-      _renderingDataVector{cellController._renderingDataVector},
-      _renderingDataVectorSize{cellController._renderingDataVectorSize} {}
+      _yearsNumber{cellController._yearsNumber} {}
 
 CellController &CellController::operator=(const CellController &cellController) noexcept {
   _mersenneTwisterEngine        = cellController._mersenneTwisterEngine;
@@ -250,8 +244,6 @@ CellController &CellController::operator=(const CellController &cellController) 
   _cellVector                     = cellController._cellVector;
   _ticksNumber                    = cellController._ticksNumber;
   _yearsNumber                    = cellController._yearsNumber;
-  _renderingDataVector            = cellController._renderingDataVector;
-  _renderingDataVectorSize        = cellController._renderingDataVectorSize;
 
   return *this;
 }
@@ -312,10 +304,7 @@ CellController::CellController(CellController &&cellController) noexcept
       _cellIndexList{std::exchange(cellController._cellIndexList, LinkedList<int>{})},
       _cellVector{std::exchange(cellController._cellVector, std::vector<Cell>{})},
       _ticksNumber{std::exchange(cellController._ticksNumber, 0)},
-      _yearsNumber{std::exchange(cellController._yearsNumber, 0)},
-      _renderingDataVector{
-          std::exchange(cellController._renderingDataVector, std::vector<RenderingData>{})},
-      _renderingDataVectorSize{std::exchange(cellController._renderingDataVectorSize, 0)} {}
+      _yearsNumber{std::exchange(cellController._yearsNumber, 0)} {}
 
 CellController &CellController::operator=(CellController &&cellController) noexcept {
   std::swap(_mersenneTwisterEngine, cellController._mersenneTwisterEngine);
@@ -368,8 +357,6 @@ CellController &CellController::operator=(CellController &&cellController) noexc
   std::swap(_cellVector, cellController._cellVector);
   std::swap(_ticksNumber, cellController._ticksNumber);
   std::swap(_yearsNumber, cellController._yearsNumber);
-  std::swap(_renderingDataVector, cellController._renderingDataVector);
-  std::swap(_renderingDataVectorSize, cellController._renderingDataVectorSize);
 
   return *this;
 }
@@ -540,24 +527,80 @@ void CellController::act() noexcept {
   gammaFlash();
 }
 
-void CellController::updateRenderingData(int cellRenderingMode) {
-  // Resetting _renderingDataVectorSize
-  _renderingDataVectorSize = 0;
+void CellController::render(RenderingData *renderingData, int cellRenderingMode) {
+  // Initializing count of RenderingData objects
+  int renderingDataCount{};
 
-  // Rendering each cell
+  // Rendering each cell and putting its rendering data to array
   LinkedList<int>::Iterator iter{_cellIndexList.getIterator()};
   while (iter.hasNext()) {
+    // Local constants
+    static constexpr float kMinColor           = 0.0f;
+    static constexpr float kHalfColor          = 0.5f;
+    static constexpr float kThreeQuartersColor = 0.75f;
+    static constexpr float kMaxColor           = 1.0f;
+
     const Cell &cell = _cellVector[iter.next()];
 
-    pushRenderingData(cell, cellRenderingMode);
+    float colorR{}, colorG{}, colorB{};
+
+    // If cell is alive
+    if (cell._isAlive) {
+      // Diet mode
+      if (cellRenderingMode % 4 == 0) {
+        // Normalizing color and reducing it to range from 0 to 255
+        colorR = static_cast<float>(cell._colorR);
+        colorG = static_cast<float>(cell._colorG);
+        colorB = static_cast<float>(cell._colorB);
+
+        float colorVectorLength = std::sqrt(colorR * colorR + colorG * colorG + colorB * colorB);
+
+        if (colorVectorLength < 1.0f) {
+          colorR = kMinColor;
+          colorG = kMinColor;
+          colorB = kMinColor;
+        } else {
+          colorR /= colorVectorLength;
+          colorG /= colorVectorLength;
+          colorB /= colorVectorLength;
+        }
+      }
+      // Energy level mode
+      else if (cellRenderingMode % 4 == 1) {
+        colorR = 1.0f;
+        colorG = map(cell._energy, 0.0f, _maxEnergy, kMaxColor, kMinColor);
+        colorB = kMinColor;
+      }
+      // Energy sharing balance mode
+      else if (cellRenderingMode % 4 == 2) {
+        colorR = map(cell._energyShareBalance, -_maxEnergy, _maxEnergy, kMaxColor, kMinColor);
+        colorG = map(cell._energyShareBalance, -_maxEnergy, _maxEnergy, kHalfColor, kMaxColor);
+        colorB = map(cell._energyShareBalance, -_maxEnergy, _maxEnergy, kMinColor, kMaxColor);
+      }
+      // Last energy share mode
+      else {
+        colorR = map(cell._lastEnergyShare, -1.0f, 1.0f, kMaxColor, kMinColor);
+        colorG = map(cell._lastEnergyShare, -1.0f, 1.0f, kHalfColor, kMaxColor);
+        colorB = map(cell._lastEnergyShare, -1.0f, 1.0f, kMinColor, kMaxColor);
+      }
+    }
+    // If cell is dead
+    else {
+      colorR = kThreeQuartersColor;
+      colorG = kThreeQuartersColor;
+      colorB = kThreeQuartersColor;
+    }
+
+    // Putting cell rendering data to array
+    renderingData[renderingDataCount] =
+        RenderingData{cell._index, colorR, colorG, colorB, kMaxColor};
+
+    // Incrementing count of RenderingData objects
+    ++renderingDataCount;
   }
 }
 
-const CellController::RenderingData *CellController::getRenderingData() const noexcept {
-  return &_renderingDataVector[0];
-}
-
-int CellController::getRenderingDataSize() const noexcept { return _renderingDataVectorSize; }
+int CellController::getCellCount() const noexcept { return _cellIndexList.count(); }
 
 void CellController::updateTime() noexcept {
   // Updating ticks
@@ -1048,68 +1091,4 @@ void CellController::removeCell(const Cell &cell) noexcept {
   // Order matters
   _cellIndexList.remove(cell._index);  // 1
   _cellVector[cell._index] = Cell{};   // 2
-}
-
-void CellController::pushRenderingData(const Cell &cell, int cellRenderingMode) {
-  // Local constants
-  static constexpr float kMinColor           = 0.0f;
-  static constexpr float kHalfColor          = 0.5f;
-  static constexpr float kThreeQuartersColor = 0.75f;
-  static constexpr float kMaxColor           = 1.0f;
-
-  float colorR{}, colorG{}, colorB{};
-
-  // If cell is alive
-  if (cell._isAlive) {
-    // Diet mode
-    if (cellRenderingMode % 4 == 0) {
-      // Normalizing color and reducing it to range from 0 to 255
-      colorR = static_cast<float>(cell._colorR);
-      colorG = static_cast<float>(cell._colorG);
-      colorB = static_cast<float>(cell._colorB);
-
-      float colorVectorLength = std::sqrt(colorR * colorR + colorG * colorG + colorB * colorB);
-
-      if (colorVectorLength < 1.0f) {
-        colorR = kMinColor;
-        colorG = kMinColor;
-        colorB = kMinColor;
-      } else {
-        colorR /= colorVectorLength;
-        colorG /= colorVectorLength;
-        colorB /= colorVectorLength;
-      }
-    }
-    // Energy level mode
-    else if (cellRenderingMode % 4 == 1) {
-      colorR = 1.0f;
-      colorG = map(cell._energy, 0.0f, _maxEnergy, kMaxColor, kMinColor);
-      colorB = kMinColor;
-    }
-    // Energy sharing balance mode
-    else if (cellRenderingMode % 4 == 2) {
-      colorR = map(cell._energyShareBalance, -_maxEnergy, _maxEnergy, kMaxColor, kMinColor);
-      colorG = map(cell._energyShareBalance, -_maxEnergy, _maxEnergy, kHalfColor, kMaxColor);
-      colorB = map(cell._energyShareBalance, -_maxEnergy, _maxEnergy, kMinColor, kMaxColor);
-    }
-    // Last energy share mode
-    else {
-      colorR = map(cell._lastEnergyShare, -1.0f, 1.0f, kMaxColor, kMinColor);
-      colorG = map(cell._lastEnergyShare, -1.0f, 1.0f, kHalfColor, kMaxColor);
-      colorB = map(cell._lastEnergyShare, -1.0f, 1.0f, kMinColor, kMaxColor);
-    }
-  }
-  // If cell is dead
-  else {
-    colorR = kThreeQuartersColor;
-    colorG = kThreeQuartersColor;
-    colorB = kThreeQuartersColor;
-  }
-
-  // Updating cell rendering data
-  _renderingDataVector[_renderingDataVectorSize] =
-      RenderingData{cell._index, colorR, colorG, colorB, kMaxColor};
-
-  // Increment _renderingDataVectorSize
-  ++_renderingDataVectorSize;
 }
