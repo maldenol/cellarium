@@ -209,11 +209,6 @@ class CellController {
   int _ticksNumber{};
   int _yearsNumber{};
 
-  // Photosynthesis and mineral energy surge vectors for optimization when rendering environment
-  std::vector<int> _surgeOfPhotosynthesisEnergy{};
-  std::vector<int> _surgeOfMineralEnergy{};
-  bool             _enableRenderingEnvironment{};
-
   // Vector of cell rendering data and its size
   std::vector<RenderingData> _renderingDataVector{};
   int                        _renderingDataVectorSize{};
@@ -229,10 +224,10 @@ class CellController {
   ~CellController() noexcept;
 
   // Computes one simulation tick
-  void act(bool enableRenderingEnvironment) noexcept;
+  void act() noexcept;
 
   // Updates rendering data vector
-  void updateRenderingData(bool enableRenderingEnvironment, int cellRenderingMode);
+  void updateRenderingData(int cellRenderingMode);
 
   // Gets rendering data vector and its size
   const RenderingData *getRenderingData() const noexcept;
@@ -241,9 +236,6 @@ class CellController {
  private:
   // Updates tick counters
   void updateTime() noexcept;
-
-  // Updates energy surge vectors for optimization when rendering environment
-  void updateEnergy() noexcept;
 
   // Makes every cell mutate
   void gammaFlash() noexcept;
@@ -270,9 +262,7 @@ class CellController {
   int  getNextNthGen(const Cell &cell, int n) const noexcept;
   bool areAkin(const Cell &cell1, const Cell &cell2) const noexcept;
 
-  // Get surge of energy
-  int getPhotosynthesisEnergy(int index) const noexcept;
-  int getMineralEnergy(int index) const noexcept;
+  // Calculate burst of energy
   int calculatePhotosynthesisEnergy(int index) const noexcept;
   int calculateMineralEnergy(int index) const noexcept;
 

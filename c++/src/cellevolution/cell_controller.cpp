@@ -45,12 +45,43 @@ static constexpr float kFirstCellIndexMultiplier{2.5f};
 static constexpr float kLastEnergyShareFadeMultiplier{0.99f};
 // Budded cell parent color multiplier
 static constexpr float kBuddedCellParentColorMultiplier{2.0f};
-
 // Mathematical constant
 static constexpr float kTwoPi{6.28318530f};
+
 // Linearly interpolates value from one range (in) into another (out)
 template <typename T1, typename T2, typename T3, typename T4, typename T5>
 float map(T1 value, T2 inMin, T3 inMax, T4 outMin, T5 outMax) {
+  return static_cast<float>(outMin) + (static_cast<float>(outMax) - static_cast<float>(outMin)) *
+                                          (static_cast<float>(value) - static_cast<float>(inMin)) /
+                                          (static_cast<float>(inMax) - static_cast<float>(inMin));
+}
+// Linearly interpolates value from one range (in) into another (out) with clamping
+template <typename T1, typename T2, typename T3, typename T4, typename T5>
+float mapClamp(T1 value, T2 inMin, T3 inMax, T4 outMin, T5 outMax) {
+  // If inMin is less or equal to inMax
+  if (static_cast<float>(inMin) <= static_cast<float>(inMax)) {
+    // If value is less or equal to inMin - returning outMin
+    if (static_cast<float>(value) <= static_cast<float>(inMin)) {
+      return static_cast<float>(outMin);
+    }
+
+    // If value is greater or equal to inMax - returning outMax
+    if (static_cast<float>(value) >= static_cast<float>(inMax)) {
+      return static_cast<float>(outMax);
+    }
+  } else {
+    // If value is greater or equal to inMin - returning outMin
+    if (static_cast<float>(value) >= static_cast<float>(inMin)) {
+      return static_cast<float>(outMin);
+    }
+
+    // If value is less or equal to inMax - returning outMax
+    if (static_cast<float>(value) <= static_cast<float>(inMax)) {
+      return static_cast<float>(outMax);
+    }
+  }
+
+  // Interpolation in other cases
   return static_cast<float>(outMin) + (static_cast<float>(outMax) - static_cast<float>(outMin)) *
                                           (static_cast<float>(value) - static_cast<float>(inMin)) /
                                           (static_cast<float>(inMax) - static_cast<float>(inMin));
@@ -114,12 +145,6 @@ CellController::CellController(const Params &params)
                kFirstCellDirection,
                static_cast<int>(static_cast<float>(_columns) * kFirstCellIndexMultiplier)});
 
-  // Allocating memory for vectors of energy surge for optimization when rendering environment
-  _surgeOfPhotosynthesisEnergy.assign(_columns * _maxPhotosynthesisDepth, 0);
-  _surgeOfPhotosynthesisEnergy.reserve(_columns * _maxPhotosynthesisDepth);
-  _surgeOfMineralEnergy.assign(_maxMineralHeight, 0);
-  _surgeOfMineralEnergy.reserve(_maxMineralHeight);
-
   // Allocating memory for vector of cell positions and colors for rendering
   _renderingDataVector.assign(_columns * _rows, RenderingData{});
   _renderingDataVector.reserve(_columns * _rows);
@@ -174,9 +199,6 @@ CellController::CellController(const CellController &cellController) noexcept
       _cellVector{cellController._cellVector},
       _ticksNumber{cellController._ticksNumber},
       _yearsNumber{cellController._yearsNumber},
-      _surgeOfPhotosynthesisEnergy{cellController._surgeOfPhotosynthesisEnergy},
-      _surgeOfMineralEnergy{cellController._surgeOfMineralEnergy},
-      _enableRenderingEnvironment{cellController._enableRenderingEnvironment},
       _renderingDataVector{cellController._renderingDataVector},
       _renderingDataVectorSize{cellController._renderingDataVectorSize} {}
 
@@ -228,9 +250,6 @@ CellController &CellController::operator=(const CellController &cellController) 
   _cellVector                     = cellController._cellVector;
   _ticksNumber                    = cellController._ticksNumber;
   _yearsNumber                    = cellController._yearsNumber;
-  _surgeOfPhotosynthesisEnergy    = cellController._surgeOfPhotosynthesisEnergy;
-  _surgeOfMineralEnergy           = cellController._surgeOfMineralEnergy;
-  _enableRenderingEnvironment     = cellController._enableRenderingEnvironment;
   _renderingDataVector            = cellController._renderingDataVector;
   _renderingDataVectorSize        = cellController._renderingDataVectorSize;
 
@@ -294,11 +313,6 @@ CellController::CellController(CellController &&cellController) noexcept
       _cellVector{std::exchange(cellController._cellVector, std::vector<Cell>{})},
       _ticksNumber{std::exchange(cellController._ticksNumber, 0)},
       _yearsNumber{std::exchange(cellController._yearsNumber, 0)},
-      _surgeOfPhotosynthesisEnergy{
-          std::exchange(cellController._surgeOfPhotosynthesisEnergy, std::vector<int>{})},
-      _surgeOfMineralEnergy{
-          std::exchange(cellController._surgeOfMineralEnergy, std::vector<int>{})},
-      _enableRenderingEnvironment{std::exchange(cellController._enableRenderingEnvironment, false)},
       _renderingDataVector{
           std::exchange(cellController._renderingDataVector, std::vector<RenderingData>{})},
       _renderingDataVectorSize{std::exchange(cellController._renderingDataVectorSize, 0)} {}
@@ -354,9 +368,6 @@ CellController &CellController::operator=(CellController &&cellController) noexc
   std::swap(_cellVector, cellController._cellVector);
   std::swap(_ticksNumber, cellController._ticksNumber);
   std::swap(_yearsNumber, cellController._yearsNumber);
-  std::swap(_surgeOfPhotosynthesisEnergy, cellController._surgeOfPhotosynthesisEnergy);
-  std::swap(_surgeOfMineralEnergy, cellController._surgeOfMineralEnergy);
-  std::swap(_enableRenderingEnvironment, cellController._enableRenderingEnvironment);
   std::swap(_renderingDataVector, cellController._renderingDataVector);
   std::swap(_renderingDataVectorSize, cellController._renderingDataVectorSize);
 
@@ -365,16 +376,9 @@ CellController &CellController::operator=(CellController &&cellController) noexc
 
 CellController::~CellController() noexcept {}
 
-void CellController::act(bool enableRenderingEnvironment) noexcept {
-  _enableRenderingEnvironment = enableRenderingEnvironment;
-
+void CellController::act() noexcept {
   // Updating world time
   updateTime();
-
-  // Updating photosynthesis and mineral energy surge vectors if this tick must be drown
-  if (_enableRenderingEnvironment) {
-    updateEnergy();
-  }
 
   // Going through all cells sequently
   LinkedList<int>::Iterator iter{_cellIndexList.getIterator()};
@@ -508,7 +512,7 @@ void CellController::act(bool enableRenderingEnvironment) noexcept {
             incrementGenomCounter(cell);
           }
           break;
-        // Determining energy surge from photosynthesis (conditional instruction)
+        // Determining available energy from photosynthesis (conditional instruction)
         case kInstructionDeterminePhotosynthesisEnergy:
           if (_enableInstructionDeterminePhotosynthesisEnergy) {
             determinePhotosynthesisEnergy(cell);
@@ -516,7 +520,7 @@ void CellController::act(bool enableRenderingEnvironment) noexcept {
             incrementGenomCounter(cell);
           }
           break;
-        // Determining energy surge from minerals (conditional instruction)
+        // Determining available energy from minerals (conditional instruction)
         case kInstructionDetermineMineralEnergy:
           if (_enableInstructionDetermineMineralEnergy) {
             determineMineralEnergy(cell);
@@ -536,7 +540,7 @@ void CellController::act(bool enableRenderingEnvironment) noexcept {
   gammaFlash();
 }
 
-void CellController::updateRenderingData(bool enableRenderingEnvironment, int cellRenderingMode) {
+void CellController::updateRenderingData(int cellRenderingMode) {
   // Resetting _renderingDataVectorSize
   _renderingDataVectorSize = 0;
 
@@ -563,38 +567,6 @@ void CellController::updateTime() noexcept {
   if (_ticksNumber == _dayDurationInTicks * _seasonDurationInDays * 4) {
     _ticksNumber = 0;
     ++_yearsNumber;
-  }
-}
-
-void CellController::updateEnergy() noexcept {
-  // Calculating photosynthesis energy
-  for (int x = 0; x < _columns; ++x) {
-    int y = 0;
-
-    // Filling with values until they are low
-    while (y < _maxPhotosynthesisDepth) {
-      _surgeOfPhotosynthesisEnergy[calculateIndexByColumnAndRow(x, y)] =
-          calculatePhotosynthesisEnergy(calculateIndexByColumnAndRow(x, y));
-
-      // Break if photosynthesis energy is almost zero so underneath cells have no energy at all
-      if (_surgeOfPhotosynthesisEnergy[calculateIndexByColumnAndRow(x, y)] < 1) {
-        break;
-      }
-
-      ++y;
-    }
-
-    // Filling with zeroes
-    while (y < _maxPhotosynthesisDepth) {
-      _surgeOfPhotosynthesisEnergy[calculateIndexByColumnAndRow(x, y)] = 0;
-
-      ++y;
-    }
-  }
-
-  // Calculating mineral energy
-  for (int y = _rows - _maxMineralHeight; y < _rows; ++y) {
-    _surgeOfMineralEnergy[_rows - 1 - y] = calculateMineralEnergy(y);
   }
 }
 
@@ -658,11 +630,11 @@ void CellController::move(Cell &cell) noexcept {
   // If there is nothing at this direction
   if (_cellVector[targetIndex] == Cell{}) {
     // Moving cell
-    _cellVector[targetIndex] = std::move(cell);
 
-    _cellIndexList.replace(cell._index, targetIndex);
-
-    cell._index = targetIndex;
+    // Order matters
+    _cellVector[targetIndex] = std::move(cell);                            // 1
+    _cellIndexList.replace(_cellVector[targetIndex]._index, targetIndex);  // 2
+    _cellVector[targetIndex]._index = targetIndex;                         // 3
   }
   // If there is an obstalce and given cell is dead
   else if (!cell._isAlive) {
@@ -673,7 +645,7 @@ void CellController::move(Cell &cell) noexcept {
 
 void CellController::getEnergyFromPhotosynthesis(Cell &cell) const noexcept {
   // Calculating energy from photosynthesis at current position
-  int deltaEnergy = getPhotosynthesisEnergy(cell._index);
+  int deltaEnergy = calculatePhotosynthesisEnergy(cell._index);
 
   // If energy from photosynthesis is positive
   if (deltaEnergy > 0) {
@@ -687,7 +659,7 @@ void CellController::getEnergyFromPhotosynthesis(Cell &cell) const noexcept {
 
 void CellController::getEnergyFromMinerals(Cell &cell) const noexcept {
   // Calculating energy from minerals at current position
-  int deltaEnergy = getMineralEnergy(cell._index);
+  int deltaEnergy = calculateMineralEnergy(cell._index);
 
   // If energy from minerals is positive
   if (deltaEnergy > 0) {
@@ -906,15 +878,15 @@ void CellController::determinePhotosynthesisEnergy(Cell &cell) const noexcept {
       static_cast<int>(static_cast<float>(_maxPhotosynthesisEnergy * getNextNthGen(cell, 1)) /
                        static_cast<float>(_genomSize));
 
-  // Calculating surge of photosynthesis energy
-  int surgeOfEnergy = getPhotosynthesisEnergy(cell._index);
+  // Calculating available photosynthesis energy
+  int deltaEnergy = calculatePhotosynthesisEnergy(cell._index);
 
   // Less
-  if (surgeOfEnergy < valueToCompare) {
+  if (deltaEnergy < valueToCompare) {
     jumpCounter(cell, getNextNthGen(cell, 2));
   }
   // Greater
-  else if (surgeOfEnergy > valueToCompare) {
+  else if (deltaEnergy > valueToCompare) {
     jumpCounter(cell, getNextNthGen(cell, 4));
   }
   // Equal
@@ -929,15 +901,15 @@ void CellController::determineMineralEnergy(Cell &cell) const noexcept {
       static_cast<int>(static_cast<float>(_maxMineralEnergy * getNextNthGen(cell, 1)) /
                        static_cast<float>(_genomSize));
 
-  // Calculating surge of photosynthesis energy
-  int surgeOfEnergy = getMineralEnergy(cell._index);
+  // Calculating available mineral energy
+  int deltaEnergy = calculateMineralEnergy(cell._index);
 
   // Less
-  if (surgeOfEnergy < valueToCompare) {
+  if (deltaEnergy < valueToCompare) {
     jumpCounter(cell, getNextNthGen(cell, 2));
   }
   // Greater
-  else if (surgeOfEnergy > valueToCompare) {
+  else if (deltaEnergy > valueToCompare) {
     jumpCounter(cell, getNextNthGen(cell, 4));
   }
   // Equal
@@ -981,46 +953,6 @@ bool CellController::areAkin(const Cell &cell1, const Cell &cell2) const noexcep
   return true;
 }
 
-int CellController::getPhotosynthesisEnergy(int index) const noexcept {
-  // Calculating cell row
-  int row = calculateRowByIndex(index);
-
-  // If depth is greater than maximal
-  if (row >= _maxPhotosynthesisDepth) {
-    return 0;
-  }
-
-  int energy{};
-
-  // If this tick must not be drown
-  if (!_enableRenderingEnvironment) {
-    energy = calculatePhotosynthesisEnergy(index);
-  }
-  // If this tick must be drown
-  else {
-    energy = _surgeOfPhotosynthesisEnergy[index];
-  }
-
-  return energy;
-}
-
-int CellController::getMineralEnergy(int index) const noexcept {
-  // Calculating cell row
-  int row = calculateRowByIndex(index);
-
-  // If depth is less than minimal
-  if (row < _rows - _maxMineralHeight) {
-    return 0;
-  }
-
-  // If this tick must not be drown
-  if (!_enableRenderingEnvironment) {
-    return calculateMineralEnergy(row);
-  }
-
-  return _surgeOfMineralEnergy[_rows - 1 - row];
-}
-
 int CellController::calculatePhotosynthesisEnergy(int index) const noexcept {
   // Local constants
   static constexpr float kSeasonCount = 4.0f;
@@ -1061,7 +993,7 @@ int CellController::calculatePhotosynthesisEnergy(int index) const noexcept {
   }
 
   // Calculating depth coefficient
-  float depthCoefficient = map(row, 0.0f, _maxPhotosynthesisDepth, 1.0f, 0.0f);
+  float depthCoefficient = mapClamp(row, 0.0f, _maxPhotosynthesisDepth, 1.0f, 0.0f);
 
   // Getting energy from photosynthesis
   return static_cast<int>(
@@ -1074,7 +1006,7 @@ int CellController::calculateMineralEnergy(int index) const noexcept {
 
   // Getting energy from minerals
   return static_cast<int>(
-      map(row, _rows - 1, _rows - 1 - _maxMineralHeight, _maxMineralEnergy, 0.0f));
+      mapClamp(row, _rows - 1, _rows - 1 - _maxMineralHeight, _maxMineralEnergy, 0.0f));
 }
 
 int CellController::calculateColumnByIndex(int index) const noexcept {
@@ -1106,13 +1038,16 @@ void CellController::addCell(const Cell &cell) noexcept {
   // Pushing cell to the front of the linked list
   // so it will be processed not earlier than the next tick
   // and before older cells (younger cells have smaller "reaction time")
-  _cellIndexList.pushFront(cell._index);
-  _cellVector[cell._index] = cell;
+
+  // Order matters
+  _cellIndexList.pushFront(cell._index);  // 1
+  _cellVector[cell._index] = cell;        // 2
 }
 
 void CellController::removeCell(const Cell &cell) noexcept {
-  _cellIndexList.remove(cell._index);
-  _cellVector[cell._index] = Cell{};
+  // Order matters
+  _cellIndexList.remove(cell._index);  // 1
+  _cellVector[cell._index] = Cell{};   // 2
 }
 
 void CellController::pushRenderingData(const Cell &cell, int cellRenderingMode) {

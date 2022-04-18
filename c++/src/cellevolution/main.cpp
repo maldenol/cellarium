@@ -174,7 +174,7 @@ int main(int argc, char *argv[]) {
     // If simulation is not paused
     if (!gEnablePause) {
       // Computing next simulation tick
-      cellController.act(enableRenderingEnvironment);
+      cellController.act();
     }
 
     // If current tick should be rendered
@@ -186,7 +186,7 @@ int main(int argc, char *argv[]) {
       glClear(GL_COLOR_BUFFER_BIT);
 
       // Updating rendering data of simulation
-      cellController.updateRenderingData(gEnableRenderingEnvironment, gCellRenderingMode);
+      cellController.updateRenderingData(gCellRenderingMode);
 
       // Rendering simulation
       int renderingDataSize = cellController.getRenderingDataSize();
