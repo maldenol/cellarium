@@ -74,6 +74,7 @@ static constexpr bool  kInitenableInstructionDeterminePhotosynthesisEnergy{true}
 static constexpr bool  kInitEnableInstructionDetermineMineralEnergy{true};
 static constexpr bool  kInitEnableDeadCellPinningOnSinking{true};
 // Instruction constants
+static constexpr int kInstructionCount{14};
 static constexpr int kInstructionDoNothing{0};
 static constexpr int kInstructionTurn{1};
 static constexpr int kInstructionMove{2};
@@ -88,6 +89,12 @@ static constexpr int kInstructionDetermineEnergyLevel{10};
 static constexpr int kInstructionDetermineDepth{11};
 static constexpr int kInstructionDeterminePhotosynthesisEnergy{12};
 static constexpr int kInstructionDetermineMineralEnergy{13};
+// Cell rendering mode constants
+static constexpr int kRenderingModeCount{4};
+static constexpr int kRenderingModeDiet{0};
+static constexpr int kRenderingModeEnergyLevel{1};
+static constexpr int kRenderingModeEnergySharingBalance{2};
+static constexpr int kRenderingModeLastEnergyShare{3};
 
 // Class for stroring simulation parameters and state, computing it and filling data for rendering
 class CellController {
@@ -223,7 +230,7 @@ class CellController {
   void act() noexcept;
 
   // Puts RenderingData of each cell to given array
-  void render(RenderingData *renderingData, int cellRenderingMode = 0, bool renderEnvironment = false);
+  void render(RenderingData *renderingData, int cellRenderingMode = 0);
 
   // Returns count of cells
   size_t getCellCount() const noexcept;

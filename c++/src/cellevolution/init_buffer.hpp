@@ -13,24 +13,13 @@
 // You should have received a copy of the GNU General Public License
 // along with cellevolution.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef EXTRA_SHADER_HPP
-#define EXTRA_SHADER_HPP
-
-// STD
-#include <string>
-#include <vector>
+#ifndef INIT_BUFFER_HPP
+#define INIT_BUFFER_HPP
 
 // OpenGL
 #include <glad/glad.h>
 
-namespace extra {
-
-// Compiles shader with source code
-void compileShader(GLuint shader, const std::string &source);
-
-// Creates shader program compiling and linking given shaders
-GLuint createShaderProgram(const std::vector<GLenum> &shaderTypes, const std::vector<std::string> &shaderSources);
-
-}
+// Initializes and configures OpenGL Vertex Array and Buffer Objects for cells
+GLuint initCellBuffers(GLsizeiptr count);
 
 #endif

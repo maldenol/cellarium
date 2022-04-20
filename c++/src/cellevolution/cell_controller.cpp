@@ -409,116 +409,116 @@ void CellController::act() noexcept {
       // Performing appropriate instruction
       switch (instuction) {
         // Do nothing
-        case kInstructionDoNothing:
+        case kInstructionDoNothing: {
           incrementGenomCounter(cell);
-          break;
+        } break;
         // Turning
-        case kInstructionTurn:
+        case kInstructionTurn: {
           if (_enableInstructionTurn) {
             turn(cell);
           }
           incrementGenomCounter(cell);
-          break;
+        } break;
         // Moving (no more instructions permitted)
-        case kInstructionMove:
+        case kInstructionMove: {
           if (_enableInstructionMove) {
             i = _maxInstructionsPerTick;
             move(cell);
           }
           incrementGenomCounter(cell);
-          break;
+        } break;
         // Getting energy from photosynthesis (no more instructions permitted)
-        case kInstructionGetEnergyFromPhotosynthesis:
+        case kInstructionGetEnergyFromPhotosynthesis: {
           if (_enableInstructionGetEnergyFromPhotosynthesis) {
             i = _maxInstructionsPerTick;
             getEnergyFromPhotosynthesis(cell);
           }
           incrementGenomCounter(cell);
-          break;
+        } break;
         // Getting energy from minerals (no more instructions permitted)
-        case kInstructionGetEnergyFromMinerals:
+        case kInstructionGetEnergyFromMinerals: {
           if (_enableInstructionGetEnergyFromMinerals) {
             i = _maxInstructionsPerTick;
             getEnergyFromMinerals(cell);
           }
           incrementGenomCounter(cell);
-          break;
+        } break;
         // Getting energy from food (no more instructions permitted)
-        case kInstructionGetEnergyFromFood:
+        case kInstructionGetEnergyFromFood: {
           if (_enableInstructionGetEnergyFromFood) {
             i = _maxInstructionsPerTick;
             getEnergyFromFood(cell);
           }
           incrementGenomCounter(cell);
-          break;
+        } break;
         // Budding (no more instructions permitted)
-        case kInstructionBud:
+        case kInstructionBud: {
           if (_enableInstructionBud) {
             i = _maxInstructionsPerTick;
             bud(cell);
           }
           incrementGenomCounter(cell);
-          break;
+        } break;
         // Making random gen mutate (no more instructions permitted)
-        case kInstructionMutateRandomGen:
+        case kInstructionMutateRandomGen: {
           if (_enableInstructionMutateRandomGen) {
             i = _maxInstructionsPerTick;
             mutateRandomGen(cell);
           }
           incrementGenomCounter(cell);
-          break;
+        } break;
         // Sharing energy (no more instructions permitted)
-        case kInstructionShareEnergy:
+        case kInstructionShareEnergy: {
           if (_enableInstructionShareEnergy) {
             i = _maxInstructionsPerTick;
             shareEnergy(cell);
           }
           incrementGenomCounter(cell);
-          break;
+        } break;
         // Looking forward (conditional instruction)
-        case kInstructionLookForward:
+        case kInstructionLookForward: {
           if (_enableInstructionLookForward) {
             lookForward(cell);
           } else {
             incrementGenomCounter(cell);
           }
-          break;
+        } break;
         // Determining own energy level (conditional instruction)
-        case kInstructionDetermineEnergyLevel:
+        case kInstructionDetermineEnergyLevel: {
           if (_enableInstructionDetermineEnergyLevel) {
             determineEnergyLevel(cell);
           } else {
             incrementGenomCounter(cell);
           }
-          break;
+        } break;
         // Determining own depth (conditional instruction)
-        case kInstructionDetermineDepth:
+        case kInstructionDetermineDepth: {
           if (_enableInstructionDetermineDepth) {
             determineDepth(cell);
           } else {
             incrementGenomCounter(cell);
           }
-          break;
+        } break;
         // Determining available energy from photosynthesis (conditional instruction)
-        case kInstructionDeterminePhotosynthesisEnergy:
+        case kInstructionDeterminePhotosynthesisEnergy: {
           if (_enableInstructionDeterminePhotosynthesisEnergy) {
             determinePhotosynthesisEnergy(cell);
           } else {
             incrementGenomCounter(cell);
           }
-          break;
+        } break;
         // Determining available energy from minerals (conditional instruction)
-        case kInstructionDetermineMineralEnergy:
+        case kInstructionDetermineMineralEnergy: {
           if (_enableInstructionDetermineMineralEnergy) {
             determineMineralEnergy(cell);
           } else {
             incrementGenomCounter(cell);
           }
-          break;
+        } break;
         // Unconditional jump
-        default:
+        default: {
           addGenToCounter(cell);
-          break;
+        } break;
       }
     }
   }
@@ -527,52 +527,15 @@ void CellController::act() noexcept {
   gammaFlash();
 }
 
-void CellController::render(RenderingData *renderingData, int cellRenderingMode,
-                            bool renderEnvironment) {
+void CellController::render(RenderingData *renderingData, int cellRenderingMode) {
   // Local constants
-  static constexpr float kMinColor           = 0.0f;
-  static constexpr float kHalfColor          = 0.5f;
-  static constexpr float kThreeQuartersColor = 0.75f;
-  static constexpr float kMaxColor           = 1.0f;
+  static constexpr float kMinColor{0.0f};
+  static constexpr float kHalfColor{0.5f};
+  static constexpr float kThreeQuartersColor{0.75f};
+  static constexpr float kMaxColor{1.0f};
 
   // Initializing count of RenderingData objects
   int renderingDataCount{};
-
-  // If environment rendering is enabled
-  if (renderEnvironment) {
-    // For each column
-    for (int c = 0; c < _columns; ++c) {
-      // For each row where photosynthesis energy can be gotten
-      for (int r = 0; r < _maxPhotosynthesisDepth; ++r) {
-        int index = calculateIndexByColumnAndRow(c, r);
-
-        float colorA = map(calculatePhotosynthesisEnergy(index), 0.0f, _maxPhotosynthesisEnergy,
-                           kMinColor, kThreeQuartersColor);
-
-        // Putting environment rendering data to array
-        renderingData[renderingDataCount] =
-            RenderingData{index, kMaxColor, kMaxColor, kMinColor, colorA};
-
-        // Incrementing count of RenderingData objects
-        ++renderingDataCount;
-      }
-
-      // For each row where mineral energy can be gotten
-      for (int r = _rows - _maxMineralHeight; r < _rows; ++r) {
-        int index = calculateIndexByColumnAndRow(c, r);
-
-        float colorA = map(calculateMineralEnergy(index), 0.0f, _maxMineralEnergy, kMinColor,
-                           kThreeQuartersColor);
-
-        // Putting environment rendering data to array
-        renderingData[renderingDataCount] =
-            RenderingData{index, kMinColor, kMinColor, kMaxColor, colorA};
-
-        // Incrementing count of RenderingData objects
-        ++renderingDataCount;
-      }
-    }
-  }
 
   // Rendering each cell and putting its rendering data to array
   LinkedList<int>::Iterator iter{_cellIndexList.getIterator()};
@@ -583,42 +546,45 @@ void CellController::render(RenderingData *renderingData, int cellRenderingMode,
 
     // If cell is alive
     if (cell._isAlive) {
-      // Diet mode
-      if (cellRenderingMode % 4 == 0) {
-        // Normalizing color and reducing it to range from 0 to 255
-        colorR = static_cast<float>(cell._colorR);
-        colorG = static_cast<float>(cell._colorG);
-        colorB = static_cast<float>(cell._colorB);
+      // Choosing appropriate cell rendering mode
+      switch (cellRenderingMode) {
+        // Diet mode
+        case kRenderingModeDiet: {
+          // Normalizing color and reducing it to range from 0 to 255
+          colorR = static_cast<float>(cell._colorR);
+          colorG = static_cast<float>(cell._colorG);
+          colorB = static_cast<float>(cell._colorB);
 
-        float colorVectorLength = std::sqrt(colorR * colorR + colorG * colorG + colorB * colorB);
+          float colorVectorLength = std::sqrt(colorR * colorR + colorG * colorG + colorB * colorB);
 
-        if (colorVectorLength < 1.0f) {
-          colorR = kMinColor;
-          colorG = kMinColor;
+          if (colorVectorLength < 1.0f) {
+            colorR = kMinColor;
+            colorG = kMinColor;
+            colorB = kMinColor;
+          } else {
+            colorR /= colorVectorLength;
+            colorG /= colorVectorLength;
+            colorB /= colorVectorLength;
+          }
+        } break;
+        // Energy level mode
+        case kRenderingModeEnergyLevel: {
+          colorR = 1.0f;
+          colorG = map(cell._energy, 0.0f, _maxEnergy, kMaxColor, kMinColor);
           colorB = kMinColor;
-        } else {
-          colorR /= colorVectorLength;
-          colorG /= colorVectorLength;
-          colorB /= colorVectorLength;
-        }
-      }
-      // Energy level mode
-      else if (cellRenderingMode % 4 == 1) {
-        colorR = 1.0f;
-        colorG = map(cell._energy, 0.0f, _maxEnergy, kMaxColor, kMinColor);
-        colorB = kMinColor;
-      }
-      // Energy sharing balance mode
-      else if (cellRenderingMode % 4 == 2) {
-        colorR = map(cell._energyShareBalance, -_maxEnergy, _maxEnergy, kMaxColor, kMinColor);
-        colorG = map(cell._energyShareBalance, -_maxEnergy, _maxEnergy, kHalfColor, kMaxColor);
-        colorB = map(cell._energyShareBalance, -_maxEnergy, _maxEnergy, kMinColor, kMaxColor);
-      }
-      // Last energy share mode
-      else {
-        colorR = map(cell._lastEnergyShare, -1.0f, 1.0f, kMaxColor, kMinColor);
-        colorG = map(cell._lastEnergyShare, -1.0f, 1.0f, kHalfColor, kMaxColor);
-        colorB = map(cell._lastEnergyShare, -1.0f, 1.0f, kMinColor, kMaxColor);
+        } break;
+        // Energy sharing balance mode
+        case kRenderingModeEnergySharingBalance: {
+          colorR = map(cell._energyShareBalance, -_maxEnergy, _maxEnergy, kMaxColor, kMinColor);
+          colorG = map(cell._energyShareBalance, -_maxEnergy, _maxEnergy, kHalfColor, kMaxColor);
+          colorB = map(cell._energyShareBalance, -_maxEnergy, _maxEnergy, kMinColor, kMaxColor);
+        } break;
+        // Last energy share mode
+        case kRenderingModeLastEnergyShare: {
+          colorR = map(cell._lastEnergyShare, -1.0f, 1.0f, kMaxColor, kMinColor);
+          colorG = map(cell._lastEnergyShare, -1.0f, 1.0f, kHalfColor, kMaxColor);
+          colorB = map(cell._lastEnergyShare, -1.0f, 1.0f, kMinColor, kMaxColor);
+        } break;
       }
     }
     // If cell is dead
@@ -1035,8 +1001,8 @@ bool CellController::areAkin(const Cell &cell1, const Cell &cell2) const noexcep
 
 int CellController::calculatePhotosynthesisEnergy(int index) const noexcept {
   // Local constants
-  static constexpr float kSeasonCount = 4.0f;
-  static constexpr float kHalfOfDay   = 0.5f;
+  static constexpr float kSeasonCount{4.0f};
+  static constexpr float kHalfOfDay{0.5f};
 
   // Calculating cell column and row
   int column = calculateColumnByIndex(index);

@@ -25,32 +25,35 @@
 #include <GLFW/glfw3.h>
 
 // "extra" internal library
-#include "extra/extra.hpp"
+#include "./extra/extra.hpp"
+
+// Headers of other compile unit
+#include "./init_shader.hpp"
+#include "./init_buffer.hpp"
+#include "./render_buffer.hpp"
+#include "./controls.hpp"
 
 // CellController
 #include "./cell_controller.hpp"
 
 // Global constants
-static constexpr int     kInitWindowWidth  = 1920;
-static constexpr int     kInitWindowHeight = 1080;
+static constexpr int     kInitWindowWidth{1920};
+static constexpr int     kInitWindowHeight{1080};
 static const std::string kWindowTitle{"cellevolution"};
-static constexpr int     kOpenGLVersionMajor               = 4;
-static constexpr int     kOpenGLVersionMinor               = 6;
-static constexpr int     kMaxTicksPerRender                = 1000;
-static constexpr float   kCellSize                         = 8.0f;
-static constexpr float   kMaxPhotosynthesisDepthMultiplier = 0.7f;
-static constexpr float   kMaxMineralHeightMultiplier       = 0.7f;
+static constexpr int     kOpenGLVersionMajor{4};
+static constexpr int     kOpenGLVersionMinor{6};
+static constexpr float   kCellSize{8.0f};
+static constexpr float   kMaxPhotosynthesisDepthMultiplier{0.7f};
+static constexpr float   kMaxMineralHeightMultiplier{0.7f};
 
-// Global variables
+// External global variables
 int  gCellRenderingMode{0};
 int  gTicksPerRender{1};
 bool gEnableRendering{true};
 bool gEnableRenderingEnvironment{true};
 bool gEnablePause{false};
 
-// User input processing function
-void processUserInput(GLFWwindow *window);
-
+// Main function
 int main(int argc, char *argv[]) {
   // Initializing GLFW and getting configured window with OpenGL context
   GLFWwindow *window = extra::createWindow(kInitWindowWidth, kInitWindowHeight, kWindowTitle,
@@ -59,48 +62,8 @@ int main(int argc, char *argv[]) {
   // Capturing OpenGL context
   glfwMakeContextCurrent(window);
 
-  // Creating, compiling and linking shader program
-  const std::vector<GLenum> shaderTypes{
-      GL_VERTEX_SHADER,
-      GL_FRAGMENT_SHADER,
-  };
-  const std::vector<std::string> shaderSources{
-      std::string{"#version 460 core\n"
-                  "\n"
-                  "uniform int   kColumns              = 1;\n"
-                  "uniform int   kRows                 = 1;\n"
-                  "uniform float kPointSizeInViewport  = 10.0f;\n"
-                  "uniform float kPointSizeInClipSpace = 0.02f;\n"
-                  "\n"
-                  "layout (location = 0) in int  aIndex;\n"
-                  "layout (location = 1) in vec4 aColor;\n"
-                  "\n"
-                  "out vec4 fColor;\n"
-                  "\n"
-                  "void main() {\n"
-                  "  int c   = aIndex - aIndex / kColumns * kColumns;\n"
-                  "  int r   = aIndex / kColumns;\n"
-                  "  float x = 2.0f * c / kColumns - 1.0f;\n"
-                  "  float y = 2.0f * r / kRows - 1.0f;\n"
-                  "  x += kPointSizeInClipSpace / 2.0f;\n"
-                  "  y += kPointSizeInClipSpace;\n"
-                  "  gl_Position  = vec4(x, -y, 0.0f, 1.0f);\n"
-                  "  gl_PointSize = kPointSizeInViewport;\n"
-                  "  fColor       = aColor;\n"
-                  "}\n"},
-      std::string{"#version 460 core\n"
-                  "\n"
-                  "in vec4 fColor;\n"
-                  "\n"
-                  "out vec4 FragColor;\n"
-                  "\n"
-                  "void main() {\n"
-                  "  FragColor = fColor;\n"
-                  "}\n"},
-  };
-  const GLuint shaderProgram{extra::createShaderProgram(shaderTypes, shaderSources)};
-  // Using shader program
-  glUseProgram(shaderProgram);
+  // Creating, compiling and linking cell shader program
+  const GLuint cellShaderProgram = initCellShaderProgram();
 
   // Initializing simulation parameters
   CellEvolution::CellController::Params cellControllerParams{};
@@ -118,43 +81,24 @@ int main(int argc, char *argv[]) {
   // Initializing simulation itself
   CellEvolution::CellController cellController{cellControllerParams};
 
-  // Initializing maxEnvironmentRenderDataCount constant
-  const int maxEnvironmentRenderDataCount{
-      cellControllerParams.columns *
-      (cellControllerParams.maxPhotosynthesisDepth + cellControllerParams.maxMineralHeight)};
-
   // Setting OpenGL viewport
   glViewport(0, 0, cellControllerParams.width, cellControllerParams.height);
 
   // Setting values of shaderProgram uniform variables
-  glUniform1i(glGetUniformLocation(shaderProgram, "kColumns"), cellControllerParams.columns);
-  glUniform1i(glGetUniformLocation(shaderProgram, "kRows"), cellControllerParams.rows);
-  glUniform1f(glGetUniformLocation(shaderProgram, "kPointSizeInViewport"),
+  glUseProgram(cellShaderProgram);
+  glUniform1i(glGetUniformLocation(cellShaderProgram, "kColumns"), cellControllerParams.columns);
+  glUniform1i(glGetUniformLocation(cellShaderProgram, "kRows"), cellControllerParams.rows);
+  glUniform1f(glGetUniformLocation(cellShaderProgram, "kPointSizeInViewport"),
               cellControllerParams.cellSize);
   glUniform1f(
-      glGetUniformLocation(shaderProgram, "kPointSizeInClipSpace"),
+      glGetUniformLocation(cellShaderProgram, "kPointSizeInClipSpace"),
       cellControllerParams.cellSize /
           static_cast<float>(std::min(cellControllerParams.width, cellControllerParams.height)));
+  glUseProgram(0);
 
-  // Initializing and configuring OpenGL Vertex Array and Buffer Objects for rendering simulation
-  GLuint vao{};
-  glGenVertexArrays(1, &vao);
-  glBindVertexArray(vao);
-  GLuint vbo{};
-  glGenBuffers(1, &vbo);
-  glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  const long maxRenderingDataCount =
-      static_cast<long>(cellControllerParams.columns * cellControllerParams.rows +
-                        maxEnvironmentRenderDataCount) *
-      static_cast<long>(sizeof(CellEvolution::CellController::RenderingData));
-  glBufferData(GL_ARRAY_BUFFER, maxRenderingDataCount, nullptr, GL_DYNAMIC_DRAW);
-  glVertexAttribIPointer(0, 1, GL_INT, sizeof(CellEvolution::CellController::RenderingData),
-                         reinterpret_cast<void *>(0));
-  glEnableVertexAttribArray(0);
-  glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE,
-                        sizeof(CellEvolution::CellController::RenderingData),
-                        reinterpret_cast<void *>(sizeof(int)));
-  glEnableVertexAttribArray(1);
+  // Initializing and configuring OpenGL Vertex Array and Buffer Objects for cells
+  GLuint cellVAO = initCellBuffers(
+      static_cast<GLsizeiptr>(cellControllerParams.rows * cellControllerParams.columns));
 
   // Enabling gl_PointSize
   glEnable(GL_PROGRAM_POINT_SIZE);
@@ -197,21 +141,8 @@ int main(int argc, char *argv[]) {
       // Clearing color buffer
       glClear(GL_COLOR_BUFFER_BIT);
 
-      // Getting current count of cells in simulation
-      int renderingDataSize{static_cast<int>(cellController.getCellCount())};
-      if (gEnableRenderingEnvironment) {
-        renderingDataSize += maxEnvironmentRenderDataCount;
-      }
-      // Mapping VBO buffer partly
-      CellEvolution::CellController::RenderingData *renderingData =
-          reinterpret_cast<CellEvolution::CellController::RenderingData *>(
-              glMapBufferRange(GL_ARRAY_BUFFER, 0, renderingDataSize, GL_MAP_WRITE_BIT));
-      // Passing VBO buffer to CellController that fills it with rendering data
-      cellController.render(renderingData, gCellRenderingMode, gEnableRenderingEnvironment);
       // Rendering cells
-      glDrawArrays(GL_POINTS, 0, renderingDataSize);
-      // Unmapping VBO buffer
-      glUnmapBuffer(GL_ARRAY_BUFFER);
+      renderCellBuffer(cellController, cellShaderProgram, cellVAO);
 
       // Swapping front and back buffers
       glfwSwapBuffers(window);
@@ -225,106 +156,4 @@ int main(int argc, char *argv[]) {
   extra::terminateWindow(window);
 
   return 0;
-}
-
-// User input processing function
-void processUserInput(GLFWwindow *window) {
-  static bool sPressed{};
-  bool        released{true};
-
-  static int sPosX{}, sPosY{}, sWidth{}, sHeight{};
-
-  // Switching cell rendering mode
-  if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) {
-    released = false;
-    if (!sPressed) {
-      sPressed = true;
-
-      ++gCellRenderingMode;
-    }
-  }
-
-  // Decreasing number of ticks per one rendering
-  if (glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS ||
-      glfwGetKey(window, GLFW_KEY_KP_SUBTRACT) == GLFW_PRESS) {
-    released = false;
-    if (!sPressed) {
-      sPressed = true;
-
-      gTicksPerRender = std::max(gTicksPerRender - 1, 1);
-    }
-  }
-
-  // Increasing number of ticks per one rendering
-  if ((glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS &&
-       (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
-        glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS)) ||
-      glfwGetKey(window, GLFW_KEY_KP_ADD) == GLFW_PRESS) {
-    released = false;
-    if (!sPressed) {
-      sPressed = true;
-
-      gTicksPerRender = std::min(gTicksPerRender + 1, kMaxTicksPerRender);
-    }
-  }
-
-  // Toggling rendering environment flag
-  if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
-    released = false;
-    if (!sPressed) {
-      sPressed = true;
-
-      gEnableRenderingEnvironment = !gEnableRenderingEnvironment;
-    }
-  }
-
-  // Toggling rendering flag
-  if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
-    released = false;
-    if (!sPressed) {
-      sPressed = true;
-
-      gEnableRendering = !gEnableRendering;
-    }
-  }
-
-  // Toggling pause flag
-  if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
-    released = false;
-    if (!sPressed) {
-      sPressed = true;
-
-      gEnablePause = !gEnablePause;
-    }
-  }
-
-  // Toggling window fullscreen mode
-  if (glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS) {
-    released = false;
-    if (!sPressed) {
-      sPressed = true;
-
-      if (glfwGetWindowMonitor(window) == nullptr) {
-        extra::enableFullscreenMode(window, sPosX, sPosY, sWidth, sHeight);
-      } else {
-        extra::disableFullscreenMode(window, sPosX, sPosY, sWidth, sHeight);
-      }
-    }
-  }
-
-  // Disabling window fullscreen mode if ESC is pressed
-  if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-    released = false;
-    if (!sPressed) {
-      sPressed = true;
-
-      if (glfwGetWindowMonitor(window) != nullptr) {
-        extra::disableFullscreenMode(window, sPosX, sPosY, sWidth, sHeight);
-      }
-    }
-  }
-
-  if (released) {
-    sPressed = false;
-  }
 }
