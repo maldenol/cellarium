@@ -23,7 +23,7 @@
 #include "./cell_controller.hpp"
 
 // Global constants
-static constexpr int kMaxTicksPerRender{1000};
+static constexpr int kMaxTicksPerRender = 1000;
 
 // External global variables
 extern int  gCellRenderingMode;

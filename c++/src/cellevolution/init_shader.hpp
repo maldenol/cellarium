@@ -22,4 +22,10 @@
 // Creates, compiles and links cell shader program
 GLuint initCellShaderProgram();
 
+// Creates, compiles and links photosynthesis energy shader program
+GLuint initPhotosynthesisEnergyShaderProgram();
+
+// Creates, compiles and links mineral energy shader program
+GLuint initMineralEnergyShaderProgram();
+
 #endif

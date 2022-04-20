@@ -31,70 +31,70 @@
 namespace CellEvolution {
 
 // CellController::Params property initial values
-static constexpr unsigned int kInitRandomSeed{1234567890};
+static constexpr unsigned int kInitRandomSeed = 1234567890;
 
-static constexpr int   kInitWidth{800};
-static constexpr int   kInitHeight{600};
-static constexpr float kInitCellSize{8.0f};
+static constexpr int   kInitWidth = 800;
+static constexpr int   kInitHeight = 600;
+static constexpr float kInitCellSize = 8.0f;
 
-static constexpr int kInitColumns{static_cast<int>(static_cast<float>(kInitWidth) / kInitCellSize)};
-static constexpr int kInitRows{static_cast<int>(static_cast<float>(kInitHeight) / kInitCellSize)};
-static constexpr int kInitGenomSize{64};
-static constexpr int kInitMaxInstructionsPerTick{16};
-static constexpr int kInitMaxAkinGenomDifference{4};
-static constexpr int kInitMinChildEnergy{40};
-static constexpr int kInitMaxEnergy{800};
-static constexpr int kInitMaxPhotosynthesisEnergy{30};
-static constexpr int kInitMaxPhotosynthesisDepth{
-    static_cast<int>(static_cast<float>(kInitRows) * 0.7f)};
-static constexpr float kInitSummerDaytimeToWholeDayRatio{0.6f};
-static constexpr bool  kInitEnableDaytimes{true};
-static constexpr bool  kInitEnableSeasons{true};
-static constexpr int   kInitMaxMineralEnergy{15};
-static constexpr int kInitMaxMineralHeight{static_cast<int>(static_cast<float>(kInitRows) * 0.7f)};
-static constexpr int kInitMaxFoodEnergy{50};
-static constexpr float kInitRandomMutationChance{0.01f};
-static constexpr float kInitBudMutationChance{0.25f};
-static constexpr int   kInitDayDurationInTicks{240};
-static constexpr int   kInitSeasonDurationInDays{92};
-static constexpr int   kInitGammaFlashPeriodInDays{46};
-static constexpr int   kInitGammaFlashMaxMutationsCount{8};
-static constexpr bool  kInitEnableInstructionTurn{true};
-static constexpr bool  kInitEnableInstructionMove{true};
-static constexpr bool  kInitEnableInstructionGetEnergyFromPhotosynthesis{true};
-static constexpr bool  kInitEnableInstructionGetEnergyFromMinerals{true};
-static constexpr bool  kInitEnableInstructionGetEnergyFromFood{true};
-static constexpr bool  kInitEnableInstructionBud{true};
-static constexpr bool  kInitEnableInstructionMutateRandomGen{true};
-static constexpr bool  kInitEnableInstructionShareEnergy{true};
-static constexpr bool  kInitEnableInstructionLookForward{true};
-static constexpr bool  kInitEnableInstructionDetermineEnergyLevel{true};
-static constexpr bool  kInitEnableInstructionDetermineDepth{true};
-static constexpr bool  kInitenableInstructionDeterminePhotosynthesisEnergy{true};
-static constexpr bool  kInitEnableInstructionDetermineMineralEnergy{true};
-static constexpr bool  kInitEnableDeadCellPinningOnSinking{true};
+static constexpr int kInitColumns = static_cast<int>(static_cast<float>(kInitWidth) / kInitCellSize);
+static constexpr int kInitRows = static_cast<int>(static_cast<float>(kInitHeight) / kInitCellSize);
+static constexpr int kInitGenomSize = 64;
+static constexpr int kInitMaxInstructionsPerTick = 16;
+static constexpr int kInitMaxAkinGenomDifference = 4;
+static constexpr int kInitMinChildEnergy = 40;
+static constexpr int kInitMaxEnergy = 800;
+static constexpr int kInitMaxPhotosynthesisEnergy = 30;
+static constexpr int kInitMaxPhotosynthesisDepth =
+    static_cast<int>(static_cast<float>(kInitRows) * 0.7f);
+static constexpr float kInitSummerDaytimeToWholeDayRatio = 0.6f;
+static constexpr bool  kInitEnableDaytimes = true;
+static constexpr bool  kInitEnableSeasons = true;
+static constexpr int   kInitMaxMineralEnergy = 15;
+static constexpr int kInitMaxMineralHeight = static_cast<int>(static_cast<float>(kInitRows) * 0.7f);
+static constexpr int kInitMaxFoodEnergy = 50;
+static constexpr float kInitRandomMutationChance = 0.01f;
+static constexpr float kInitBudMutationChance = 0.25f;
+static constexpr int   kInitDayDurationInTicks = 240;
+static constexpr int   kInitSeasonDurationInDays = 92;
+static constexpr int   kInitGammaFlashPeriodInDays = 46;
+static constexpr int   kInitGammaFlashMaxMutationsCount = 8;
+static constexpr bool  kInitEnableInstructionTurn = true;
+static constexpr bool  kInitEnableInstructionMove = true;
+static constexpr bool  kInitEnableInstructionGetEnergyFromPhotosynthesis = true;
+static constexpr bool  kInitEnableInstructionGetEnergyFromMinerals = true;
+static constexpr bool  kInitEnableInstructionGetEnergyFromFood = true;
+static constexpr bool  kInitEnableInstructionBud = true;
+static constexpr bool  kInitEnableInstructionMutateRandomGen = true;
+static constexpr bool  kInitEnableInstructionShareEnergy = true;
+static constexpr bool  kInitEnableInstructionLookForward = true;
+static constexpr bool  kInitEnableInstructionDetermineEnergyLevel = true;
+static constexpr bool  kInitEnableInstructionDetermineDepth = true;
+static constexpr bool  kInitenableInstructionDeterminePhotosynthesisEnergy = true;
+static constexpr bool  kInitEnableInstructionDetermineMineralEnergy = true;
+static constexpr bool  kInitEnableDeadCellPinningOnSinking = true;
 // Instruction constants
-static constexpr int kInstructionCount{14};
-static constexpr int kInstructionDoNothing{0};
-static constexpr int kInstructionTurn{1};
-static constexpr int kInstructionMove{2};
-static constexpr int kInstructionGetEnergyFromPhotosynthesis{3};
-static constexpr int kInstructionGetEnergyFromMinerals{4};
-static constexpr int kInstructionGetEnergyFromFood{5};
-static constexpr int kInstructionBud{6};
-static constexpr int kInstructionMutateRandomGen{7};
-static constexpr int kInstructionShareEnergy{8};
-static constexpr int kInstructionLookForward{9};
-static constexpr int kInstructionDetermineEnergyLevel{10};
-static constexpr int kInstructionDetermineDepth{11};
-static constexpr int kInstructionDeterminePhotosynthesisEnergy{12};
-static constexpr int kInstructionDetermineMineralEnergy{13};
+static constexpr int kInstructionCount = 14;
+static constexpr int kInstructionDoNothing = 0;
+static constexpr int kInstructionTurn = 1;
+static constexpr int kInstructionMove = 2;
+static constexpr int kInstructionGetEnergyFromPhotosynthesis = 3;
+static constexpr int kInstructionGetEnergyFromMinerals = 4;
+static constexpr int kInstructionGetEnergyFromFood = 5;
+static constexpr int kInstructionBud = 6;
+static constexpr int kInstructionMutateRandomGen = 7;
+static constexpr int kInstructionShareEnergy = 8;
+static constexpr int kInstructionLookForward = 9;
+static constexpr int kInstructionDetermineEnergyLevel = 10;
+static constexpr int kInstructionDetermineDepth = 11;
+static constexpr int kInstructionDeterminePhotosynthesisEnergy = 12;
+static constexpr int kInstructionDetermineMineralEnergy = 13;
 // Cell rendering mode constants
-static constexpr int kRenderingModeCount{4};
-static constexpr int kRenderingModeDiet{0};
-static constexpr int kRenderingModeEnergyLevel{1};
-static constexpr int kRenderingModeEnergySharingBalance{2};
-static constexpr int kRenderingModeLastEnergyShare{3};
+static constexpr int kRenderingModeCount = 4;
+static constexpr int kRenderingModeDiet = 0;
+static constexpr int kRenderingModeEnergyLevel = 1;
+static constexpr int kRenderingModeEnergySharingBalance = 2;
+static constexpr int kRenderingModeLastEnergyShare = 3;
 
 // Class for stroring simulation parameters and state, computing it and filling data for rendering
 class CellController {
@@ -147,13 +147,12 @@ class CellController {
     bool enableDeadCellPinningOnSinking{kInitEnableDeadCellPinningOnSinking};
   };
 
-  // Struct for storing position and color for rendering
-  struct RenderingData {
+  // Struct for storing position and color for rendering cell
+  struct CellRenderingData {
     int   index;
     float colorR;
     float colorG;
     float colorB;
-    float colorA;
   };
 
  private:
@@ -230,10 +229,16 @@ class CellController {
   void act() noexcept;
 
   // Puts RenderingData of each cell to given array
-  void render(RenderingData *renderingData, int cellRenderingMode = 0);
+  void render(CellRenderingData *cellRenderingData, int cellRenderingMode = 0);
 
   // Returns count of cells
   size_t getCellCount() const noexcept;
+
+  // Retunrs sun offset in range from -1 to 1
+  float getSunPosition() const noexcept;
+
+  // Retunrs daytime width in range from 0 to 1
+  float getDaytimeWidth() const noexcept;
 
  private:
   // Updates tick counters

@@ -23,6 +23,12 @@
 #include "./cell_controller.hpp"
 
 // Renders cells from buffer
-void renderCellBuffer(CellEvolution::CellController &cellController, const GLuint cellShaderProgram, GLuint cellVAO);
+void renderCellBuffer(CellEvolution::CellController &cellController, GLuint shaderProgram, GLuint vao, GLuint vbo);
+
+// Renders photosynthesis energy from buffer
+void renderPhotosynthesisEnergyBuffer(GLuint shaderProgram, GLuint vao, GLuint vbo, float offsetX, float widthScale);
+
+// Renders mineral energy from buffer
+void renderMineralEnergyBuffer(GLuint shaderProgram, GLuint vao, GLuint vbo);
 
 #endif

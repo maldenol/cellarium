@@ -23,7 +23,7 @@
 using namespace CellEvolution;
 
 // Global constants
-constexpr int kInitIndex{-1};
+constexpr int kInitIndex = -1;
 
 Cell::Cell() noexcept : _index{kInitIndex} {};
 

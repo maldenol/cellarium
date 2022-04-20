@@ -20,6 +20,12 @@
 #include <glad/glad.h>
 
 // Initializes and configures OpenGL Vertex Array and Buffer Objects for cells
-GLuint initCellBuffers(GLsizeiptr count);
+void initCellBuffers(int maxCount, GLuint &vao, GLuint &vbo);
+
+// Initializes and configures OpenGL Vertex Array and Buffer Objects for photosynthesis energy
+void initPhotosynthesisEnergyBuffers(float minHeightInClipSpace, GLuint &vao, GLuint &vbo);
+
+// Initializes and configures OpenGL Vertex Array and Buffer Objects for mineral energy
+void initMineralEnergyBuffers(float maxHeightInClipSpace, GLuint &vao, GLuint &vbo);
 
 #endif

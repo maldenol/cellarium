@@ -25,7 +25,7 @@
 using namespace CellEvolution;
 
 // Position offsets per 2D direction
-static constexpr int                                             kDirectionCount{8};
+static constexpr int                                             kDirectionCount = 8;
 static constexpr std::array<std::array<int, 2>, kDirectionCount> kDirectionOffsets{
     std::array<int, 2>{ 0, -1},
      std::array<int, 2>{ 1, -1},
@@ -37,16 +37,16 @@ static constexpr std::array<std::array<int, 2>, kDirectionCount> kDirectionOffse
      std::array<int, 2>{-1, -1},
 };
 // First cell properties
-static constexpr int   kFirstCellGenomInstructions{3};
-static constexpr float kFirstCellEnergyMultiplier{3.0f};
-static constexpr int   kFirstCellDirection{2};
-static constexpr float kFirstCellIndexMultiplier{2.5f};
+static constexpr int   kFirstCellGenomInstructions = 3;
+static constexpr float kFirstCellEnergyMultiplier  = 3.0f;
+static constexpr int   kFirstCellDirection         = 2;
+static constexpr float kFirstCellIndexMultiplier   = 2.5f;
 // Last energy share value fade multiplier
-static constexpr float kLastEnergyShareFadeMultiplier{0.99f};
+static constexpr float kLastEnergyShareFadeMultiplier = 0.99f;
 // Budded cell parent color multiplier
-static constexpr float kBuddedCellParentColorMultiplier{2.0f};
+static constexpr float kBuddedCellParentColorMultiplier = 2.0f;
 // Mathematical constant
-static constexpr float kTwoPi{6.28318530f};
+static constexpr float kTwoPi = 6.28318530f;
 
 // Linearly interpolates value from one range (in) into another (out)
 template <typename T1, typename T2, typename T3, typename T4, typename T5>
@@ -527,7 +527,7 @@ void CellController::act() noexcept {
   gammaFlash();
 }
 
-void CellController::render(RenderingData *renderingData, int cellRenderingMode) {
+void CellController::render(CellRenderingData *cellRenderingData, int cellRenderingMode) {
   // Local constants
   static constexpr float kMinColor{0.0f};
   static constexpr float kHalfColor{0.5f};
@@ -595,8 +595,7 @@ void CellController::render(RenderingData *renderingData, int cellRenderingMode)
     }
 
     // Putting cell rendering data to array
-    renderingData[renderingDataCount] =
-        RenderingData{cell._index, colorR, colorG, colorB, kMaxColor};
+    cellRenderingData[renderingDataCount] = CellRenderingData{cell._index, colorR, colorG, colorB};
 
     // Incrementing count of RenderingData objects
     ++renderingDataCount;
@@ -604,6 +603,26 @@ void CellController::render(RenderingData *renderingData, int cellRenderingMode)
 }
 
 size_t CellController::getCellCount() const noexcept { return _cellIndexList.count(); }
+
+float CellController::getSunPosition() const noexcept {
+  return map(_ticksNumber % _dayDurationInTicks, 0.0f, _dayDurationInTicks - 1, -1.0f, 1.0f);
+}
+
+float CellController::getDaytimeWidth() const noexcept {
+  // Local constant
+  static constexpr float kSeasonCount{4.0f};
+
+  float daytimeWidthRatio = 1.0f - _summerDaytimeToWholeDayRatio;
+
+  if (_enableSeasons) {
+    daytimeWidthRatio =
+        map(std::sin(map(_ticksNumber / _dayDurationInTicks / _seasonDurationInDays, 0.0f,
+                         kSeasonCount, 0.0f, kTwoPi)),
+            -1.0f, 1.0f, 1.0f - _summerDaytimeToWholeDayRatio, _summerDaytimeToWholeDayRatio);
+  }
+
+  return daytimeWidthRatio;
+}
 
 void CellController::updateTime() noexcept {
   // Updating ticks

@@ -37,33 +37,36 @@
 #include "./cell_controller.hpp"
 
 // Global constants
-static constexpr int     kInitWindowWidth{1920};
-static constexpr int     kInitWindowHeight{1080};
-static const std::string kWindowTitle{"cellevolution"};
-static constexpr int     kOpenGLVersionMajor{4};
-static constexpr int     kOpenGLVersionMinor{6};
-static constexpr float   kCellSize{8.0f};
-static constexpr float   kMaxPhotosynthesisDepthMultiplier{0.7f};
-static constexpr float   kMaxMineralHeightMultiplier{0.7f};
+static constexpr int              kInitWindowWidth                  = 1920;
+static constexpr int              kInitWindowHeight                 = 1080;
+static constexpr std::string_view kWindowTitle                      = "cellevolution";
+static constexpr int              kOpenGLVersionMajor               = 4;
+static constexpr int              kOpenGLVersionMinor               = 6;
+static constexpr float            kCellSize                         = 8.0f;
+static constexpr float            kMaxPhotosynthesisDepthMultiplier = 0.7f;
+static constexpr float            kMaxMineralHeightMultiplier       = 0.7f;
 
 // External global variables
-int  gCellRenderingMode{0};
-int  gTicksPerRender{1};
-bool gEnableRendering{true};
-bool gEnableRenderingEnvironment{true};
-bool gEnablePause{false};
+int  gCellRenderingMode          = 0;
+int  gTicksPerRender             = 1;
+bool gEnableRendering            = true;
+bool gEnableRenderingEnvironment = true;
+bool gEnablePause                = false;
 
 // Main function
 int main(int argc, char *argv[]) {
   // Initializing GLFW and getting configured window with OpenGL context
-  GLFWwindow *window = extra::createWindow(kInitWindowWidth, kInitWindowHeight, kWindowTitle,
-                                           kOpenGLVersionMajor, kOpenGLVersionMinor);
+  GLFWwindow *window =
+      extra::createWindow(kInitWindowWidth, kInitWindowHeight, std::string{kWindowTitle},
+                          kOpenGLVersionMajor, kOpenGLVersionMinor);
 
   // Capturing OpenGL context
   glfwMakeContextCurrent(window);
 
-  // Creating, compiling and linking cell shader program
-  const GLuint cellShaderProgram = initCellShaderProgram();
+  // Creating, compiling and linking cell and environment shader programs
+  const GLuint cellShaderProgram                 = initCellShaderProgram();
+  const GLuint photosynthesisEnergyShaderProgram = initPhotosynthesisEnergyShaderProgram();
+  const GLuint mineralEnergyShaderProgram        = initMineralEnergyShaderProgram();
 
   // Initializing simulation parameters
   CellEvolution::CellController::Params cellControllerParams{};
@@ -84,7 +87,7 @@ int main(int argc, char *argv[]) {
   // Setting OpenGL viewport
   glViewport(0, 0, cellControllerParams.width, cellControllerParams.height);
 
-  // Setting values of shaderProgram uniform variables
+  // Setting values of cellShaderProgram uniform variables
   glUseProgram(cellShaderProgram);
   glUniform1i(glGetUniformLocation(cellShaderProgram, "kColumns"), cellControllerParams.columns);
   glUniform1i(glGetUniformLocation(cellShaderProgram, "kRows"), cellControllerParams.rows);
@@ -96,9 +99,18 @@ int main(int argc, char *argv[]) {
           static_cast<float>(std::min(cellControllerParams.width, cellControllerParams.height)));
   glUseProgram(0);
 
-  // Initializing and configuring OpenGL Vertex Array and Buffer Objects for cells
-  GLuint cellVAO = initCellBuffers(
-      static_cast<GLsizeiptr>(cellControllerParams.rows * cellControllerParams.columns));
+  // Initializing and configuring OpenGL Vertex Array and Buffer Objects for cells and environment
+  GLuint cellVAO{}, cellVBO{};
+  initCellBuffers(cellControllerParams.rows * cellControllerParams.columns, cellVAO, cellVBO);
+  GLuint photosynthesisEnergyVAO{}, photosynthesisEnergyVBO{};
+  initPhotosynthesisEnergyBuffers(
+      static_cast<float>(1 - 2 * cellControllerParams.maxPhotosynthesisDepth /
+                                 cellControllerParams.rows),
+      photosynthesisEnergyVAO, photosynthesisEnergyVBO);
+  GLuint mineralEnergyVAO{}, mineralEnergyVBO{};
+  initMineralEnergyBuffers(static_cast<float>(-1 + 2 * cellControllerParams.maxMineralHeight /
+                                                       cellControllerParams.rows),
+                           mineralEnergyVAO, mineralEnergyVBO);
 
   // Enabling gl_PointSize
   glEnable(GL_PROGRAM_POINT_SIZE);
@@ -141,8 +153,16 @@ int main(int argc, char *argv[]) {
       // Clearing color buffer
       glClear(GL_COLOR_BUFFER_BIT);
 
+      // Rendering environment if needed
+      if (gEnableRenderingEnvironment) {
+        renderMineralEnergyBuffer(mineralEnergyShaderProgram, mineralEnergyVAO, mineralEnergyVBO);
+        renderPhotosynthesisEnergyBuffer(photosynthesisEnergyShaderProgram, photosynthesisEnergyVAO,
+                                         photosynthesisEnergyVBO, cellController.getSunPosition(),
+                                         cellController.getDaytimeWidth());
+      }
+
       // Rendering cells
-      renderCellBuffer(cellController, cellShaderProgram, cellVAO);
+      renderCellBuffer(cellController, cellShaderProgram, cellVAO, cellVBO);
 
       // Swapping front and back buffers
       glfwSwapBuffers(window);

@@ -21,23 +21,23 @@
 
 // Creates, compiles and links cell shader program
 GLuint initCellShaderProgram() {
-  // Initializing vector of cell shader types
+  // Initializing vector of shader types
   const std::vector<GLenum> shaderTypes{
       GL_VERTEX_SHADER,
       GL_FRAGMENT_SHADER,
   };
 
-  // Initializing vector of cell shader sources
+  // Initializing vector of shader sources
   const std::vector<std::string> shaderSources{
       std::string{"#version 460 core\n"
                   "\n"
-                  "uniform int   kColumns  = 1;\n"
-                  "uniform int   kRows     = 1;\n"
-                  "uniform float kPointSizeInViewport  = 10.0f;\n"
-                  "uniform float kPointSizeInClipSpace = 0.02f;\n"
+                  "uniform int   kColumns;\n"
+                  "uniform int   kRows;\n"
+                  "uniform float kPointSizeInViewport;\n"
+                  "uniform float kPointSizeInClipSpace;\n"
                   "\n"
                   "layout (location = 0) in int  aIndex;\n"
-                  "layout (location = 1) in vec4 aColor;\n"
+                  "layout (location = 1) in vec3 aColor;\n"
                   "\n"
                   "out vec4 fColor;\n"
                   "\n"
@@ -51,7 +51,7 @@ GLuint initCellShaderProgram() {
                   "\n"
                   "  gl_Position  = vec4(x, -y, 0.0f, 1.0f);\n"
                   "  gl_PointSize = kPointSizeInViewport;\n"
-                  "  fColor       = aColor;\n"
+                  "  fColor       = vec4(aColor, 1.0f);\n"
                   "}\n"},
       std::string{"#version 460 core\n"
                   "\n"
@@ -64,6 +64,86 @@ GLuint initCellShaderProgram() {
                   "}\n"},
   };
 
-  // Creating cell shader program and returning it
+  // Creating shader program and returning it
+  return extra::createShaderProgram(shaderTypes, shaderSources);
+}
+
+// Creates, compiles and links photosynthesis energy shader program
+GLuint initPhotosynthesisEnergyShaderProgram() {
+  // Initializing vector of shader types
+  const std::vector<GLenum> shaderTypes{
+      GL_VERTEX_SHADER,
+      GL_FRAGMENT_SHADER,
+  };
+
+  // Initializing vector of shader sources
+  const std::vector<std::string> shaderSources{
+      std::string{"#version 460 core\n"
+                  "\n"
+                  "uniform float kOffsetX;\n"
+                  "uniform float kWidthScale;\n"
+                  "\n"
+                  "layout (location = 0) in vec2  aPosXY;\n"
+                  "layout (location = 1) in float aColorA;\n"
+                  "\n"
+                  "out vec4 fColor;\n"
+                  "\n"
+                  "float kInstanceOffsetX[3] = {-2.0f, 0.0f, 2.0f};\n"
+                  "\n"
+                  "void main() {\n"
+                  "  float x  = aPosXY.x * kWidthScale + kOffsetX;\n"
+                  "  float y  = aPosXY.y;\n"
+                  "  x       += kInstanceOffsetX[gl_InstanceID];\n"
+                  "  gl_Position = vec4(x, y, 0.0f, 1.0f);\n"
+                  "  fColor      = vec4(1.0f, 1.0f, 0.0f, aColorA);\n"
+                  "}\n"},
+      std::string{"#version 460 core\n"
+                  "\n"
+                  "in vec4 fColor;\n"
+                  "\n"
+                  "out vec4 FragColor;\n"
+                  "\n"
+                  "void main() {\n"
+                  "  FragColor = fColor;\n"
+                  "}\n"},
+  };
+
+  // Creating shader program and returning it
+  return extra::createShaderProgram(shaderTypes, shaderSources);
+}
+
+// Creates, compiles and links mineral energy shader program
+GLuint initMineralEnergyShaderProgram() {
+  // Initializing vector of shader types
+  const std::vector<GLenum> shaderTypes{
+      GL_VERTEX_SHADER,
+      GL_FRAGMENT_SHADER,
+  };
+
+  // Initializing vector of shader sources
+  const std::vector<std::string> shaderSources{
+      std::string{"#version 460 core\n"
+                  "\n"
+                  "layout (location = 0) in vec2  aPosXY;\n"
+                  "layout (location = 1) in float aColorA;\n"
+                  "\n"
+                  "out vec4 fColor;\n"
+                  "\n"
+                  "void main() {\n"
+                  "  gl_Position = vec4(aPosXY.xy, 0.0f, 1.0f);\n"
+                  "  fColor      = vec4(0.0f, 0.0f, 1.0f, aColorA);\n"
+                  "}\n"},
+      std::string{"#version 460 core\n"
+                  "\n"
+                  "in vec4 fColor;\n"
+                  "\n"
+                  "out vec4 FragColor;\n"
+                  "\n"
+                  "void main() {\n"
+                  "  FragColor = fColor;\n"
+                  "}\n"},
+  };
+
+  // Creating shader program and returning it
   return extra::createShaderProgram(shaderTypes, shaderSources);
 }
