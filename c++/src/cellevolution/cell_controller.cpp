@@ -407,20 +407,20 @@ void CellController::act() noexcept {
       int instuction = cell._genom[cell._counter];
 
       // Performing appropriate instruction
-      switch (instuction) {
+      switch (static_cast<CellInstructions>(instuction)) {
         // Do nothing
-        case kInstructionDoNothing: {
+        case CellInstructions::DoNothing: {
           incrementGenomCounter(cell);
         } break;
         // Turning
-        case kInstructionTurn: {
+        case CellInstructions::Turn: {
           if (_enableInstructionTurn) {
             turn(cell);
           }
           incrementGenomCounter(cell);
         } break;
         // Moving (no more instructions permitted)
-        case kInstructionMove: {
+        case CellInstructions::Move: {
           if (_enableInstructionMove) {
             i = _maxInstructionsPerTick;
             move(cell);
@@ -428,7 +428,7 @@ void CellController::act() noexcept {
           incrementGenomCounter(cell);
         } break;
         // Getting energy from photosynthesis (no more instructions permitted)
-        case kInstructionGetEnergyFromPhotosynthesis: {
+        case CellInstructions::GetEnergyFromPhotosynthesis: {
           if (_enableInstructionGetEnergyFromPhotosynthesis) {
             i = _maxInstructionsPerTick;
             getEnergyFromPhotosynthesis(cell);
@@ -436,7 +436,7 @@ void CellController::act() noexcept {
           incrementGenomCounter(cell);
         } break;
         // Getting energy from minerals (no more instructions permitted)
-        case kInstructionGetEnergyFromMinerals: {
+        case CellInstructions::GetEnergyFromMinerals: {
           if (_enableInstructionGetEnergyFromMinerals) {
             i = _maxInstructionsPerTick;
             getEnergyFromMinerals(cell);
@@ -444,7 +444,7 @@ void CellController::act() noexcept {
           incrementGenomCounter(cell);
         } break;
         // Getting energy from food (no more instructions permitted)
-        case kInstructionGetEnergyFromFood: {
+        case CellInstructions::GetEnergyFromFood: {
           if (_enableInstructionGetEnergyFromFood) {
             i = _maxInstructionsPerTick;
             getEnergyFromFood(cell);
@@ -452,7 +452,7 @@ void CellController::act() noexcept {
           incrementGenomCounter(cell);
         } break;
         // Budding (no more instructions permitted)
-        case kInstructionBud: {
+        case CellInstructions::Bud: {
           if (_enableInstructionBud) {
             i = _maxInstructionsPerTick;
             bud(cell);
@@ -460,7 +460,7 @@ void CellController::act() noexcept {
           incrementGenomCounter(cell);
         } break;
         // Making random gen mutate (no more instructions permitted)
-        case kInstructionMutateRandomGen: {
+        case CellInstructions::MutateRandomGen: {
           if (_enableInstructionMutateRandomGen) {
             i = _maxInstructionsPerTick;
             mutateRandomGen(cell);
@@ -468,7 +468,7 @@ void CellController::act() noexcept {
           incrementGenomCounter(cell);
         } break;
         // Sharing energy (no more instructions permitted)
-        case kInstructionShareEnergy: {
+        case CellInstructions::ShareEnergy: {
           if (_enableInstructionShareEnergy) {
             i = _maxInstructionsPerTick;
             shareEnergy(cell);
@@ -476,7 +476,7 @@ void CellController::act() noexcept {
           incrementGenomCounter(cell);
         } break;
         // Looking forward (conditional instruction)
-        case kInstructionLookForward: {
+        case CellInstructions::LookForward: {
           if (_enableInstructionLookForward) {
             lookForward(cell);
           } else {
@@ -484,7 +484,7 @@ void CellController::act() noexcept {
           }
         } break;
         // Determining own energy level (conditional instruction)
-        case kInstructionDetermineEnergyLevel: {
+        case CellInstructions::DetermineEnergyLevel: {
           if (_enableInstructionDetermineEnergyLevel) {
             determineEnergyLevel(cell);
           } else {
@@ -492,7 +492,7 @@ void CellController::act() noexcept {
           }
         } break;
         // Determining own depth (conditional instruction)
-        case kInstructionDetermineDepth: {
+        case CellInstructions::DetermineDepth: {
           if (_enableInstructionDetermineDepth) {
             determineDepth(cell);
           } else {
@@ -500,7 +500,7 @@ void CellController::act() noexcept {
           }
         } break;
         // Determining available energy from photosynthesis (conditional instruction)
-        case kInstructionDeterminePhotosynthesisEnergy: {
+        case CellInstructions::DeterminePhotosynthesisEnergy: {
           if (_enableInstructionDeterminePhotosynthesisEnergy) {
             determinePhotosynthesisEnergy(cell);
           } else {
@@ -508,7 +508,7 @@ void CellController::act() noexcept {
           }
         } break;
         // Determining available energy from minerals (conditional instruction)
-        case kInstructionDetermineMineralEnergy: {
+        case CellInstructions::DetermineMineralEnergy: {
           if (_enableInstructionDetermineMineralEnergy) {
             determineMineralEnergy(cell);
           } else {
@@ -547,9 +547,9 @@ void CellController::render(CellRenderingData *cellRenderingData, int cellRender
     // If cell is alive
     if (cell._isAlive) {
       // Choosing appropriate cell rendering mode
-      switch (cellRenderingMode) {
+      switch (static_cast<CellRenderingModes>(cellRenderingMode)) {
         // Diet mode
-        case kRenderingModeDiet: {
+        case CellRenderingModes::Diet: {
           // Normalizing color and reducing it to range from 0 to 255
           colorR = static_cast<float>(cell._colorR);
           colorG = static_cast<float>(cell._colorG);
@@ -568,19 +568,19 @@ void CellController::render(CellRenderingData *cellRenderingData, int cellRender
           }
         } break;
         // Energy level mode
-        case kRenderingModeEnergyLevel: {
+        case CellRenderingModes::EnergyLevel: {
           colorR = 1.0f;
           colorG = map(cell._energy, 0.0f, _maxEnergy, kMaxColor, kMinColor);
           colorB = kMinColor;
         } break;
         // Energy sharing balance mode
-        case kRenderingModeEnergySharingBalance: {
+        case CellRenderingModes::EnergySharingBalance: {
           colorR = map(cell._energyShareBalance, -_maxEnergy, _maxEnergy, kMaxColor, kMinColor);
           colorG = map(cell._energyShareBalance, -_maxEnergy, _maxEnergy, kHalfColor, kMaxColor);
           colorB = map(cell._energyShareBalance, -_maxEnergy, _maxEnergy, kMinColor, kMaxColor);
         } break;
         // Last energy share mode
-        case kRenderingModeLastEnergyShare: {
+        case CellRenderingModes::LastEnergyShare: {
           colorR = map(cell._lastEnergyShare, -1.0f, 1.0f, kMaxColor, kMinColor);
           colorG = map(cell._lastEnergyShare, -1.0f, 1.0f, kHalfColor, kMaxColor);
           colorB = map(cell._lastEnergyShare, -1.0f, 1.0f, kMinColor, kMaxColor);

@@ -73,33 +73,37 @@ static constexpr bool  kInitEnableInstructionDetermineDepth = true;
 static constexpr bool  kInitenableInstructionDeterminePhotosynthesisEnergy = true;
 static constexpr bool  kInitEnableInstructionDetermineMineralEnergy = true;
 static constexpr bool  kInitEnableDeadCellPinningOnSinking = true;
-// Instruction constants
-static constexpr int kInstructionCount = 14;
-static constexpr int kInstructionDoNothing = 0;
-static constexpr int kInstructionTurn = 1;
-static constexpr int kInstructionMove = 2;
-static constexpr int kInstructionGetEnergyFromPhotosynthesis = 3;
-static constexpr int kInstructionGetEnergyFromMinerals = 4;
-static constexpr int kInstructionGetEnergyFromFood = 5;
-static constexpr int kInstructionBud = 6;
-static constexpr int kInstructionMutateRandomGen = 7;
-static constexpr int kInstructionShareEnergy = 8;
-static constexpr int kInstructionLookForward = 9;
-static constexpr int kInstructionDetermineEnergyLevel = 10;
-static constexpr int kInstructionDetermineDepth = 11;
-static constexpr int kInstructionDeterminePhotosynthesisEnergy = 12;
-static constexpr int kInstructionDetermineMineralEnergy = 13;
-// Cell rendering mode constants
-static constexpr int kRenderingModeCount = 4;
-static constexpr int kRenderingModeDiet = 0;
-static constexpr int kRenderingModeEnergyLevel = 1;
-static constexpr int kRenderingModeEnergySharingBalance = 2;
-static constexpr int kRenderingModeLastEnergyShare = 3;
+// Instruction enumeration
+enum class CellInstructions {
+  DoNothing,
+  Turn,
+  Move,
+  GetEnergyFromPhotosynthesis,
+  GetEnergyFromMinerals,
+  GetEnergyFromFood,
+  Bud,
+  MutateRandomGen,
+  ShareEnergy,
+  LookForward,
+  DetermineEnergyLevel,
+  DetermineDepth,
+  DeterminePhotosynthesisEnergy,
+  DetermineMineralEnergy,
+  Size
+};
+// Cell rendering mode enumeration
+enum class CellRenderingModes {
+  Diet,
+  EnergyLevel,
+  EnergySharingBalance,
+  LastEnergyShare,
+  Size
+};
 
 // Class for stroring simulation parameters and state, computing it and filling data for rendering
 class CellController {
  public:
-  // Auxiliary structure for class construction
+  // Auxiliary struct for class construction
   struct Params {
     std::mt19937 mersenneTwisterEngine{kInitRandomSeed};
     unsigned int randomSeed{kInitRandomSeed};

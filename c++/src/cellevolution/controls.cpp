@@ -16,6 +16,9 @@
 // Header file
 #include "./controls.hpp"
 
+// STD
+#include <algorithm>
+
 // "extra" internal library
 #include "./extra/extra.hpp"
 
@@ -25,19 +28,11 @@
 // Global constants
 static constexpr int kMaxTicksPerRender = 1000;
 
-// External global variables
-extern int  gCellRenderingMode;
-extern int  gTicksPerRender;
-extern bool gEnableRendering;
-extern bool gEnableRenderingEnvironment;
-extern bool gEnablePause;
-
 // User input processing function
-void processUserInput(GLFWwindow *window) {
+void processUserInput(GLFWwindow *window, Controls &controls) {
+  // Variables for key press and release handling
   static bool sPressed{};
   bool        released{true};
-
-  static int sPosX{}, sPosY{}, sWidth{}, sHeight{};
 
   // Switching cell rendering mode
   if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) {
@@ -45,7 +40,8 @@ void processUserInput(GLFWwindow *window) {
     if (!sPressed) {
       sPressed = true;
 
-      gCellRenderingMode = (gCellRenderingMode + 1) % CellEvolution::kRenderingModeCount;
+      controls.cellRenderingMode = (controls.cellRenderingMode + 1) %
+                                   static_cast<int>(CellEvolution::CellRenderingModes::Size);
     }
   }
 
@@ -56,7 +52,7 @@ void processUserInput(GLFWwindow *window) {
     if (!sPressed) {
       sPressed = true;
 
-      gTicksPerRender = std::max(gTicksPerRender - 1, 1);
+      controls.ticksPerRender = std::max(controls.ticksPerRender - 1, 1);
     }
   }
 
@@ -69,7 +65,7 @@ void processUserInput(GLFWwindow *window) {
     if (!sPressed) {
       sPressed = true;
 
-      gTicksPerRender = std::min(gTicksPerRender + 1, kMaxTicksPerRender);
+      controls.ticksPerRender = std::min(controls.ticksPerRender + 1, kMaxTicksPerRender);
     }
   }
 
@@ -79,7 +75,7 @@ void processUserInput(GLFWwindow *window) {
     if (!sPressed) {
       sPressed = true;
 
-      gEnableRenderingEnvironment = !gEnableRenderingEnvironment;
+      controls.enableRenderingEnvironment = !controls.enableRenderingEnvironment;
     }
   }
 
@@ -89,7 +85,7 @@ void processUserInput(GLFWwindow *window) {
     if (!sPressed) {
       sPressed = true;
 
-      gEnableRendering = !gEnableRendering;
+      controls.enableRendering = !controls.enableRendering;
     }
   }
 
@@ -99,7 +95,7 @@ void processUserInput(GLFWwindow *window) {
     if (!sPressed) {
       sPressed = true;
 
-      gEnablePause = !gEnablePause;
+      controls.enablePause = !controls.enablePause;
     }
   }
 
@@ -109,27 +105,52 @@ void processUserInput(GLFWwindow *window) {
     if (!sPressed) {
       sPressed = true;
 
-      if (glfwGetWindowMonitor(window) == nullptr) {
-        extra::enableFullscreenMode(window, sPosX, sPosY, sWidth, sHeight);
-      } else {
-        extra::disableFullscreenMode(window, sPosX, sPosY, sWidth, sHeight);
-      }
+      controls.enableFullscreenMode = !controls.enableFullscreenMode;
     }
   }
 
-  // Disabling window fullscreen mode if ESC is pressed
+  // Disabling window fullscreen mode
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
     released = false;
     if (!sPressed) {
       sPressed = true;
 
-      if (glfwGetWindowMonitor(window) != nullptr) {
-        extra::disableFullscreenMode(window, sPosX, sPosY, sWidth, sHeight);
-      }
+      controls.enableFullscreenMode = false;
     }
   }
 
+  // Toggling window V-sync
+  if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS) {
+    released = false;
+    if (!sPressed) {
+      sPressed = true;
+
+      controls.enableVSync = !controls.enableVSync;
+    }
+  }
+
+  // Cheking for key released
   if (released) {
     sPressed = false;
   }
+
+  // Checking for window fullscreen mode change
+  static int sPosX{}, sPosY{}, sWidth{}, sHeight{};
+  if (controls.enableFullscreenMode) {
+    extra::enableFullscreenMode(window, sPosX, sPosY, sWidth, sHeight);
+  } else {
+    extra::disableFullscreenMode(window, sPosX, sPosY, sWidth, sHeight);
+  }
+
+  // Checking for window V-sync change
+  if (controls.enableVSync) {
+    glfwSwapInterval(1);
+  } else {
+    glfwSwapInterval(0);
+  }
+}
+
+// Window size callback function
+void windowSizeCallback(GLFWwindow *window, int width, int height) {
+  glViewport(0, 0, width, height);
 }

@@ -14,8 +14,7 @@
 // along with cellevolution.  If not, see <https://www.gnu.org/licenses/>.
 
 // STD
-#include <algorithm>
-#include <string>
+#include <string_view>
 
 // Qt
 #include <QGuiApplication>
@@ -46,13 +45,6 @@ static constexpr float            kCellSize                         = 8.0f;
 static constexpr float            kMaxPhotosynthesisDepthMultiplier = 0.7f;
 static constexpr float            kMaxMineralHeightMultiplier       = 0.7f;
 
-// External global variables
-int  gCellRenderingMode          = 0;
-int  gTicksPerRender             = 1;
-bool gEnableRendering            = true;
-bool gEnableRenderingEnvironment = true;
-bool gEnablePause                = false;
-
 // Main function
 int main(int argc, char *argv[]) {
   // Initializing GLFW and getting configured window with OpenGL context
@@ -62,6 +54,18 @@ int main(int argc, char *argv[]) {
 
   // Capturing OpenGL context
   glfwMakeContextCurrent(window);
+
+  // Setting OpenGL viewport
+  glViewport(0, 0, kInitWindowWidth, kInitWindowHeight);
+  // Setting window size callback function
+  glfwSetWindowSizeCallback(window, windowSizeCallback);
+  // Enabling gl_PointSize
+  glEnable(GL_PROGRAM_POINT_SIZE);
+  // Setting OpenGL clear color
+  glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+  // Enable blending for environment rendering
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnable(GL_BLEND);
 
   // Creating, compiling and linking cell and environment shader programs
   const GLuint cellShaderProgram                 = initCellShaderProgram();
@@ -83,9 +87,6 @@ int main(int argc, char *argv[]) {
       static_cast<int>(static_cast<float>(cellControllerParams.rows) * kMaxMineralHeightMultiplier);
   // Initializing simulation itself
   CellEvolution::CellController cellController{cellControllerParams};
-
-  // Setting OpenGL viewport
-  glViewport(0, 0, cellControllerParams.width, cellControllerParams.height);
 
   // Setting values of cellShaderProgram uniform variables
   glUseProgram(cellShaderProgram);
@@ -112,18 +113,8 @@ int main(int argc, char *argv[]) {
                                                        cellControllerParams.rows),
                            mineralEnergyVAO, mineralEnergyVBO);
 
-  // Enabling gl_PointSize
-  glEnable(GL_PROGRAM_POINT_SIZE);
-
-  // Setting OpenGL clear color
-  glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-
-  // Enable blending for environment rendering
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glEnable(GL_BLEND);
-
-  // Removing FPS limit
-  glfwSwapInterval(0);
+  // Initializing controls struct
+  Controls controls{0, 1, true, true, false, true, true};
 
   // Initializing ticks passed value
   int ticksPassed{};
@@ -134,13 +125,13 @@ int main(int argc, char *argv[]) {
     glfwPollEvents();
 
     // Processing user input
-    processUserInput(window);
+    processUserInput(window, controls);
 
     // Checking if current tick should be rendered
-    bool renderCurrTick = gEnableRendering && (ticksPassed % gTicksPerRender == 0);
+    bool renderCurrTick = controls.enableRendering && (ticksPassed % controls.ticksPerRender == 0);
 
     // If simulation is not paused
-    if (!gEnablePause) {
+    if (!controls.enablePause) {
       // Computing next simulation tick
       cellController.act();
     }
@@ -154,7 +145,7 @@ int main(int argc, char *argv[]) {
       glClear(GL_COLOR_BUFFER_BIT);
 
       // Rendering environment if needed
-      if (gEnableRenderingEnvironment) {
+      if (controls.enableRenderingEnvironment) {
         renderMineralEnergyBuffer(mineralEnergyShaderProgram, mineralEnergyVAO, mineralEnergyVBO);
         renderPhotosynthesisEnergyBuffer(photosynthesisEnergyShaderProgram, photosynthesisEnergyVAO,
                                          photosynthesisEnergyVBO, cellController.getSunPosition(),
@@ -162,7 +153,8 @@ int main(int argc, char *argv[]) {
       }
 
       // Rendering cells
-      renderCellBuffer(cellController, cellShaderProgram, cellVAO, cellVBO);
+      renderCellBuffer(cellShaderProgram, cellVAO, cellVBO, cellController,
+                       controls.cellRenderingMode);
 
       // Swapping front and back buffers
       glfwSwapBuffers(window);

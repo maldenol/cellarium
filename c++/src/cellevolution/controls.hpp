@@ -20,7 +20,21 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
+// Struct with controls variables
+struct Controls {
+  int  cellRenderingMode{};
+  int  ticksPerRender{};
+  bool enableRendering{};
+  bool enableRenderingEnvironment{};
+  bool enablePause{};
+  bool enableFullscreenMode{};
+  bool enableVSync{};
+};
+
 // User input processing function
-void processUserInput(GLFWwindow *window);
+void processUserInput(GLFWwindow *window, Controls& controls);
+
+// Window size callback function
+void windowSizeCallback(GLFWwindow *window, int width, int height);
 
 #endif

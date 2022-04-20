@@ -22,7 +22,7 @@
 template <typename T>
 class LinkedList {
  private:
-  // Linked list element structure
+  // Linked list element struct
   struct Element {
     std::shared_ptr<Element> next{};
     T                        value{};

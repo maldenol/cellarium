@@ -16,12 +16,9 @@
 // Header file
 #include "./render_buffer.hpp"
 
-// External global variables
-extern bool gCellRenderingMode;
-
 // Renders cells from buffer
-void renderCellBuffer(CellEvolution::CellController &cellController, GLuint shaderProgram,
-                      GLuint vao, GLuint vbo) {
+void renderCellBuffer(GLuint shaderProgram, GLuint vao, GLuint vbo,
+                      CellEvolution::CellController &cellController, int cellRenderingMode) {
   // Using shader program
   glUseProgram(shaderProgram);
   // Binding VAO and VBO
@@ -34,7 +31,7 @@ void renderCellBuffer(CellEvolution::CellController &cellController, GLuint shad
       reinterpret_cast<CellEvolution::CellController::CellRenderingData *>(
           glMapBufferRange(GL_ARRAY_BUFFER, 0, renderingDataSize, GL_MAP_WRITE_BIT));
   // Passing VBO buffer to CellController that fills it with rendering data
-  cellController.render(cellRenderingData, gCellRenderingMode);
+  cellController.render(cellRenderingData, cellRenderingMode);
   // Rendering elements
   glDrawArrays(GL_POINTS, 0, renderingDataSize);
   // Unmapping VBO buffer
