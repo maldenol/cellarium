@@ -17,8 +17,6 @@
 #define CELL_CONTROLLER_HPP
 
 // STD
-#include <algorithm>
-#include <memory>
 #include <random>
 #include <vector>
 

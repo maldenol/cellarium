@@ -17,6 +17,7 @@
 #include "./cell_controller.hpp"
 
 // STD
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <utility>
