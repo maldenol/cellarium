@@ -211,7 +211,7 @@ class CellController {
   // Linked list of cell indices for quick consequent access
   LinkedList<int> _cellIndexList{};
   // Vector of cells for quick random access
-  std::vector<Cell> _cellVector{};
+  std::vector<Cell *> _cellVector{};
 
   // Simulation time counters
   int _ticksNumber{};
@@ -257,7 +257,7 @@ class CellController {
   void getEnergyFromFood(Cell &cell) noexcept;
   void bud(Cell &cell) noexcept;
   void mutateRandomGen(Cell &cell) noexcept;
-  void shareEnergy(Cell &cell) noexcept;
+  void shareEnergy(Cell &cell) const noexcept;
   void lookForward(Cell &cell) const noexcept;
   void determineEnergyLevel(Cell &cell) const noexcept;
   void determineDepth(Cell &cell) const noexcept;
@@ -282,8 +282,8 @@ class CellController {
   int calculateIndexByIndexAndDirection(int index, int direction) const noexcept;
 
   // Add and remove cells
-  void addCell(const Cell &cell) noexcept;
-  void removeCell(const Cell &cell) noexcept;
+  void addCell(Cell *cell) noexcept;
+  void removeCell(Cell *cell) noexcept;
 };
 
 }

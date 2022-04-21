@@ -42,6 +42,7 @@ static constexpr std::string_view kWindowTitle                      = "cellevolu
 static constexpr int              kOpenGLVersionMajor               = 4;
 static constexpr int              kOpenGLVersionMinor               = 6;
 static constexpr float            kCellSize                         = 8.0f;
+static constexpr unsigned int     kRandomSeed                       = 1234567890;
 static constexpr float            kMaxPhotosynthesisDepthMultiplier = 0.7f;
 static constexpr float            kMaxMineralHeightMultiplier       = 0.7f;
 
@@ -74,12 +75,14 @@ int main(int argc, char *argv[]) {
 
   // Initializing simulation parameters
   CellEvolution::CellController::Params cellControllerParams{};
-  cellControllerParams.width    = kInitWindowWidth;
-  cellControllerParams.height   = kInitWindowHeight;
-  cellControllerParams.cellSize = kCellSize;
-  cellControllerParams.columns  = static_cast<int>(static_cast<float>(cellControllerParams.width) /
+  cellControllerParams.mersenneTwisterEngine = std::mt19937{kRandomSeed};
+  cellControllerParams.randomSeed            = kRandomSeed;
+  cellControllerParams.width                 = kInitWindowWidth;
+  cellControllerParams.height                = kInitWindowHeight;
+  cellControllerParams.cellSize              = kCellSize;
+  cellControllerParams.columns = static_cast<int>(static_cast<float>(cellControllerParams.width) /
                                                   cellControllerParams.cellSize);
-  cellControllerParams.rows     = static_cast<int>(static_cast<float>(cellControllerParams.height) /
+  cellControllerParams.rows    = static_cast<int>(static_cast<float>(cellControllerParams.height) /
                                                cellControllerParams.cellSize);
   cellControllerParams.maxPhotosynthesisDepth = static_cast<int>(
       static_cast<float>(cellControllerParams.rows) * kMaxPhotosynthesisDepthMultiplier);
