@@ -17,7 +17,7 @@
 #include <string_view>
 
 // Qt
-#include <QGuiApplication>
+#include <QCoreApplication>
 
 // OpenGL
 #include <glad/glad.h>
@@ -27,6 +27,7 @@
 #include "./extra/extra.hpp"
 
 // Headers of other compile unit
+#include "./command_line.hpp"
 #include "./init_shader.hpp"
 #include "./init_buffer.hpp"
 #include "./render_buffer.hpp"
@@ -36,28 +37,38 @@
 #include "./cell_controller.hpp"
 
 // Global constants
-static constexpr int              kInitWindowWidth                  = 1920;
-static constexpr int              kInitWindowHeight                 = 1080;
-static constexpr std::string_view kWindowTitle                      = "cellevolution";
-static constexpr int              kOpenGLVersionMajor               = 4;
-static constexpr int              kOpenGLVersionMinor               = 6;
-static constexpr float            kCellSize                         = 8.0f;
-static constexpr unsigned int     kRandomSeed                       = 1234567890;
-static constexpr float            kMaxPhotosynthesisDepthMultiplier = 0.7f;
-static constexpr float            kMaxMineralHeightMultiplier       = 0.7f;
+static constexpr std::string_view kWindowTitle        = "cellevolution";
+static constexpr int              kOpenGLVersionMajor = 4;
+static constexpr int              kOpenGLVersionMinor = 6;
 
 // Main function
 int main(int argc, char *argv[]) {
+  // Initializing simulation parameters
+  CellEvolution::CellController::Params cellControllerParams{};
+
+  // Initializing controls struct
+  Controls controls{0, 1, true, true, false, false, true};
+
+  // Processing command line arguments updating CellController::Params and Controls
+  int success{processCommandLineArguments(argc, argv, std::string{kWindowTitle}, controls,
+                                          cellControllerParams)};
+  if (success != 0) {
+    return 0;
+  }
+
+  // Initializing simulation itself
+  CellEvolution::CellController cellController{cellControllerParams};
+
   // Initializing GLFW and getting configured window with OpenGL context
   GLFWwindow *window =
-      extra::createWindow(kInitWindowWidth, kInitWindowHeight, std::string{kWindowTitle},
-                          kOpenGLVersionMajor, kOpenGLVersionMinor);
+      extra::createWindow(cellControllerParams.width, cellControllerParams.height,
+                          std::string{kWindowTitle}, kOpenGLVersionMajor, kOpenGLVersionMinor);
 
   // Capturing OpenGL context
   glfwMakeContextCurrent(window);
 
   // Setting OpenGL viewport
-  glViewport(0, 0, kInitWindowWidth, kInitWindowHeight);
+  glViewport(0, 0, cellControllerParams.width, cellControllerParams.height);
   // Setting window size callback function
   glfwSetWindowSizeCallback(window, windowSizeCallback);
   // Enabling gl_PointSize
@@ -73,28 +84,10 @@ int main(int argc, char *argv[]) {
   const GLuint photosynthesisEnergyShaderProgram = initPhotosynthesisEnergyShaderProgram();
   const GLuint mineralEnergyShaderProgram        = initMineralEnergyShaderProgram();
 
-  // Initializing simulation parameters
-  CellEvolution::CellController::Params cellControllerParams{};
-  cellControllerParams.mersenneTwisterEngine = std::mt19937{kRandomSeed};
-  cellControllerParams.randomSeed            = kRandomSeed;
-  cellControllerParams.width                 = kInitWindowWidth;
-  cellControllerParams.height                = kInitWindowHeight;
-  cellControllerParams.cellSize              = kCellSize;
-  cellControllerParams.columns = static_cast<int>(static_cast<float>(cellControllerParams.width) /
-                                                  cellControllerParams.cellSize);
-  cellControllerParams.rows    = static_cast<int>(static_cast<float>(cellControllerParams.height) /
-                                               cellControllerParams.cellSize);
-  cellControllerParams.maxPhotosynthesisDepth = static_cast<int>(
-      static_cast<float>(cellControllerParams.rows) * kMaxPhotosynthesisDepthMultiplier);
-  cellControllerParams.maxMineralHeight =
-      static_cast<int>(static_cast<float>(cellControllerParams.rows) * kMaxMineralHeightMultiplier);
-  // Initializing simulation itself
-  CellEvolution::CellController cellController{cellControllerParams};
-
   // Setting values of cellShaderProgram uniform variables
   glUseProgram(cellShaderProgram);
-  glUniform1i(glGetUniformLocation(cellShaderProgram, "kColumns"), cellControllerParams.columns);
-  glUniform1i(glGetUniformLocation(cellShaderProgram, "kRows"), cellControllerParams.rows);
+  glUniform1i(glGetUniformLocation(cellShaderProgram, "kColumns"), cellController.getColumns());
+  glUniform1i(glGetUniformLocation(cellShaderProgram, "kRows"), cellController.getRows());
   glUniform1f(glGetUniformLocation(cellShaderProgram, "kPointSizeInViewport"),
               cellControllerParams.cellSize);
   glUniform1f(
@@ -105,19 +98,16 @@ int main(int argc, char *argv[]) {
 
   // Initializing and configuring OpenGL Vertex Array and Buffer Objects for cells and environment
   GLuint cellVAO{}, cellVBO{};
-  initCellBuffers(cellControllerParams.rows * cellControllerParams.columns, cellVAO, cellVBO);
+  initCellBuffers(cellController.getColumns() * cellController.getRows(), cellVAO, cellVBO);
   GLuint photosynthesisEnergyVAO{}, photosynthesisEnergyVBO{};
   initPhotosynthesisEnergyBuffers(
-      static_cast<float>(1 - 2 * cellControllerParams.maxPhotosynthesisDepth /
-                                 cellControllerParams.rows),
+      static_cast<float>(1 -
+                         2 * cellController.getMaxPhotosynthesisDepth() / cellController.getRows()),
       photosynthesisEnergyVAO, photosynthesisEnergyVBO);
   GLuint mineralEnergyVAO{}, mineralEnergyVBO{};
-  initMineralEnergyBuffers(static_cast<float>(-1 + 2 * cellControllerParams.maxMineralHeight /
-                                                       cellControllerParams.rows),
-                           mineralEnergyVAO, mineralEnergyVBO);
-
-  // Initializing controls struct
-  Controls controls{0, 1, true, true, false, true, true};
+  initMineralEnergyBuffers(
+      static_cast<float>(-1 + 2 * cellController.getMaxMineralHeight() / cellController.getRows()),
+      mineralEnergyVAO, mineralEnergyVBO);
 
   // Initializing ticks passed value
   int ticksPassed{};

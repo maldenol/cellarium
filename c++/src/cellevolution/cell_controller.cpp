@@ -93,23 +93,22 @@ CellController::CellController() : CellController{Params{}} {}
 CellController::CellController(const Params &params)
     : _mersenneTwisterEngine{params.mersenneTwisterEngine},
       _randomSeed{params.randomSeed},
-      _width{params.width},
-      _height{params.height},
-      _cellSize{params.cellSize},
-      _columns{params.columns},
-      _rows{params.rows},
+      _columns(static_cast<int>(static_cast<float>(params.width) / params.cellSize)),
+      _rows(static_cast<int>(static_cast<float>(params.height) / params.cellSize)),
       _genomSize{params.genomSize},
       _maxInstructionsPerTick{params.maxInstructionsPerTick},
       _maxAkinGenomDifference{params.maxAkinGenomDifference},
       _minChildEnergy{params.minChildEnergy},
       _maxEnergy{params.maxEnergy},
       _maxPhotosynthesisEnergy{params.maxPhotosynthesisEnergy},
-      _maxPhotosynthesisDepth{params.maxPhotosynthesisDepth},
+      _maxPhotosynthesisDepth(
+          static_cast<int>(static_cast<float>(_rows) * params.maxPhotosynthesisDepthMultiplier)),
       _summerDaytimeToWholeDayRatio{params.summerDaytimeToWholeDayRatio},
       _enableDaytimes{params.enableDaytimes},
       _enableSeasons{params.enableSeasons},
       _maxMineralEnergy{params.maxMineralEnergy},
-      _maxMineralHeight{params.maxMineralHeight},
+      _maxMineralHeight(
+          static_cast<int>(static_cast<float>(_rows) * params.maxMineralHeightMultiplier)),
       _maxFoodEnergy{params.maxFoodEnergy},
       _randomMutationChance{params.randomMutationChance},
       _budMutationChance{params.budMutationChance},
@@ -143,18 +142,16 @@ CellController::CellController(const Params &params)
   // Creating the first cell
   std::vector<int> firstCellGenom;
   firstCellGenom.assign(_genomSize, kFirstCellGenomInstructions);
-  addCell(std::make_unique<Cell>(firstCellGenom,
-               static_cast<int>(static_cast<float>(_minChildEnergy) * kFirstCellEnergyMultiplier),
-               kFirstCellDirection,
-               static_cast<int>(static_cast<float>(_columns) * kFirstCellIndexMultiplier)));
+  addCell(std::make_unique<Cell>(
+      firstCellGenom,
+      static_cast<int>(static_cast<float>(_minChildEnergy) * kFirstCellEnergyMultiplier),
+      kFirstCellDirection,
+      static_cast<int>(static_cast<float>(_columns) * kFirstCellIndexMultiplier)));
 }
 
 CellController::CellController(const CellController &cellController) noexcept
     : _mersenneTwisterEngine{cellController._mersenneTwisterEngine},
       _randomSeed{cellController._randomSeed},
-      _width{cellController._width},
-      _height{cellController._height},
-      _cellSize{cellController._cellSize},
       _columns{cellController._columns},
       _rows{cellController._rows},
       _genomSize{cellController._genomSize},
@@ -216,9 +213,6 @@ CellController::CellController(const CellController &cellController) noexcept
 CellController &CellController::operator=(const CellController &cellController) noexcept {
   _mersenneTwisterEngine        = cellController._mersenneTwisterEngine;
   _randomSeed                   = cellController._randomSeed;
-  _width                        = cellController._width;
-  _height                       = cellController._height;
-  _cellSize                     = cellController._cellSize;
   _columns                      = cellController._columns;
   _rows                         = cellController._rows;
   _genomSize                    = cellController._genomSize;
@@ -273,8 +267,8 @@ CellController &CellController::operator=(const CellController &cellController) 
     _cellPtrVector[index] = std::make_unique<Cell>(*cellController._cellPtrVector[index]);
   }
 
-  _ticksNumber                    = cellController._ticksNumber;
-  _yearsNumber                    = cellController._yearsNumber;
+  _ticksNumber = cellController._ticksNumber;
+  _yearsNumber = cellController._yearsNumber;
 
   return *this;
 }
@@ -282,9 +276,6 @@ CellController &CellController::operator=(const CellController &cellController) 
 CellController::CellController(CellController &&cellController) noexcept
     : _mersenneTwisterEngine{std::exchange(cellController._mersenneTwisterEngine, std::mt19937{})},
       _randomSeed{std::exchange(cellController._randomSeed, 0)},
-      _width{std::exchange(cellController._width, 0)},
-      _height{std::exchange(cellController._height, 0)},
-      _cellSize{std::exchange(cellController._cellSize, 0.0f)},
       _columns{std::exchange(cellController._columns, 0)},
       _rows{std::exchange(cellController._rows, 0)},
       _genomSize{std::exchange(cellController._genomSize, 0)},
@@ -333,16 +324,14 @@ CellController::CellController(CellController &&cellController) noexcept
       _enableDeadCellPinningOnSinking{
           std::exchange(cellController._enableDeadCellPinningOnSinking, false)},
       _cellIndexList{std::exchange(cellController._cellIndexList, LinkedList<int>{})},
-      _cellPtrVector{std::exchange(cellController._cellPtrVector, std::vector<std::unique_ptr<Cell>>{})},
+      _cellPtrVector{
+          std::exchange(cellController._cellPtrVector, std::vector<std::unique_ptr<Cell>>{})},
       _ticksNumber{std::exchange(cellController._ticksNumber, 0)},
       _yearsNumber{std::exchange(cellController._yearsNumber, 0)} {}
 
 CellController &CellController::operator=(CellController &&cellController) noexcept {
   std::swap(_mersenneTwisterEngine, cellController._mersenneTwisterEngine);
   std::swap(_randomSeed, cellController._randomSeed);
-  std::swap(_width, cellController._width);
-  std::swap(_height, cellController._height);
-  std::swap(_cellSize, cellController._cellSize);
   std::swap(_columns, cellController._columns);
   std::swap(_rows, cellController._rows);
   std::swap(_genomSize, cellController._genomSize);
@@ -402,7 +391,7 @@ void CellController::act() noexcept {
   LinkedList<int>::Iterator iter{_cellIndexList.getIterator()};
   while (iter.hasNext()) {
     const int index = iter.next();
-    Cell &cell = *_cellPtrVector[index];
+    Cell     &cell  = *_cellPtrVector[index];
 
     // Moving cell if it is dead
     if (!cell._isAlive) {
@@ -664,6 +653,14 @@ float CellController::getDaytimeWidth() const noexcept {
   return daytimeWidthRatio;
 }
 
+int CellController::getColumns() const noexcept { return _columns; }
+
+int CellController::getRows() const noexcept { return _rows; }
+
+int CellController::getMaxPhotosynthesisDepth() const noexcept { return _maxPhotosynthesisDepth; }
+
+int CellController::getMaxMineralHeight() const noexcept { return _maxMineralHeight; }
+
 void CellController::updateTime() noexcept {
   // Updating ticks
   ++_ticksNumber;
@@ -824,17 +821,18 @@ void CellController::bud(Cell &cell) noexcept {
     // If there is nothing at this direction
     if (_cellPtrVector[targetIndex] == nullptr) {
       // Creating new cell
-      std::unique_ptr<Cell> buddedCellPtr = std::make_unique<Cell>(cell._genom, cell._energy / 2, cell._direction, targetIndex);
+      std::unique_ptr<Cell> buddedCellPtr =
+          std::make_unique<Cell>(cell._genom, cell._energy / 2, cell._direction, targetIndex);
 
       // Assigning cell color
       float colorVectorLength = static_cast<float>(std::sqrt(
           cell._colorR * cell._colorR + cell._colorG * cell._colorG + cell._colorB * cell._colorB));
-      buddedCellPtr->_colorR     = static_cast<int>(static_cast<float>(cell._colorR) *
-                                             kBuddedCellParentColorMultiplier / colorVectorLength);
-      buddedCellPtr->_colorG     = static_cast<int>(static_cast<float>(cell._colorG) *
-                                             kBuddedCellParentColorMultiplier / colorVectorLength);
-      buddedCellPtr->_colorB     = static_cast<int>(static_cast<float>(cell._colorB) *
-                                             kBuddedCellParentColorMultiplier / colorVectorLength);
+      buddedCellPtr->_colorR  = static_cast<int>(
+          static_cast<float>(cell._colorR) * kBuddedCellParentColorMultiplier / colorVectorLength);
+      buddedCellPtr->_colorG = static_cast<int>(
+          static_cast<float>(cell._colorG) * kBuddedCellParentColorMultiplier / colorVectorLength);
+      buddedCellPtr->_colorB = static_cast<int>(
+          static_cast<float>(cell._colorB) * kBuddedCellParentColorMultiplier / colorVectorLength);
 
       // Applying random bud mutation to the budded cell
       if (static_cast<float>(_mersenneTwisterEngine()) /
@@ -897,7 +895,7 @@ void CellController::shareEnergy(Cell &cell) const noexcept {
     targetCell._energyShareBalance -= deltaEnergy;
 
     // Updating last energy shares
-    cell._lastEnergyShare           = 1.0f;
+    cell._lastEnergyShare       = 1.0f;
     targetCell._lastEnergyShare = -1.0f;
   }
 }
@@ -1145,12 +1143,12 @@ void CellController::addCell(std::unique_ptr<Cell> cellPtr) noexcept {
   // and before older cells (younger cells have smaller "reaction time")
 
   // Order matters
-  _cellIndexList.pushFront(cellPtr->_index);          // 1
+  _cellIndexList.pushFront(cellPtr->_index);             // 1
   _cellPtrVector[cellPtr->_index] = std::move(cellPtr);  // 2
 }
 
 void CellController::removeCell(std::unique_ptr<Cell> cellPtr) noexcept {
   // Order matters
-  _cellIndexList.remove(cellPtr->_index);  // 1
+  _cellIndexList.remove(cellPtr->_index);     // 1
   _cellPtrVector[cellPtr->_index] = nullptr;  // 2
 }

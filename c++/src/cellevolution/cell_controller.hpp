@@ -36,21 +36,19 @@ static constexpr int   kInitWidth = 800;
 static constexpr int   kInitHeight = 600;
 static constexpr float kInitCellSize = 8.0f;
 
-static constexpr int kInitColumns = static_cast<int>(static_cast<float>(kInitWidth) / kInitCellSize);
-static constexpr int kInitRows = static_cast<int>(static_cast<float>(kInitHeight) / kInitCellSize);
+static constexpr float kInitPhotosynthesisDepthMultiplier = 0.7f;
+static constexpr float kInitMineralHeightMultiplier       = 0.7f;
+
 static constexpr int kInitGenomSize = 64;
 static constexpr int kInitMaxInstructionsPerTick = 16;
 static constexpr int kInitMaxAkinGenomDifference = 4;
 static constexpr int kInitMinChildEnergy = 40;
 static constexpr int kInitMaxEnergy = 800;
 static constexpr int kInitMaxPhotosynthesisEnergy = 30;
-static constexpr int kInitMaxPhotosynthesisDepth =
-    static_cast<int>(static_cast<float>(kInitRows) * 0.7f);
 static constexpr float kInitSummerDaytimeToWholeDayRatio = 0.6f;
 static constexpr bool  kInitEnableDaytimes = true;
 static constexpr bool  kInitEnableSeasons = true;
 static constexpr int   kInitMaxMineralEnergy = 15;
-static constexpr int kInitMaxMineralHeight = static_cast<int>(static_cast<float>(kInitRows) * 0.7f);
 static constexpr int kInitMaxFoodEnergy = 50;
 static constexpr float kInitRandomMutationChance = 0.01f;
 static constexpr float kInitBudMutationChance = 0.25f;
@@ -111,20 +109,19 @@ class CellController {
     int   height{kInitHeight};
     float cellSize{kInitCellSize};
 
-    int   columns{kInitColumns};
-    int   rows{kInitRows};
+    float maxPhotosynthesisDepthMultiplier{kInitPhotosynthesisDepthMultiplier};
+    float maxMineralHeightMultiplier{kInitMineralHeightMultiplier};
+
     int   genomSize{kInitGenomSize};
     int   maxInstructionsPerTick{kInitMaxInstructionsPerTick};
     int   maxAkinGenomDifference{kInitMaxAkinGenomDifference};
     int   minChildEnergy{kInitMinChildEnergy};
     int   maxEnergy{kInitMaxEnergy};
     int   maxPhotosynthesisEnergy{kInitMaxPhotosynthesisEnergy};
-    int   maxPhotosynthesisDepth{kInitMaxPhotosynthesisDepth};
     float summerDaytimeToWholeDayRatio{kInitSummerDaytimeToWholeDayRatio};
     bool  enableDaytimes{kInitEnableDaytimes};
     bool  enableSeasons{kInitEnableSeasons};
     int   maxMineralEnergy{kInitMaxMineralEnergy};
-    int   maxMineralHeight{kInitMaxMineralHeight};
     int   maxFoodEnergy{kInitMaxFoodEnergy};
     float randomMutationChance{kInitRandomMutationChance};
     float budMutationChance{kInitBudMutationChance};
@@ -162,11 +159,6 @@ class CellController {
   // Pseufo-random numbers generation
   std::mt19937 _mersenneTwisterEngine{};
   unsigned int _randomSeed{};
-
-  // Simulation world and cell sizes
-  int   _width{};
-  int   _height{};
-  float _cellSize{};
 
   // Simulation discrete space size
   int _columns{};
@@ -237,11 +229,16 @@ class CellController {
   // Returns count of cells
   size_t getCellCount() const noexcept;
 
-  // Retunrs sun offset in range from -1 to 1
+  // Returns sun offset in range from -1 to 1
   float getSunPosition() const noexcept;
-
-  // Retunrs daytime width in range from 0 to 1
+  // Returns daytime width in range from 0 to 1
   float getDaytimeWidth() const noexcept;
+
+  // Getters
+  int getColumns() const noexcept;
+  int getRows() const noexcept;
+  int getMaxPhotosynthesisDepth() const noexcept;
+  int getMaxMineralHeight() const noexcept;
 
  private:
   // Updates tick counters

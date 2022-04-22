@@ -30,9 +30,12 @@ static constexpr int kMaxTicksPerRender = 1000;
 
 // User input processing function
 void processUserInput(GLFWwindow *window, Controls &controls) {
+  // Static variables
+  static int sPosX{}, sPosY{}, sWidth{}, sHeight{};
+
   // Variables for key press and release handling
   static bool sPressed{};
-  bool        released{true};
+  bool        released = true;
 
   // Switching cell rendering mode
   if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) {
@@ -106,6 +109,11 @@ void processUserInput(GLFWwindow *window, Controls &controls) {
       sPressed = true;
 
       controls.enableFullscreenMode = !controls.enableFullscreenMode;
+      if (controls.enableFullscreenMode) {
+        extra::enableFullscreenMode(window, sPosX, sPosY, sWidth, sHeight);
+      } else {
+        extra::disableFullscreenMode(window, sPosX, sPosY, sWidth, sHeight);
+      }
     }
   }
 
@@ -116,6 +124,9 @@ void processUserInput(GLFWwindow *window, Controls &controls) {
       sPressed = true;
 
       controls.enableFullscreenMode = false;
+      if (glfwGetWindowMonitor(window) != nullptr) {
+        extra::disableFullscreenMode(window, sPosX, sPosY, sWidth, sHeight);
+      }
     }
   }
 
@@ -126,6 +137,11 @@ void processUserInput(GLFWwindow *window, Controls &controls) {
       sPressed = true;
 
       controls.enableVSync = !controls.enableVSync;
+      if (controls.enableVSync) {
+        glfwSwapInterval(1);
+      } else {
+        glfwSwapInterval(0);
+      }
     }
   }
 
@@ -134,19 +150,22 @@ void processUserInput(GLFWwindow *window, Controls &controls) {
     sPressed = false;
   }
 
-  // Checking for window fullscreen mode change
-  static int sPosX{}, sPosY{}, sWidth{}, sHeight{};
-  if (controls.enableFullscreenMode) {
-    extra::enableFullscreenMode(window, sPosX, sPosY, sWidth, sHeight);
-  } else {
-    extra::disableFullscreenMode(window, sPosX, sPosY, sWidth, sHeight);
-  }
+  // Checking initial controls values
+  static bool sFirstCall = true;
+  if (sFirstCall) {
+    sFirstCall = false;
 
-  // Checking for window V-sync change
-  if (controls.enableVSync) {
-    glfwSwapInterval(1);
-  } else {
-    glfwSwapInterval(0);
+    // Window fullscreen mode
+    if (controls.enableFullscreenMode) {
+      extra::enableFullscreenMode(window, sPosX, sPosY, sWidth, sHeight);
+    }
+
+    // Window V-sync
+    if (controls.enableVSync) {
+      glfwSwapInterval(1);
+    } else {
+      glfwSwapInterval(0);
+    }
   }
 }
 
