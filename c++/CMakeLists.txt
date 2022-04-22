@@ -6,7 +6,7 @@ SET(CMAKE_CXX_COMPILER g++)
 SET(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 SET(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
-SET(HDR_DIR ${CMAKE_SOURCE_DIR}/include)
+SET(INC_DIR ${CMAKE_SOURCE_DIR}/include)
 SET(LIB_DIR ${CMAKE_SOURCE_DIR}/lib)
 SET(BIN_DIR ${CMAKE_BINARY_DIR}/bin)
 
@@ -14,12 +14,12 @@ SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BIN_DIR})
 SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BIN_DIR})
 SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${BIN_DIR})
 
-FILE(GLOB_RECURSE SRC_CXX_FILES "${SRC_DIR}/*.cpp")
-FILE(GLOB_RECURSE HDR_CXX_FILES "${HDR_DIR}/*.hpp")
+FILE(GLOB_RECURSE SRC_CXX_FILES "${SRC_DIR}/*.cpp" "${SRC_DIR}/*.hpp" "${SRC_DIR}/*.inl")
+FILE(GLOB_RECURSE INC_CXX_FILES "${INC_DIR}/*.cpp" "${INC_DIR}/*.hpp" "${INC_DIR}/*.inl")
 ADD_CUSTOM_TARGET(checks
-  COMMAND cppcheck -q --inconclusive --enable=all --suppress=missingIncludeSystem --error-exitcode=0 ${SRC_CXX_FILES} ${HDR_CXX_FILES}
-  COMMAND clang-tidy -fix -p ${BIN_DIR} ${SRC_CXX_FILES} ${HDR_CXX_FILES}
-  COMMAND clang-format -i ${SRC_CXX_FILES} ${HDR_CXX_FILES}
+  COMMAND cppcheck -q --inconclusive --enable=all --suppress=missingIncludeSystem --error-exitcode=0 ${SRC_CXX_FILES} ${INC_CXX_FILES}
+  COMMAND clang-tidy -fix -p ${BIN_DIR} ${SRC_CXX_FILES} ${INC_CXX_FILES}
+  COMMAND clang-format -i ${SRC_CXX_FILES} ${INC_CXX_FILES}
 )
 
 ADD_CUSTOM_TARGET(dev)
