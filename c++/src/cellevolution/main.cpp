@@ -71,8 +71,6 @@ int main(int argc, char *argv[]) {
   glViewport(0, 0, cellControllerParams.width, cellControllerParams.height);
   // Setting window size callback function
   glfwSetWindowSizeCallback(window, windowSizeCallback);
-  // Enabling gl_PointSize
-  glEnable(GL_PROGRAM_POINT_SIZE);
   // Setting OpenGL clear color
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
   // Enable blending for environment rendering
@@ -88,12 +86,6 @@ int main(int argc, char *argv[]) {
   glUseProgram(cellShaderProgram);
   glUniform1i(glGetUniformLocation(cellShaderProgram, "kColumns"), cellController.getColumns());
   glUniform1i(glGetUniformLocation(cellShaderProgram, "kRows"), cellController.getRows());
-  glUniform1f(glGetUniformLocation(cellShaderProgram, "kPointSizeInViewport"),
-              cellControllerParams.cellSize);
-  glUniform1f(
-      glGetUniformLocation(cellShaderProgram, "kPointSizeInClipSpace"),
-      cellControllerParams.cellSize /
-          static_cast<float>(std::min(cellControllerParams.width, cellControllerParams.height)));
   glUseProgram(0);
 
   // Initializing and configuring OpenGL Vertex Array and Buffer Objects for cells and environment

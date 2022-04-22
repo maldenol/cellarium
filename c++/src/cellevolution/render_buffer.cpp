@@ -28,7 +28,7 @@ void renderCellBuffer(GLuint shaderProgram, GLuint vao, GLuint vbo,
   int renderingDataSize = static_cast<int>(cellController.getCellCount());
   // Mapping VBO buffer partly
   CellEvolution::CellController::CellRenderingData *cellRenderingData =
-      reinterpret_cast<CellEvolution::CellController::CellRenderingData *>(
+      static_cast<CellEvolution::CellController::CellRenderingData *>(
           glMapBufferRange(GL_ARRAY_BUFFER, 0, renderingDataSize, GL_MAP_WRITE_BIT));
   // Passing VBO buffer to CellController that fills it with rendering data
   cellController.render(cellRenderingData, cellRenderingMode);
