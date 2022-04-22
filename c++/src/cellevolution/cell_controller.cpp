@@ -133,17 +133,20 @@ CellController::CellController(const Params &params)
           params.enableInstructionDeterminePhotosynthesisEnergy},
       _enableInstructionDetermineMineralEnergy{params.enableInstructionDetermineMineralEnergy},
       _enableDeadCellPinningOnSinking{params.enableDeadCellPinningOnSinking} {
-  // Allocating memory for vector of cells
-  _cellVector.assign(_columns * _rows, nullptr);
+  // Allocating memory for vector of cell pointers
+  const int maxCellCount{_columns * _rows};
+  for (int i = 0; i < maxCellCount; ++i) {
+    _cellPtrVector.push_back(std::unique_ptr<Cell>{});
+  }
+  _cellPtrVector.reserve(maxCellCount);
 
   // Creating the first cell
   std::vector<int> firstCellGenom;
   firstCellGenom.assign(_genomSize, kFirstCellGenomInstructions);
-  addCell(
-      new Cell{firstCellGenom,
+  addCell(std::make_unique<Cell>(firstCellGenom,
                static_cast<int>(static_cast<float>(_minChildEnergy) * kFirstCellEnergyMultiplier),
                kFirstCellDirection,
-               static_cast<int>(static_cast<float>(_columns) * kFirstCellIndexMultiplier)});
+               static_cast<int>(static_cast<float>(_columns) * kFirstCellIndexMultiplier)));
 }
 
 CellController::CellController(const CellController &cellController) noexcept
@@ -192,9 +195,23 @@ CellController::CellController(const CellController &cellController) noexcept
           cellController._enableInstructionDetermineMineralEnergy},
       _enableDeadCellPinningOnSinking{cellController._enableDeadCellPinningOnSinking},
       _cellIndexList{cellController._cellIndexList},
-      _cellVector{cellController._cellVector},
+      // Copying _cellPtrVector in body
       _ticksNumber{cellController._ticksNumber},
-      _yearsNumber{cellController._yearsNumber} {}
+      _yearsNumber{cellController._yearsNumber} {
+  // Allocating memory for vector of cell pointers
+  const int maxCellCount{_columns * _rows};
+  for (int i = 0; i < maxCellCount; ++i) {
+    _cellPtrVector.push_back(std::unique_ptr<Cell>{});
+  }
+  _cellPtrVector.reserve(maxCellCount);
+
+  // Copying _cellPtrVector
+  LinkedList<int>::Iterator iter{cellController._cellIndexList.getIterator()};
+  while (iter.hasNext()) {
+    const int index{iter.next()};
+    _cellPtrVector[index] = std::make_unique<Cell>(*cellController._cellPtrVector[index]);
+  }
+}
 
 CellController &CellController::operator=(const CellController &cellController) noexcept {
   _mersenneTwisterEngine        = cellController._mersenneTwisterEngine;
@@ -241,7 +258,21 @@ CellController &CellController::operator=(const CellController &cellController) 
       cellController._enableInstructionDetermineMineralEnergy;
   _enableDeadCellPinningOnSinking = cellController._enableDeadCellPinningOnSinking;
   _cellIndexList                  = cellController._cellIndexList;
-  _cellVector                     = cellController._cellVector;
+
+  // Allocating memory for vector of cell pointers
+  const int maxCellCount{_columns * _rows};
+  for (int i = 0; i < maxCellCount; ++i) {
+    _cellPtrVector.push_back(std::unique_ptr<Cell>{});
+  }
+  _cellPtrVector.reserve(maxCellCount);
+
+  // Copying _cellPtrVector
+  LinkedList<int>::Iterator iter{cellController._cellIndexList.getIterator()};
+  while (iter.hasNext()) {
+    const int index{iter.next()};
+    _cellPtrVector[index] = std::make_unique<Cell>(*cellController._cellPtrVector[index]);
+  }
+
   _ticksNumber                    = cellController._ticksNumber;
   _yearsNumber                    = cellController._yearsNumber;
 
@@ -302,7 +333,7 @@ CellController::CellController(CellController &&cellController) noexcept
       _enableDeadCellPinningOnSinking{
           std::exchange(cellController._enableDeadCellPinningOnSinking, false)},
       _cellIndexList{std::exchange(cellController._cellIndexList, LinkedList<int>{})},
-      _cellVector{std::exchange(cellController._cellVector, std::vector<Cell *>{})},
+      _cellPtrVector{std::exchange(cellController._cellPtrVector, std::vector<std::unique_ptr<Cell>>{})},
       _ticksNumber{std::exchange(cellController._ticksNumber, 0)},
       _yearsNumber{std::exchange(cellController._yearsNumber, 0)} {}
 
@@ -354,20 +385,14 @@ CellController &CellController::operator=(CellController &&cellController) noexc
             cellController._enableInstructionDetermineMineralEnergy);
   std::swap(_enableDeadCellPinningOnSinking, cellController._enableDeadCellPinningOnSinking);
   std::swap(_cellIndexList, cellController._cellIndexList);
-  std::swap(_cellVector, cellController._cellVector);
+  std::swap(_cellPtrVector, cellController._cellPtrVector);
   std::swap(_ticksNumber, cellController._ticksNumber);
   std::swap(_yearsNumber, cellController._yearsNumber);
 
   return *this;
 }
 
-CellController::~CellController() noexcept {
-  // Removing all cells sequently
-  LinkedList<int>::Iterator iter{_cellIndexList.getIterator()};
-  while (iter.hasNext()) {
-    removeCell(_cellVector[iter.next()]);
-  }
-}
+CellController::~CellController() noexcept {}
 
 void CellController::act() noexcept {
   // Updating world time
@@ -376,7 +401,8 @@ void CellController::act() noexcept {
   // Going through all cells sequently
   LinkedList<int>::Iterator iter{_cellIndexList.getIterator()};
   while (iter.hasNext()) {
-    Cell &cell = *_cellVector[iter.next()];
+    const int index = iter.next();
+    Cell &cell = *_cellPtrVector[index];
 
     // Moving cell if it is dead
     if (!cell._isAlive) {
@@ -388,7 +414,7 @@ void CellController::act() noexcept {
     cell._energy--;
     // Removing cell if its energy is less than one
     if (cell._energy <= 0) {
-      removeCell(&cell);
+      removeCell(std::move(_cellPtrVector[index]));
       continue;
     }
     // Making cell bud if its energy greater or equals to maximal
@@ -546,7 +572,7 @@ void CellController::render(CellRenderingData *cellRenderingData, int cellRender
   // Rendering each cell and putting its rendering data to array
   LinkedList<int>::Iterator iter{_cellIndexList.getIterator()};
   while (iter.hasNext()) {
-    const Cell &cell = *_cellVector[iter.next()];
+    const Cell &cell = *_cellPtrVector[iter.next()];
 
     float colorR{}, colorG{}, colorB{};
 
@@ -658,7 +684,7 @@ void CellController::gammaFlash() noexcept {
     // For each cell
     LinkedList<int>::Iterator iter{_cellIndexList.getIterator()};
     while (iter.hasNext()) {
-      Cell &cell = *_cellVector[iter.next()];
+      Cell &cell = *_cellPtrVector[iter.next()];
 
       // Ignoring if cell is dead
       if (!cell._isAlive) {
@@ -707,14 +733,13 @@ void CellController::move(Cell &cell) noexcept {
   }
 
   // If there is nothing at this direction
-  if (_cellVector[targetIndex] == nullptr) {
+  if (_cellPtrVector[targetIndex] == nullptr) {
     // Moving cell
 
     // Order matters
-    _cellVector[targetIndex] = &cell;  // 1
-    _cellVector[cell._index] = nullptr;
-    _cellIndexList.replace(cell._index, targetIndex);  // 2
-    cell._index = targetIndex;                         // 3
+    _cellPtrVector[targetIndex] = std::move(_cellPtrVector[cell._index]);      // 1
+    _cellIndexList.replace(_cellPtrVector[targetIndex]->_index, targetIndex);  // 2
+    _cellPtrVector[targetIndex]->_index = targetIndex;                         // 3
   }
   // If there is an obstalce and given cell is dead
   else if (!cell._isAlive) {
@@ -760,11 +785,11 @@ void CellController::getEnergyFromFood(Cell &cell) noexcept {
     return;
   }
 
-  // Getting cell at this direction
-  Cell *targetCellPtr = _cellVector[targetIndex];
-
   // If there is a cell or food
-  if (targetCellPtr != nullptr) {
+  if (_cellPtrVector[targetIndex] != nullptr) {
+    // Getting cell at this direction
+    std::unique_ptr<Cell> targetCellPtr = std::move(_cellPtrVector[targetIndex]);
+
     // Calculating energy from food
     int deltaEnergy = std::min(targetCellPtr->_energy, _maxFoodEnergy);
 
@@ -775,7 +800,7 @@ void CellController::getEnergyFromFood(Cell &cell) noexcept {
     ++cell._colorR;
 
     // Removing prey or food
-    removeCell(targetCellPtr);
+    removeCell(std::move(targetCellPtr));
   }
 }
 
@@ -797,25 +822,25 @@ void CellController::bud(Cell &cell) noexcept {
     }
 
     // If there is nothing at this direction
-    if (_cellVector[targetIndex] == nullptr) {
+    if (_cellPtrVector[targetIndex] == nullptr) {
       // Creating new cell
-      Cell *buddedCell = new Cell{cell._genom, cell._energy / 2, cell._direction, targetIndex};
+      std::unique_ptr<Cell> buddedCellPtr = std::make_unique<Cell>(cell._genom, cell._energy / 2, cell._direction, targetIndex);
 
       // Assigning cell color
       float colorVectorLength = static_cast<float>(std::sqrt(
           cell._colorR * cell._colorR + cell._colorG * cell._colorG + cell._colorB * cell._colorB));
-      buddedCell->_colorR     = static_cast<int>(static_cast<float>(cell._colorR) *
+      buddedCellPtr->_colorR     = static_cast<int>(static_cast<float>(cell._colorR) *
                                              kBuddedCellParentColorMultiplier / colorVectorLength);
-      buddedCell->_colorG     = static_cast<int>(static_cast<float>(cell._colorG) *
+      buddedCellPtr->_colorG     = static_cast<int>(static_cast<float>(cell._colorG) *
                                              kBuddedCellParentColorMultiplier / colorVectorLength);
-      buddedCell->_colorB     = static_cast<int>(static_cast<float>(cell._colorB) *
+      buddedCellPtr->_colorB     = static_cast<int>(static_cast<float>(cell._colorB) *
                                              kBuddedCellParentColorMultiplier / colorVectorLength);
 
       // Applying random bud mutation to the budded cell
       if (static_cast<float>(_mersenneTwisterEngine()) /
               static_cast<float>(_mersenneTwisterEngine.max()) <
           _budMutationChance) {
-        mutateRandomGen(*buddedCell);
+        mutateRandomGen(*buddedCellPtr);
       }
 
       // Applying random bud mutation to current cell
@@ -826,7 +851,7 @@ void CellController::bud(Cell &cell) noexcept {
         mutateRandomGen(cell);
       }
 
-      addCell(buddedCell);
+      addCell(std::move(buddedCellPtr));
 
       return;
     }
@@ -854,26 +879,26 @@ void CellController::shareEnergy(Cell &cell) const noexcept {
     return;
   }
 
-  // Getting cell at this direction
-  Cell *targetCellPtr = _cellVector[targetIndex];
-
   // If there is a cell
-  if (targetCellPtr != nullptr && targetCellPtr->_isAlive) {
+  if (_cellPtrVector[targetIndex] != nullptr && _cellPtrVector[targetIndex]->_isAlive) {
+    // Getting cell at this direction
+    Cell &targetCell = *_cellPtrVector[targetIndex];
+
     // Calculating energy to share
     int deltaEnergy = static_cast<int>(static_cast<float>(cell._energy * getNextNthGen(cell, 1)) /
                                        static_cast<float>(_genomSize));
 
     // Sharing energy
     cell._energy -= deltaEnergy;
-    targetCellPtr->_energy += deltaEnergy;
+    targetCell._energy += deltaEnergy;
 
     // Updating energy share balances
     cell._energyShareBalance += deltaEnergy;
-    targetCellPtr->_energyShareBalance -= deltaEnergy;
+    targetCell._energyShareBalance -= deltaEnergy;
 
     // Updating last energy shares
     cell._lastEnergyShare           = 1.0f;
-    targetCellPtr->_lastEnergyShare = -1.0f;
+    targetCell._lastEnergyShare = -1.0f;
   }
 }
 
@@ -886,15 +911,15 @@ void CellController::lookForward(Cell &cell) const noexcept {
     return;
   }
 
-  // Getting cell at this direction
-  const Cell *targetCellPtr = _cellVector[targetIndex];
-
   // If there is a cell or food
-  if (targetCellPtr != nullptr) {
+  if (_cellPtrVector[targetIndex] != nullptr) {
+    // Getting cell at this direction
+    const Cell &targetCell = *_cellPtrVector[targetIndex];
+
     // If it is a live cell
-    if (targetCellPtr->_isAlive) {
+    if (targetCell._isAlive) {
       // If it is an akin cell
-      if (areAkin(cell, *targetCellPtr)) {
+      if (areAkin(cell, targetCell)) {
         jumpCounter(cell, getNextNthGen(cell, 3));
       }
       // If it is a strange cell
@@ -1114,19 +1139,18 @@ int CellController::calculateIndexByIndexAndDirection(int index, int direction) 
   return calculateIndexByColumnAndRow(c, r);
 }
 
-void CellController::addCell(Cell *cell) noexcept {
+void CellController::addCell(std::unique_ptr<Cell> cellPtr) noexcept {
   // Pushing cell to the front of the linked list
   // so it will be processed not earlier than the next tick
   // and before older cells (younger cells have smaller "reaction time")
 
   // Order matters
-  _cellIndexList.pushFront(cell->_index);  // 1
-  _cellVector[cell->_index] = cell;        // 2
+  _cellIndexList.pushFront(cellPtr->_index);          // 1
+  _cellPtrVector[cellPtr->_index] = std::move(cellPtr);  // 2
 }
 
-void CellController::removeCell(Cell *cell) noexcept {
+void CellController::removeCell(std::unique_ptr<Cell> cellPtr) noexcept {
   // Order matters
-  _cellIndexList.remove(cell->_index);  // 1
-  _cellVector[cell->_index] = nullptr;  // 2
-  delete cell;
+  _cellIndexList.remove(cellPtr->_index);  // 1
+  _cellPtrVector[cellPtr->_index] = nullptr;  // 2
 }

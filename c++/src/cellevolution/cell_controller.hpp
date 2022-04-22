@@ -17,6 +17,7 @@
 #define CELL_CONTROLLER_HPP
 
 // STD
+#include <memory>
 #include <random>
 #include <vector>
 
@@ -211,7 +212,7 @@ class CellController {
   // Linked list of cell indices for quick consequent access
   LinkedList<int> _cellIndexList{};
   // Vector of cells for quick random access
-  std::vector<Cell *> _cellVector{};
+  std::vector<std::unique_ptr<Cell>> _cellPtrVector{};
 
   // Simulation time counters
   int _ticksNumber{};
@@ -282,8 +283,8 @@ class CellController {
   int calculateIndexByIndexAndDirection(int index, int direction) const noexcept;
 
   // Add and remove cells
-  void addCell(Cell *cell) noexcept;
-  void removeCell(Cell *cell) noexcept;
+  void addCell(std::unique_ptr<Cell> cellPtr) noexcept;
+  void removeCell(std::unique_ptr<Cell> cellPtr) noexcept;
 };
 
 }
