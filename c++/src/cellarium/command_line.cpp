@@ -65,13 +65,16 @@ int generateDefaultConfigurationFile() {
   configJsonObject.insert("maxAkinGenomDifference", CellEvolution::kInitMaxAkinGenomDifference);
   configJsonObject.insert("minChildEnergy", CellEvolution::kInitMinChildEnergy);
   configJsonObject.insert("maxEnergy", CellEvolution::kInitMaxEnergy);
-  configJsonObject.insert("maxPhotosynthesisEnergy", CellEvolution::kInitMaxPhotosynthesisEnergy);
+  configJsonObject.insert("maxBurstOfPhotosynthesisEnergy",
+                          CellEvolution::kInitMaxBurstOfPhotosynthesisEnergy);
   configJsonObject.insert("summerDaytimeToWholeDayRatio",
                           CellEvolution::kInitSummerDaytimeToWholeDayRatio);
   configJsonObject.insert("enableDaytimes", CellEvolution::kInitEnableDaytimes);
   configJsonObject.insert("enableSeasons", CellEvolution::kInitEnableSeasons);
-  configJsonObject.insert("maxMineralEnergy", CellEvolution::kInitMaxMineralEnergy);
-  configJsonObject.insert("maxFoodEnergy", CellEvolution::kInitMaxFoodEnergy);
+  configJsonObject.insert("maxMinerals", CellEvolution::kInitMaxMinerals);
+  configJsonObject.insert("maxBurstOfMinerals", CellEvolution::kInitMaxBurstOfMinerals);
+  configJsonObject.insert("energyPerMineral", CellEvolution::kInitEnergyPerMineral);
+  configJsonObject.insert("maxBurstOfFoodEnergy", CellEvolution::kInitMaxBurstOfFoodEnergy);
   configJsonObject.insert("randomMutationChance", CellEvolution::kInitRandomMutationChance);
   configJsonObject.insert("budMutationChance", CellEvolution::kInitBudMutationChance);
   configJsonObject.insert("dayDurationInTicks", CellEvolution::kInitDayDurationInTicks);
@@ -97,10 +100,13 @@ int generateDefaultConfigurationFile() {
                           CellEvolution::kInitEnableInstructionDetermineEnergyLevel);
   configJsonObject.insert("enableInstructionDetermineDepth",
                           CellEvolution::kInitEnableInstructionDetermineDepth);
-  configJsonObject.insert("enableInstructionDeterminePhotosynthesisEnergy",
-                          CellEvolution::kInitenableInstructionDeterminePhotosynthesisEnergy);
-  configJsonObject.insert("enableInstructionDetermineMineralEnergy",
-                          CellEvolution::kInitEnableInstructionDetermineMineralEnergy);
+  configJsonObject.insert(
+      "enableInstructionDetermineBurstOfPhotosynthesisEnergy",
+      CellEvolution::kInitenableInstructionDetermineBurstOfPhotosynthesisEnergy);
+  configJsonObject.insert("enableInstructionDetermineBurstOfMinerals",
+                          CellEvolution::kInitEnableInstructionDetermineBurstOfMinerals);
+  configJsonObject.insert("enableInstructionDetermineBurstOfMineralEnergy",
+                          CellEvolution::kInitEnableInstructionDetermineBurstOfMineralEnergy);
   configJsonObject.insert("enableForcedBuddingOnMaximalEnergyLevel",
                           CellEvolution::kInitEnableForcedBuddingOnMaximalEnergyLevel);
   configJsonObject.insert("enableTryingToBudInUnoccupiedDirection",
@@ -234,26 +240,33 @@ int processCommandLineArguments(int argc, char *argv[], const std::string &title
   cellControllerParams.maxEnergy      = configJsonObject.contains("maxEnergy")
                                             ? configJsonObject["maxEnergy"].toInt()
                                             : cellControllerParams.maxEnergy;
-  cellControllerParams.maxPhotosynthesisEnergy =
-      configJsonObject.contains("maxPhotosynthesisEnergy")
-          ? configJsonObject["maxPhotosynthesisEnergy"].toInt()
-          : cellControllerParams.maxPhotosynthesisEnergy;
+  cellControllerParams.maxBurstOfPhotosynthesisEnergy =
+      configJsonObject.contains("maxBurstOfPhotosynthesisEnergy")
+          ? configJsonObject["maxBurstOfPhotosynthesisEnergy"].toInt()
+          : cellControllerParams.maxBurstOfPhotosynthesisEnergy;
   cellControllerParams.summerDaytimeToWholeDayRatio =
       configJsonObject.contains("summerDaytimeToWholeDayRatio")
           ? static_cast<float>(configJsonObject["summerDaytimeToWholeDayRatio"].toDouble())
           : cellControllerParams.summerDaytimeToWholeDayRatio;
-  cellControllerParams.enableDaytimes   = configJsonObject.contains("enableDaytimes")
-                                              ? configJsonObject["enableDaytimes"].toBool()
-                                              : cellControllerParams.enableDaytimes;
-  cellControllerParams.enableSeasons    = configJsonObject.contains("enableSeasons")
-                                              ? configJsonObject["enableSeasons"].toBool()
-                                              : cellControllerParams.enableSeasons;
-  cellControllerParams.maxMineralEnergy = configJsonObject.contains("maxMineralEnergy")
-                                              ? configJsonObject["maxMineralEnergy"].toInt()
-                                              : cellControllerParams.maxMineralEnergy;
-  cellControllerParams.maxFoodEnergy    = configJsonObject.contains("maxFoodEnergy")
-                                              ? configJsonObject["maxFoodEnergy"].toInt()
-                                              : cellControllerParams.maxFoodEnergy;
+  cellControllerParams.enableDaytimes     = configJsonObject.contains("enableDaytimes")
+                                                ? configJsonObject["enableDaytimes"].toBool()
+                                                : cellControllerParams.enableDaytimes;
+  cellControllerParams.enableSeasons      = configJsonObject.contains("enableSeasons")
+                                                ? configJsonObject["enableSeasons"].toBool()
+                                                : cellControllerParams.enableSeasons;
+  cellControllerParams.maxMinerals        = configJsonObject.contains("maxMinerals")
+                                                ? configJsonObject["maxMinerals"].toInt()
+                                                : cellControllerParams.maxMinerals;
+  cellControllerParams.maxBurstOfMinerals = configJsonObject.contains("maxBurstOfMinerals")
+                                                ? configJsonObject["maxBurstOfMinerals"].toInt()
+                                                : cellControllerParams.maxBurstOfMinerals;
+  cellControllerParams.energyPerMineral =
+      configJsonObject.contains("energyPerMineral")
+          ? static_cast<float>(configJsonObject["energyPerMineral"].toDouble())
+          : cellControllerParams.energyPerMineral;
+  cellControllerParams.maxBurstOfFoodEnergy = configJsonObject.contains("maxBurstOfFoodEnergy")
+                                                  ? configJsonObject["maxBurstOfFoodEnergy"].toInt()
+                                                  : cellControllerParams.maxBurstOfFoodEnergy;
   cellControllerParams.randomMutationChance =
       configJsonObject.contains("randomMutationChance")
           ? static_cast<float>(configJsonObject["randomMutationChance"].toDouble())
@@ -320,14 +333,18 @@ int processCommandLineArguments(int argc, char *argv[], const std::string &title
       configJsonObject.contains("enableInstructionDetermineDepth")
           ? configJsonObject["enableInstructionDetermineDepth"].toBool()
           : cellControllerParams.enableInstructionDetermineDepth;
-  cellControllerParams.enableInstructionDeterminePhotosynthesisEnergy =
-      configJsonObject.contains("enableInstructionDeterminePhotosynthesisEnergy")
-          ? configJsonObject["enableInstructionDeterminePhotosynthesisEnergy"].toBool()
-          : cellControllerParams.enableInstructionDeterminePhotosynthesisEnergy;
-  cellControllerParams.enableInstructionDetermineMineralEnergy =
-      configJsonObject.contains("enableInstructionDetermineMineralEnergy")
-          ? configJsonObject["enableInstructionDetermineMineralEnergy"].toBool()
-          : cellControllerParams.enableInstructionDetermineMineralEnergy;
+  cellControllerParams.enableInstructionDetermineBurstOfPhotosynthesisEnergy =
+      configJsonObject.contains("enableInstructionDetermineBurstOfPhotosynthesisEnergy")
+          ? configJsonObject["enableInstructionDetermineBurstOfPhotosynthesisEnergy"].toBool()
+          : cellControllerParams.enableInstructionDetermineBurstOfPhotosynthesisEnergy;
+  cellControllerParams.enableInstructionDetermineBurstOfMinerals =
+      configJsonObject.contains("enableInstructionDetermineBurstOfMinerals")
+          ? configJsonObject["enableInstructionDetermineBurstOfMinerals"].toBool()
+          : cellControllerParams.enableInstructionDetermineBurstOfMinerals;
+  cellControllerParams.enableInstructionDetermineBurstOfMineralEnergy =
+      configJsonObject.contains("enableInstructionDetermineBurstOfMineralEnergy")
+          ? configJsonObject["enableInstructionDetermineBurstOfMineralEnergy"].toBool()
+          : cellControllerParams.enableInstructionDetermineBurstOfMineralEnergy;
   cellControllerParams.enableForcedBuddingOnMaximalEnergyLevel =
       configJsonObject.contains("enableForcedBuddingOnMaximalEnergyLevel")
           ? configJsonObject["enableForcedBuddingOnMaximalEnergyLevel"].toBool()

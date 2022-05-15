@@ -34,6 +34,7 @@ Cell::Cell(const Cell &cell) noexcept
     : _genom{cell._genom},
       _counter{cell._counter},
       _energy{cell._energy},
+      _minerals{cell._minerals},
       _direction{cell._direction},
       _index{cell._index},
       _colorR{cell._colorR},
@@ -48,6 +49,7 @@ Cell &Cell::operator=(const Cell &cell) noexcept {
   _genom              = cell._genom;
   _counter            = cell._counter;
   _energy             = cell._energy;
+  _minerals           = cell._minerals;
   _direction          = cell._direction;
   _index              = cell._index;
   _colorR             = cell._colorR;
@@ -65,6 +67,7 @@ Cell::Cell(Cell &&cell) noexcept
     : _genom{std::exchange(cell._genom, std::vector<int>{})},
       _counter{std::exchange(cell._counter, 0)},
       _energy{std::exchange(cell._energy, 0)},
+      _minerals{std::exchange(cell._minerals, 0)},
       _direction{std::exchange(cell._direction, 0)},
       _index{std::exchange(cell._index, kInitIndex)},
       _colorR{std::exchange(cell._colorR, 0)},
@@ -79,6 +82,7 @@ Cell &Cell::operator=(Cell &&cell) noexcept {
   std::swap(_genom, cell._genom);
   std::swap(_counter, cell._counter);
   std::swap(_energy, cell._energy);
+  std::swap(_minerals, cell._minerals);
   std::swap(_direction, cell._direction);
   std::swap(_index, cell._index);
   std::swap(_colorR, cell._colorR);

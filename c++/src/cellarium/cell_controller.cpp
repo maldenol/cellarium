@@ -100,16 +100,18 @@ CellController::CellController(const Params &params)
       _maxAkinGenomDifference{params.maxAkinGenomDifference},
       _minChildEnergy{params.minChildEnergy},
       _maxEnergy{params.maxEnergy},
-      _maxPhotosynthesisEnergy{params.maxPhotosynthesisEnergy},
+      _maxBurstOfPhotosynthesisEnergy{params.maxBurstOfPhotosynthesisEnergy},
       _maxPhotosynthesisDepth(
           static_cast<int>(static_cast<float>(_rows) * params.maxPhotosynthesisDepthMultiplier)),
       _summerDaytimeToWholeDayRatio{params.summerDaytimeToWholeDayRatio},
       _enableDaytimes{params.enableDaytimes},
       _enableSeasons{params.enableSeasons},
-      _maxMineralEnergy{params.maxMineralEnergy},
+      _maxMinerals{params.maxMinerals},
+      _maxBurstOfMinerals{params.maxBurstOfMinerals},
+      _energyPerMineral{params.energyPerMineral},
       _maxMineralHeight(
           static_cast<int>(static_cast<float>(_rows) * params.maxMineralHeightMultiplier)),
-      _maxFoodEnergy{params.maxFoodEnergy},
+      _maxBurstOfFoodEnergy{params.maxBurstOfFoodEnergy},
       _randomMutationChance{params.randomMutationChance},
       _budMutationChance{params.budMutationChance},
       _dayDurationInTicks{params.dayDurationInTicks},
@@ -128,9 +130,11 @@ CellController::CellController(const Params &params)
       _enableInstructionTouch{params.enableInstructionTouch},
       _enableInstructionDetermineEnergyLevel{params.enableInstructionDetermineEnergyLevel},
       _enableInstructionDetermineDepth{params.enableInstructionDetermineDepth},
-      _enableInstructionDeterminePhotosynthesisEnergy{
-          params.enableInstructionDeterminePhotosynthesisEnergy},
-      _enableInstructionDetermineMineralEnergy{params.enableInstructionDetermineMineralEnergy},
+      _enableInstructionDetermineBurstOfPhotosynthesisEnergy{
+          params.enableInstructionDetermineBurstOfPhotosynthesisEnergy},
+      _enableInstructionDetermineBurstOfMinerals{params.enableInstructionDetermineBurstOfMinerals},
+      _enableInstructionDetermineBurstOfMineralEnergy{
+          params.enableInstructionDetermineBurstOfMineralEnergy},
       _enableForcedBuddingOnMaximalEnergyLevel{params.enableForcedBuddingOnMaximalEnergyLevel},
       _enableTryingToBudInUnoccupiedDirection{params.enableTryingToBudInUnoccupiedDirection},
       _enableDeathOnBuddingIfNotEnoughSpace{params.enableDeathOnBuddingIfNotEnoughSpace},
@@ -162,14 +166,16 @@ CellController::CellController(const CellController &cellController) noexcept
       _maxAkinGenomDifference{cellController._maxAkinGenomDifference},
       _minChildEnergy{cellController._minChildEnergy},
       _maxEnergy{cellController._maxEnergy},
-      _maxPhotosynthesisEnergy{cellController._maxPhotosynthesisEnergy},
+      _maxBurstOfPhotosynthesisEnergy{cellController._maxBurstOfPhotosynthesisEnergy},
       _maxPhotosynthesisDepth{cellController._maxPhotosynthesisDepth},
       _summerDaytimeToWholeDayRatio{cellController._summerDaytimeToWholeDayRatio},
       _enableDaytimes{cellController._enableDaytimes},
       _enableSeasons{cellController._enableSeasons},
-      _maxMineralEnergy{cellController._maxMineralEnergy},
+      _maxMinerals{cellController._maxMinerals},
+      _maxBurstOfMinerals{cellController._maxBurstOfMinerals},
+      _energyPerMineral{cellController._energyPerMineral},
       _maxMineralHeight{cellController._maxMineralHeight},
-      _maxFoodEnergy{cellController._maxFoodEnergy},
+      _maxBurstOfFoodEnergy{cellController._maxBurstOfFoodEnergy},
       _randomMutationChance{cellController._randomMutationChance},
       _budMutationChance{cellController._budMutationChance},
       _dayDurationInTicks{cellController._dayDurationInTicks},
@@ -189,10 +195,12 @@ CellController::CellController(const CellController &cellController) noexcept
       _enableInstructionTouch{cellController._enableInstructionTouch},
       _enableInstructionDetermineEnergyLevel{cellController._enableInstructionDetermineEnergyLevel},
       _enableInstructionDetermineDepth{cellController._enableInstructionDetermineDepth},
-      _enableInstructionDeterminePhotosynthesisEnergy{
-          cellController._enableInstructionDeterminePhotosynthesisEnergy},
-      _enableInstructionDetermineMineralEnergy{
-          cellController._enableInstructionDetermineMineralEnergy},
+      _enableInstructionDetermineBurstOfPhotosynthesisEnergy{
+          cellController._enableInstructionDetermineBurstOfPhotosynthesisEnergy},
+      _enableInstructionDetermineBurstOfMinerals{
+          cellController._enableInstructionDetermineBurstOfMinerals},
+      _enableInstructionDetermineBurstOfMineralEnergy{
+          cellController._enableInstructionDetermineBurstOfMineralEnergy},
       _enableForcedBuddingOnMaximalEnergyLevel{
           cellController._enableForcedBuddingOnMaximalEnergyLevel},
       _enableTryingToBudInUnoccupiedDirection{
@@ -219,31 +227,33 @@ CellController::CellController(const CellController &cellController) noexcept
 }
 
 CellController &CellController::operator=(const CellController &cellController) noexcept {
-  _mersenneTwisterEngine        = cellController._mersenneTwisterEngine;
-  _randomSeed                   = cellController._randomSeed;
-  _columns                      = cellController._columns;
-  _rows                         = cellController._rows;
-  _genomSize                    = cellController._genomSize;
-  _maxInstructionsPerTick       = cellController._maxInstructionsPerTick;
-  _maxAkinGenomDifference       = cellController._maxAkinGenomDifference;
-  _minChildEnergy               = cellController._minChildEnergy;
-  _maxEnergy                    = cellController._maxEnergy;
-  _maxPhotosynthesisEnergy      = cellController._maxPhotosynthesisEnergy;
-  _maxPhotosynthesisDepth       = cellController._maxPhotosynthesisDepth;
-  _summerDaytimeToWholeDayRatio = cellController._summerDaytimeToWholeDayRatio;
-  _enableDaytimes               = cellController._enableDaytimes;
-  _enableSeasons                = cellController._enableSeasons;
-  _maxMineralEnergy             = cellController._maxMineralEnergy;
-  _maxMineralHeight             = cellController._maxMineralHeight;
-  _maxFoodEnergy                = cellController._maxFoodEnergy;
-  _randomMutationChance         = cellController._randomMutationChance;
-  _budMutationChance            = cellController._budMutationChance;
-  _dayDurationInTicks           = cellController._dayDurationInTicks;
-  _seasonDurationInDays         = cellController._seasonDurationInDays;
-  _gammaFlashPeriodInDays       = cellController._gammaFlashPeriodInDays;
-  _gammaFlashMaxMutationsCount  = cellController._gammaFlashMaxMutationsCount;
-  _enableInstructionTurn        = cellController._enableInstructionTurn;
-  _enableInstructionMove        = cellController._enableInstructionMove;
+  _mersenneTwisterEngine          = cellController._mersenneTwisterEngine;
+  _randomSeed                     = cellController._randomSeed;
+  _columns                        = cellController._columns;
+  _rows                           = cellController._rows;
+  _genomSize                      = cellController._genomSize;
+  _maxInstructionsPerTick         = cellController._maxInstructionsPerTick;
+  _maxAkinGenomDifference         = cellController._maxAkinGenomDifference;
+  _minChildEnergy                 = cellController._minChildEnergy;
+  _maxEnergy                      = cellController._maxEnergy;
+  _maxBurstOfPhotosynthesisEnergy = cellController._maxBurstOfPhotosynthesisEnergy;
+  _maxPhotosynthesisDepth         = cellController._maxPhotosynthesisDepth;
+  _summerDaytimeToWholeDayRatio   = cellController._summerDaytimeToWholeDayRatio;
+  _enableDaytimes                 = cellController._enableDaytimes;
+  _enableSeasons                  = cellController._enableSeasons;
+  _maxMinerals                    = cellController._maxMinerals;
+  _maxBurstOfMinerals             = cellController._maxBurstOfMinerals;
+  _energyPerMineral               = cellController._energyPerMineral;
+  _maxMineralHeight               = cellController._maxMineralHeight;
+  _maxBurstOfFoodEnergy           = cellController._maxBurstOfFoodEnergy;
+  _randomMutationChance           = cellController._randomMutationChance;
+  _budMutationChance              = cellController._budMutationChance;
+  _dayDurationInTicks             = cellController._dayDurationInTicks;
+  _seasonDurationInDays           = cellController._seasonDurationInDays;
+  _gammaFlashPeriodInDays         = cellController._gammaFlashPeriodInDays;
+  _gammaFlashMaxMutationsCount    = cellController._gammaFlashMaxMutationsCount;
+  _enableInstructionTurn          = cellController._enableInstructionTurn;
+  _enableInstructionMove          = cellController._enableInstructionMove;
   _enableInstructionGetEnergyFromPhotosynthesis =
       cellController._enableInstructionGetEnergyFromPhotosynthesis;
   _enableInstructionGetEnergyFromMinerals = cellController._enableInstructionGetEnergyFromMinerals;
@@ -254,10 +264,12 @@ CellController &CellController::operator=(const CellController &cellController) 
   _enableInstructionTouch                 = cellController._enableInstructionTouch;
   _enableInstructionDetermineEnergyLevel  = cellController._enableInstructionDetermineEnergyLevel;
   _enableInstructionDetermineDepth        = cellController._enableInstructionDetermineDepth;
-  _enableInstructionDeterminePhotosynthesisEnergy =
-      cellController._enableInstructionDeterminePhotosynthesisEnergy;
-  _enableInstructionDetermineMineralEnergy =
-      cellController._enableInstructionDetermineMineralEnergy;
+  _enableInstructionDetermineBurstOfPhotosynthesisEnergy =
+      cellController._enableInstructionDetermineBurstOfPhotosynthesisEnergy;
+  _enableInstructionDetermineBurstOfMinerals =
+      cellController._enableInstructionDetermineBurstOfMinerals;
+  _enableInstructionDetermineBurstOfMineralEnergy =
+      cellController._enableInstructionDetermineBurstOfMineralEnergy;
   _enableForcedBuddingOnMaximalEnergyLevel =
       cellController._enableForcedBuddingOnMaximalEnergyLevel;
   _enableTryingToBudInUnoccupiedDirection = cellController._enableTryingToBudInUnoccupiedDirection;
@@ -295,15 +307,18 @@ CellController::CellController(CellController &&cellController) noexcept
       _maxAkinGenomDifference{std::exchange(cellController._maxAkinGenomDifference, 0)},
       _minChildEnergy{std::exchange(cellController._minChildEnergy, 0)},
       _maxEnergy{std::exchange(cellController._maxEnergy, 0)},
-      _maxPhotosynthesisEnergy{std::exchange(cellController._maxPhotosynthesisEnergy, 0)},
+      _maxBurstOfPhotosynthesisEnergy{
+          std::exchange(cellController._maxBurstOfPhotosynthesisEnergy, 0)},
       _maxPhotosynthesisDepth{std::exchange(cellController._maxPhotosynthesisDepth, 0)},
       _summerDaytimeToWholeDayRatio{
           std::exchange(cellController._summerDaytimeToWholeDayRatio, 0.0f)},
       _enableDaytimes{std::exchange(cellController._enableDaytimes, false)},
       _enableSeasons{std::exchange(cellController._enableSeasons, false)},
-      _maxMineralEnergy{std::exchange(cellController._maxMineralEnergy, 0)},
+      _maxMinerals{std::exchange(cellController._maxMinerals, 0)},
+      _maxBurstOfMinerals{std::exchange(cellController._maxBurstOfMinerals, 0)},
+      _energyPerMineral{std::exchange(cellController._energyPerMineral, 0)},
       _maxMineralHeight{std::exchange(cellController._maxMineralHeight, 0)},
-      _maxFoodEnergy{std::exchange(cellController._maxFoodEnergy, 0)},
+      _maxBurstOfFoodEnergy{std::exchange(cellController._maxBurstOfFoodEnergy, 0)},
       _randomMutationChance{std::exchange(cellController._randomMutationChance, 0.0f)},
       _budMutationChance{std::exchange(cellController._budMutationChance, 0.0f)},
       _dayDurationInTicks{std::exchange(cellController._dayDurationInTicks, 0)},
@@ -328,10 +343,12 @@ CellController::CellController(CellController &&cellController) noexcept
           std::exchange(cellController._enableInstructionDetermineEnergyLevel, false)},
       _enableInstructionDetermineDepth{
           std::exchange(cellController._enableInstructionDetermineDepth, false)},
-      _enableInstructionDeterminePhotosynthesisEnergy{
-          std::exchange(cellController._enableInstructionDeterminePhotosynthesisEnergy, false)},
-      _enableInstructionDetermineMineralEnergy{
-          std::exchange(cellController._enableInstructionDetermineMineralEnergy, false)},
+      _enableInstructionDetermineBurstOfPhotosynthesisEnergy{std::exchange(
+          cellController._enableInstructionDetermineBurstOfPhotosynthesisEnergy, false)},
+      _enableInstructionDetermineBurstOfMinerals{
+          std::exchange(cellController._enableInstructionDetermineBurstOfMinerals, false)},
+      _enableInstructionDetermineBurstOfMineralEnergy{
+          std::exchange(cellController._enableInstructionDetermineBurstOfMineralEnergy, false)},
       _enableForcedBuddingOnMaximalEnergyLevel{
           std::exchange(cellController._enableForcedBuddingOnMaximalEnergyLevel, false)},
       _enableTryingToBudInUnoccupiedDirection{
@@ -356,14 +373,16 @@ CellController &CellController::operator=(CellController &&cellController) noexc
   std::swap(_maxAkinGenomDifference, cellController._maxAkinGenomDifference);
   std::swap(_minChildEnergy, cellController._minChildEnergy);
   std::swap(_maxEnergy, cellController._maxEnergy);
-  std::swap(_maxPhotosynthesisEnergy, cellController._maxPhotosynthesisEnergy);
+  std::swap(_maxBurstOfPhotosynthesisEnergy, cellController._maxBurstOfPhotosynthesisEnergy);
   std::swap(_maxPhotosynthesisDepth, cellController._maxPhotosynthesisDepth);
   std::swap(_summerDaytimeToWholeDayRatio, cellController._summerDaytimeToWholeDayRatio);
   std::swap(_enableDaytimes, cellController._enableDaytimes);
   std::swap(_enableSeasons, cellController._enableSeasons);
-  std::swap(_maxMineralEnergy, cellController._maxMineralEnergy);
+  std::swap(_maxMinerals, cellController._maxMinerals);
+  std::swap(_maxBurstOfMinerals, cellController._maxBurstOfMinerals);
+  std::swap(_energyPerMineral, cellController._energyPerMineral);
   std::swap(_maxMineralHeight, cellController._maxMineralHeight);
-  std::swap(_maxFoodEnergy, cellController._maxFoodEnergy);
+  std::swap(_maxBurstOfFoodEnergy, cellController._maxBurstOfFoodEnergy);
   std::swap(_randomMutationChance, cellController._randomMutationChance);
   std::swap(_budMutationChance, cellController._budMutationChance);
   std::swap(_dayDurationInTicks, cellController._dayDurationInTicks);
@@ -385,10 +404,12 @@ CellController &CellController::operator=(CellController &&cellController) noexc
   std::swap(_enableInstructionDetermineEnergyLevel,
             cellController._enableInstructionDetermineEnergyLevel);
   std::swap(_enableInstructionDetermineDepth, cellController._enableInstructionDetermineDepth);
-  std::swap(_enableInstructionDeterminePhotosynthesisEnergy,
-            cellController._enableInstructionDeterminePhotosynthesisEnergy);
-  std::swap(_enableInstructionDetermineMineralEnergy,
-            cellController._enableInstructionDetermineMineralEnergy);
+  std::swap(_enableInstructionDetermineBurstOfPhotosynthesisEnergy,
+            cellController._enableInstructionDetermineBurstOfPhotosynthesisEnergy);
+  std::swap(_enableInstructionDetermineBurstOfMinerals,
+            cellController._enableInstructionDetermineBurstOfMinerals);
+  std::swap(_enableInstructionDetermineBurstOfMineralEnergy,
+            cellController._enableInstructionDetermineBurstOfMineralEnergy);
   std::swap(_enableForcedBuddingOnMaximalEnergyLevel,
             cellController._enableForcedBuddingOnMaximalEnergyLevel);
   std::swap(_enableTryingToBudInUnoccupiedDirection,
@@ -433,6 +454,12 @@ void CellController::act() noexcept {
     if (_enableForcedBuddingOnMaximalEnergyLevel && cell._energy >= _maxEnergy - 1) {
       bud(cell);
       continue;
+    }
+
+    // Updating cell minerals
+    cell._minerals += calculateBurstOfMinerals(cell._index);
+    if (cell._minerals > _maxMinerals) {
+      cell._minerals = _maxMinerals;
     }
 
     // Fading last energy share
@@ -544,17 +571,25 @@ void CellController::act() noexcept {
           }
         } break;
         // Determining available energy from photosynthesis (conditional instruction)
-        case CellInstructions::DeterminePhotosynthesisEnergy: {
-          if (_enableInstructionDeterminePhotosynthesisEnergy) {
-            determinePhotosynthesisEnergy(cell);
+        case CellInstructions::DetermineBurstOfPhotosynthesisEnergy: {
+          if (_enableInstructionDetermineBurstOfPhotosynthesisEnergy) {
+            determineBurstOfPhotosynthesisEnergy(cell);
+          } else {
+            incrementGenomCounter(cell);
+          }
+        } break;
+        // Determining available minerals (conditional instruction)
+        case CellInstructions::DetermineBurstOfMinerals: {
+          if (_enableInstructionDetermineBurstOfMinerals) {
+            determineBurstOfMinerals(cell);
           } else {
             incrementGenomCounter(cell);
           }
         } break;
         // Determining available energy from minerals (conditional instruction)
-        case CellInstructions::DetermineMineralEnergy: {
-          if (_enableInstructionDetermineMineralEnergy) {
-            determineMineralEnergy(cell);
+        case CellInstructions::DetermineBurstOfMineralEnergy: {
+          if (_enableInstructionDetermineBurstOfMineralEnergy) {
+            determineBurstOfMineralEnergy(cell);
           } else {
             incrementGenomCounter(cell);
           }
@@ -780,7 +815,7 @@ void CellController::move(Cell &cell) noexcept {
 
 void CellController::getEnergyFromPhotosynthesis(Cell &cell) const noexcept {
   // Calculating energy from photosynthesis at index
-  int deltaEnergy = calculatePhotosynthesisEnergy(cell._index);
+  int deltaEnergy = calculateBurstOfPhotosynthesisEnergy(cell._index);
 
   // If energy from photosynthesis is positive
   if (deltaEnergy > 0) {
@@ -794,12 +829,15 @@ void CellController::getEnergyFromPhotosynthesis(Cell &cell) const noexcept {
 
 void CellController::getEnergyFromMinerals(Cell &cell) const noexcept {
   // Calculating energy from minerals at index
-  int deltaEnergy = calculateMineralEnergy(cell._index);
+  int deltaEnergy = calculateBurstOfMineralEnergy(cell._minerals);
 
   // If energy from minerals is positive
   if (deltaEnergy > 0) {
     // Increasing energy level
     cell._energy += deltaEnergy;
+
+    // Converting all the minerals
+    cell._minerals = 0;
 
     // Making cell color more blue
     ++cell._colorB;
@@ -823,7 +861,7 @@ void CellController::getEnergyFromFood(Cell &cell) noexcept {
     std::unique_ptr<Cell> targetCellPtr = std::move(_cellPtrVector[targetIndex]);
 
     // Calculating energy from food
-    int deltaEnergy = std::min(targetCellPtr->_energy, _maxFoodEnergy);
+    int deltaEnergy = std::min(targetCellPtr->_energy, _maxBurstOfFoodEnergy);
 
     // Increasing energy level
     cell._energy += deltaEnergy;
@@ -1014,14 +1052,14 @@ void CellController::determineDepth(Cell &cell) const noexcept {
   }
 }
 
-void CellController::determinePhotosynthesisEnergy(Cell &cell) const noexcept {
+void CellController::determineBurstOfPhotosynthesisEnergy(Cell &cell) const noexcept {
   // Calculating value to compare
-  int valueToCompare =
-      static_cast<int>(static_cast<float>(_maxPhotosynthesisEnergy * getNextNthGen(cell, 1)) /
-                       static_cast<float>(_genomSize));
+  int valueToCompare = static_cast<int>(
+      static_cast<float>(_maxBurstOfPhotosynthesisEnergy * getNextNthGen(cell, 1)) /
+      static_cast<float>(_genomSize));
 
   // Calculating available photosynthesis energy
-  int deltaEnergy = calculatePhotosynthesisEnergy(cell._index);
+  int deltaEnergy = calculateBurstOfPhotosynthesisEnergy(cell._index);
 
   // Less
   if (deltaEnergy < valueToCompare) {
@@ -1033,14 +1071,33 @@ void CellController::determinePhotosynthesisEnergy(Cell &cell) const noexcept {
   }
 }
 
-void CellController::determineMineralEnergy(Cell &cell) const noexcept {
+void CellController::determineBurstOfMinerals(Cell &cell) const noexcept {
   // Calculating value to compare
   int valueToCompare =
-      static_cast<int>(static_cast<float>(_maxMineralEnergy * getNextNthGen(cell, 1)) /
+      static_cast<int>(static_cast<float>(_maxBurstOfMinerals * getNextNthGen(cell, 1)) /
                        static_cast<float>(_genomSize));
 
+  // Calculating available minerals
+  int deltaMinerals = calculateBurstOfMinerals(cell._index);
+
+  // Less
+  if (deltaMinerals < valueToCompare) {
+    jumpCounter(cell, getNextNthGen(cell, 2));
+  }
+  // Greater or equal
+  else {
+    jumpCounter(cell, getNextNthGen(cell, 3));
+  }
+}
+
+void CellController::determineBurstOfMineralEnergy(Cell &cell) const noexcept {
+  // Calculating value to compare
+  int valueToCompare =
+      static_cast<int>(_energyPerMineral * static_cast<float>(_maxMinerals) *
+                       static_cast<float>(getNextNthGen(cell, 1)) / static_cast<float>(_genomSize));
+
   // Calculating available mineral energy
-  int deltaEnergy = calculateMineralEnergy(cell._index);
+  int deltaEnergy = calculateBurstOfMineralEnergy(cell._minerals);
 
   // Less
   if (deltaEnergy < valueToCompare) {
@@ -1087,7 +1144,7 @@ bool CellController::areAkin(const Cell &cell1, const Cell &cell2) const noexcep
   return true;
 }
 
-int CellController::calculatePhotosynthesisEnergy(int index) const noexcept {
+int CellController::calculateBurstOfPhotosynthesisEnergy(int index) const noexcept {
   // Local constants
   static constexpr float kSeasonCount{4.0f};
   static constexpr float kHalfOfDay{0.5f};
@@ -1130,17 +1187,22 @@ int CellController::calculatePhotosynthesisEnergy(int index) const noexcept {
   float depthCoefficient = mapClamp(row, 0.0f, _maxPhotosynthesisDepth, 1.0f, 0.0f);
 
   // Getting energy from photosynthesis
-  return static_cast<int>(
-      (static_cast<float>(_maxPhotosynthesisEnergy) * depthCoefficient * daytimeCoefficient));
+  return static_cast<int>((static_cast<float>(_maxBurstOfPhotosynthesisEnergy) * depthCoefficient *
+                           daytimeCoefficient));
 }
 
-int CellController::calculateMineralEnergy(int index) const noexcept {
+int CellController::calculateBurstOfMinerals(int index) const noexcept {
   // Calculating cell row
   int row = calculateRowByIndex(index);
 
-  // Getting energy from minerals
+  // Getting minerals
   return static_cast<int>(
-      mapClamp(row, _rows - 1, _rows - 1 - _maxMineralHeight, _maxMineralEnergy, 0.0f));
+      mapClamp(row, _rows - 1, _rows - 1 - _maxMineralHeight, _maxBurstOfMinerals, 0.0f));
+}
+
+int CellController::calculateBurstOfMineralEnergy(int minerals) const noexcept {
+  // Getting energy from minerals
+  return static_cast<int>(static_cast<float>(minerals) * _energyPerMineral);
 }
 
 int CellController::calculateColumnByIndex(int index) const noexcept {

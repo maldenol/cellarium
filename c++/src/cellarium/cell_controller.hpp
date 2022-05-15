@@ -39,17 +39,19 @@ static constexpr float kInitCellSize = 8.0f;
 static constexpr float kInitPhotosynthesisDepthMultiplier = 0.7f;
 static constexpr float kInitMineralHeightMultiplier       = 0.7f;
 
-static constexpr int kInitGenomSize = 64;
-static constexpr int kInitMaxInstructionsPerTick = 16;
-static constexpr int kInitMaxAkinGenomDifference = 4;
-static constexpr int kInitMinChildEnergy = 40;
-static constexpr int kInitMaxEnergy = 800;
-static constexpr int kInitMaxPhotosynthesisEnergy = 30;
+static constexpr int   kInitGenomSize = 64;
+static constexpr int   kInitMaxInstructionsPerTick = 16;
+static constexpr int   kInitMaxAkinGenomDifference = 4;
+static constexpr int   kInitMinChildEnergy = 40;
+static constexpr int   kInitMaxEnergy = 800;
+static constexpr int   kInitMaxBurstOfPhotosynthesisEnergy = 15;
 static constexpr float kInitSummerDaytimeToWholeDayRatio = 0.6f;
 static constexpr bool  kInitEnableDaytimes = true;
 static constexpr bool  kInitEnableSeasons = true;
-static constexpr int   kInitMaxMineralEnergy = 15;
-static constexpr int kInitMaxFoodEnergy = 50;
+static constexpr int   kInitMaxMinerals = 100;
+static constexpr int   kInitMaxBurstOfMinerals = 10;
+static constexpr float kInitEnergyPerMineral = 0.25f;
+static constexpr int   kInitMaxBurstOfFoodEnergy = 20;
 static constexpr float kInitRandomMutationChance = 0.01f;
 static constexpr float kInitBudMutationChance = 0.25f;
 static constexpr int   kInitDayDurationInTicks = 240;
@@ -67,8 +69,9 @@ static constexpr bool  kInitEnableInstructionShareEnergy = true;
 static constexpr bool  kInitEnableInstructionTouch = true;
 static constexpr bool  kInitEnableInstructionDetermineEnergyLevel = true;
 static constexpr bool  kInitEnableInstructionDetermineDepth = true;
-static constexpr bool  kInitenableInstructionDeterminePhotosynthesisEnergy = true;
-static constexpr bool  kInitEnableInstructionDetermineMineralEnergy = true;
+static constexpr bool  kInitenableInstructionDetermineBurstOfPhotosynthesisEnergy = true;
+static constexpr bool  kInitEnableInstructionDetermineBurstOfMinerals = true;
+static constexpr bool  kInitEnableInstructionDetermineBurstOfMineralEnergy = true;
 static constexpr bool  kInitEnableForcedBuddingOnMaximalEnergyLevel = true;
 static constexpr bool  kInitEnableTryingToBudInUnoccupiedDirection = true;
 static constexpr bool  kInitEnableDeathOnBuddingIfNotEnoughSpace = true;
@@ -87,8 +90,9 @@ enum class CellInstructions {
   Touch,
   DetermineEnergyLevel,
   DetermineDepth,
-  DeterminePhotosynthesisEnergy,
-  DetermineMineralEnergy,
+  DetermineBurstOfPhotosynthesisEnergy,
+  DetermineBurstOfMinerals,
+  DetermineBurstOfMineralEnergy,
   Size
 };
 // Cell rendering mode enumeration
@@ -120,12 +124,14 @@ class CellController {
     int   maxAkinGenomDifference{kInitMaxAkinGenomDifference};
     int   minChildEnergy{kInitMinChildEnergy};
     int   maxEnergy{kInitMaxEnergy};
-    int   maxPhotosynthesisEnergy{kInitMaxPhotosynthesisEnergy};
+    int   maxBurstOfPhotosynthesisEnergy{kInitMaxBurstOfPhotosynthesisEnergy};
     float summerDaytimeToWholeDayRatio{kInitSummerDaytimeToWholeDayRatio};
     bool  enableDaytimes{kInitEnableDaytimes};
     bool  enableSeasons{kInitEnableSeasons};
-    int   maxMineralEnergy{kInitMaxMineralEnergy};
-    int   maxFoodEnergy{kInitMaxFoodEnergy};
+    int   maxMinerals{kInitMaxMinerals};
+    int   maxBurstOfMinerals{kInitMaxBurstOfMinerals};
+    float energyPerMineral{kInitEnergyPerMineral};
+    int   maxBurstOfFoodEnergy{kInitMaxBurstOfFoodEnergy};
     float randomMutationChance{kInitRandomMutationChance};
     float budMutationChance{kInitBudMutationChance};
     int   dayDurationInTicks{kInitDayDurationInTicks};
@@ -144,9 +150,10 @@ class CellController {
     bool enableInstructionTouch{kInitEnableInstructionTouch};
     bool enableInstructionDetermineEnergyLevel{kInitEnableInstructionDetermineEnergyLevel};
     bool enableInstructionDetermineDepth{kInitEnableInstructionDetermineDepth};
-    bool enableInstructionDeterminePhotosynthesisEnergy{
-        kInitenableInstructionDeterminePhotosynthesisEnergy};
-    bool enableInstructionDetermineMineralEnergy{kInitEnableInstructionDetermineMineralEnergy};
+    bool enableInstructionDetermineBurstOfPhotosynthesisEnergy{
+        kInitenableInstructionDetermineBurstOfPhotosynthesisEnergy};
+    bool enableInstructionDetermineBurstOfMinerals{kInitEnableInstructionDetermineBurstOfMinerals};
+    bool enableInstructionDetermineBurstOfMineralEnergy{kInitEnableInstructionDetermineBurstOfMineralEnergy};
     bool enableForcedBuddingOnMaximalEnergyLevel{kInitEnableForcedBuddingOnMaximalEnergyLevel};
     bool enableTryingToBudInUnoccupiedDirection{kInitEnableTryingToBudInUnoccupiedDirection};
     bool enableDeathOnBuddingIfNotEnoughSpace{kInitEnableDeathOnBuddingIfNotEnoughSpace};
@@ -176,14 +183,16 @@ class CellController {
   int   _maxAkinGenomDifference{};
   int   _minChildEnergy{};
   int   _maxEnergy{};
-  int   _maxPhotosynthesisEnergy{};
+  int   _maxBurstOfPhotosynthesisEnergy{};
   int   _maxPhotosynthesisDepth{};
   float _summerDaytimeToWholeDayRatio{};
   bool  _enableDaytimes{};
   bool  _enableSeasons{};
-  int   _maxMineralEnergy{};
+  int   _maxMinerals{};
+  int   _maxBurstOfMinerals{};
+  float _energyPerMineral{};
   int   _maxMineralHeight{};
-  int   _maxFoodEnergy{};
+  int   _maxBurstOfFoodEnergy{};
   float _randomMutationChance{};
   float _budMutationChance{};
   int   _dayDurationInTicks{};
@@ -203,8 +212,9 @@ class CellController {
   bool _enableInstructionTouch{};
   bool _enableInstructionDetermineEnergyLevel{};
   bool _enableInstructionDetermineDepth{};
-  bool _enableInstructionDeterminePhotosynthesisEnergy{};
-  bool _enableInstructionDetermineMineralEnergy{};
+  bool _enableInstructionDetermineBurstOfPhotosynthesisEnergy{};
+  bool _enableInstructionDetermineBurstOfMinerals{};
+  bool _enableInstructionDetermineBurstOfMineralEnergy{};
   bool _enableForcedBuddingOnMaximalEnergyLevel{};
   bool _enableTryingToBudInUnoccupiedDirection{};
   bool _enableDeathOnBuddingIfNotEnoughSpace{};
@@ -268,8 +278,9 @@ class CellController {
   void touch(Cell &cell) const noexcept;
   void determineEnergyLevel(Cell &cell) const noexcept;
   void determineDepth(Cell &cell) const noexcept;
-  void determinePhotosynthesisEnergy(Cell &cell) const noexcept;
-  void determineMineralEnergy(Cell &cell) const noexcept;
+  void determineBurstOfPhotosynthesisEnergy(Cell &cell) const noexcept;
+  void determineBurstOfMinerals(Cell &cell) const noexcept;
+  void determineBurstOfMineralEnergy(Cell &cell) const noexcept;
   void incrementGenomCounter(Cell &cell) const noexcept;
 
   // Perform cell genom calculations
@@ -278,9 +289,10 @@ class CellController {
   int  getNextNthGen(const Cell &cell, int n) const noexcept;
   bool areAkin(const Cell &cell1, const Cell &cell2) const noexcept;
 
-  // Calculate burst of energy
-  int calculatePhotosynthesisEnergy(int index) const noexcept;
-  int calculateMineralEnergy(int index) const noexcept;
+  // Calculate bursts of energy and minerals
+  int calculateBurstOfPhotosynthesisEnergy(int index) const noexcept;
+  int calculateBurstOfMinerals(int index) const noexcept;
+  int calculateBurstOfMineralEnergy(int minerals) const noexcept;
 
   // Calculate indices, columns and rows
   int calculateColumnByIndex(int index) const noexcept;

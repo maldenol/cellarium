@@ -29,6 +29,8 @@ class Cell {
 
   int _energy{};
 
+  int _minerals{};
+
   int _direction{};
   int _index{};
 
