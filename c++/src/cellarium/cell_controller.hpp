@@ -64,11 +64,14 @@ static constexpr bool  kInitEnableInstructionGetEnergyFromFood = true;
 static constexpr bool  kInitEnableInstructionBud = true;
 static constexpr bool  kInitEnableInstructionMutateRandomGen = true;
 static constexpr bool  kInitEnableInstructionShareEnergy = true;
-static constexpr bool  kInitEnableInstructionLookForward = true;
+static constexpr bool  kInitEnableInstructionTouch = true;
 static constexpr bool  kInitEnableInstructionDetermineEnergyLevel = true;
 static constexpr bool  kInitEnableInstructionDetermineDepth = true;
 static constexpr bool  kInitenableInstructionDeterminePhotosynthesisEnergy = true;
 static constexpr bool  kInitEnableInstructionDetermineMineralEnergy = true;
+static constexpr bool  kInitEnableForcedBuddingOnMaximalEnergyLevel = true;
+static constexpr bool  kInitEnableTryingToBudInUnoccupiedDirection = true;
+static constexpr bool  kInitEnableDeathOnBuddingIfNotEnoughSpace = true;
 static constexpr bool  kInitEnableDeadCellPinningOnSinking = true;
 // Instruction enumeration
 enum class CellInstructions {
@@ -81,7 +84,7 @@ enum class CellInstructions {
   Bud,
   MutateRandomGen,
   ShareEnergy,
-  LookForward,
+  Touch,
   DetermineEnergyLevel,
   DetermineDepth,
   DeterminePhotosynthesisEnergy,
@@ -138,16 +141,19 @@ class CellController {
     bool enableInstructionBud{kInitEnableInstructionBud};
     bool enableInstructionMutateRandomGen{kInitEnableInstructionMutateRandomGen};
     bool enableInstructionShareEnergy{kInitEnableInstructionShareEnergy};
-    bool enableInstructionLookForward{kInitEnableInstructionLookForward};
+    bool enableInstructionTouch{kInitEnableInstructionTouch};
     bool enableInstructionDetermineEnergyLevel{kInitEnableInstructionDetermineEnergyLevel};
     bool enableInstructionDetermineDepth{kInitEnableInstructionDetermineDepth};
     bool enableInstructionDeterminePhotosynthesisEnergy{
         kInitenableInstructionDeterminePhotosynthesisEnergy};
     bool enableInstructionDetermineMineralEnergy{kInitEnableInstructionDetermineMineralEnergy};
+    bool enableForcedBuddingOnMaximalEnergyLevel{kInitEnableForcedBuddingOnMaximalEnergyLevel};
+    bool enableTryingToBudInUnoccupiedDirection{kInitEnableTryingToBudInUnoccupiedDirection};
+    bool enableDeathOnBuddingIfNotEnoughSpace{kInitEnableDeathOnBuddingIfNotEnoughSpace};
     bool enableDeadCellPinningOnSinking{kInitEnableDeadCellPinningOnSinking};
   };
 
-  // Struct for storing position and color for rendering cell
+  // Struct for storing index and color for rendering cell
   struct CellRenderingData {
     int   index;
     float colorR;
@@ -194,11 +200,14 @@ class CellController {
   bool _enableInstructionBud{};
   bool _enableInstructionMutateRandomGen{};
   bool _enableInstructionShareEnergy{};
-  bool _enableInstructionLookForward{};
+  bool _enableInstructionTouch{};
   bool _enableInstructionDetermineEnergyLevel{};
   bool _enableInstructionDetermineDepth{};
   bool _enableInstructionDeterminePhotosynthesisEnergy{};
   bool _enableInstructionDetermineMineralEnergy{};
+  bool _enableForcedBuddingOnMaximalEnergyLevel{};
+  bool _enableTryingToBudInUnoccupiedDirection{};
+  bool _enableDeathOnBuddingIfNotEnoughSpace{};
   bool _enableDeadCellPinningOnSinking{};
 
   // Linked list of cell indices for quick consequent access
@@ -256,7 +265,7 @@ class CellController {
   void bud(Cell &cell) noexcept;
   void mutateRandomGen(Cell &cell) noexcept;
   void shareEnergy(Cell &cell) const noexcept;
-  void lookForward(Cell &cell) const noexcept;
+  void touch(Cell &cell) const noexcept;
   void determineEnergyLevel(Cell &cell) const noexcept;
   void determineDepth(Cell &cell) const noexcept;
   void determinePhotosynthesisEnergy(Cell &cell) const noexcept;

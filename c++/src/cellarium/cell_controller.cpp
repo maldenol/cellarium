@@ -125,12 +125,15 @@ CellController::CellController(const Params &params)
       _enableInstructionBud{params.enableInstructionBud},
       _enableInstructionMutateRandomGen{params.enableInstructionMutateRandomGen},
       _enableInstructionShareEnergy{params.enableInstructionShareEnergy},
-      _enableInstructionLookForward{params.enableInstructionLookForward},
+      _enableInstructionTouch{params.enableInstructionTouch},
       _enableInstructionDetermineEnergyLevel{params.enableInstructionDetermineEnergyLevel},
       _enableInstructionDetermineDepth{params.enableInstructionDetermineDepth},
       _enableInstructionDeterminePhotosynthesisEnergy{
           params.enableInstructionDeterminePhotosynthesisEnergy},
       _enableInstructionDetermineMineralEnergy{params.enableInstructionDetermineMineralEnergy},
+      _enableForcedBuddingOnMaximalEnergyLevel{params.enableForcedBuddingOnMaximalEnergyLevel},
+      _enableTryingToBudInUnoccupiedDirection{params.enableTryingToBudInUnoccupiedDirection},
+      _enableDeathOnBuddingIfNotEnoughSpace{params.enableDeathOnBuddingIfNotEnoughSpace},
       _enableDeadCellPinningOnSinking{params.enableDeadCellPinningOnSinking} {
   // Allocating memory for vector of cell pointers
   const int maxCellCount{_columns * _rows};
@@ -183,13 +186,18 @@ CellController::CellController(const CellController &cellController) noexcept
       _enableInstructionBud{cellController._enableInstructionBud},
       _enableInstructionMutateRandomGen{cellController._enableInstructionMutateRandomGen},
       _enableInstructionShareEnergy{cellController._enableInstructionShareEnergy},
-      _enableInstructionLookForward{cellController._enableInstructionLookForward},
+      _enableInstructionTouch{cellController._enableInstructionTouch},
       _enableInstructionDetermineEnergyLevel{cellController._enableInstructionDetermineEnergyLevel},
       _enableInstructionDetermineDepth{cellController._enableInstructionDetermineDepth},
       _enableInstructionDeterminePhotosynthesisEnergy{
           cellController._enableInstructionDeterminePhotosynthesisEnergy},
       _enableInstructionDetermineMineralEnergy{
           cellController._enableInstructionDetermineMineralEnergy},
+      _enableForcedBuddingOnMaximalEnergyLevel{
+          cellController._enableForcedBuddingOnMaximalEnergyLevel},
+      _enableTryingToBudInUnoccupiedDirection{
+          cellController._enableTryingToBudInUnoccupiedDirection},
+      _enableDeathOnBuddingIfNotEnoughSpace{cellController._enableDeathOnBuddingIfNotEnoughSpace},
       _enableDeadCellPinningOnSinking{cellController._enableDeadCellPinningOnSinking},
       _cellIndexList{cellController._cellIndexList},
       // Copying _cellPtrVector in body
@@ -243,15 +251,19 @@ CellController &CellController::operator=(const CellController &cellController) 
   _enableInstructionBud                   = cellController._enableInstructionBud;
   _enableInstructionMutateRandomGen       = cellController._enableInstructionMutateRandomGen;
   _enableInstructionShareEnergy           = cellController._enableInstructionShareEnergy;
-  _enableInstructionLookForward           = cellController._enableInstructionLookForward;
+  _enableInstructionTouch                 = cellController._enableInstructionTouch;
   _enableInstructionDetermineEnergyLevel  = cellController._enableInstructionDetermineEnergyLevel;
   _enableInstructionDetermineDepth        = cellController._enableInstructionDetermineDepth;
   _enableInstructionDeterminePhotosynthesisEnergy =
       cellController._enableInstructionDeterminePhotosynthesisEnergy;
   _enableInstructionDetermineMineralEnergy =
       cellController._enableInstructionDetermineMineralEnergy;
-  _enableDeadCellPinningOnSinking = cellController._enableDeadCellPinningOnSinking;
-  _cellIndexList                  = cellController._cellIndexList;
+  _enableForcedBuddingOnMaximalEnergyLevel =
+      cellController._enableForcedBuddingOnMaximalEnergyLevel;
+  _enableTryingToBudInUnoccupiedDirection = cellController._enableTryingToBudInUnoccupiedDirection;
+  _enableDeathOnBuddingIfNotEnoughSpace   = cellController._enableDeathOnBuddingIfNotEnoughSpace;
+  _enableDeadCellPinningOnSinking         = cellController._enableDeadCellPinningOnSinking;
+  _cellIndexList                          = cellController._cellIndexList;
 
   // Allocating memory for vector of cell pointers
   const int maxCellCount{_columns * _rows};
@@ -311,8 +323,7 @@ CellController::CellController(CellController &&cellController) noexcept
           std::exchange(cellController._enableInstructionMutateRandomGen, false)},
       _enableInstructionShareEnergy{
           std::exchange(cellController._enableInstructionShareEnergy, false)},
-      _enableInstructionLookForward{
-          std::exchange(cellController._enableInstructionLookForward, false)},
+      _enableInstructionTouch{std::exchange(cellController._enableInstructionTouch, false)},
       _enableInstructionDetermineEnergyLevel{
           std::exchange(cellController._enableInstructionDetermineEnergyLevel, false)},
       _enableInstructionDetermineDepth{
@@ -321,6 +332,12 @@ CellController::CellController(CellController &&cellController) noexcept
           std::exchange(cellController._enableInstructionDeterminePhotosynthesisEnergy, false)},
       _enableInstructionDetermineMineralEnergy{
           std::exchange(cellController._enableInstructionDetermineMineralEnergy, false)},
+      _enableForcedBuddingOnMaximalEnergyLevel{
+          std::exchange(cellController._enableForcedBuddingOnMaximalEnergyLevel, false)},
+      _enableTryingToBudInUnoccupiedDirection{
+          std::exchange(cellController._enableTryingToBudInUnoccupiedDirection, false)},
+      _enableDeathOnBuddingIfNotEnoughSpace{
+          std::exchange(cellController._enableDeathOnBuddingIfNotEnoughSpace, false)},
       _enableDeadCellPinningOnSinking{
           std::exchange(cellController._enableDeadCellPinningOnSinking, false)},
       _cellIndexList{std::exchange(cellController._cellIndexList, LinkedList<int>{})},
@@ -364,7 +381,7 @@ CellController &CellController::operator=(CellController &&cellController) noexc
   std::swap(_enableInstructionBud, cellController._enableInstructionBud);
   std::swap(_enableInstructionMutateRandomGen, cellController._enableInstructionMutateRandomGen);
   std::swap(_enableInstructionShareEnergy, cellController._enableInstructionShareEnergy);
-  std::swap(_enableInstructionLookForward, cellController._enableInstructionLookForward);
+  std::swap(_enableInstructionTouch, cellController._enableInstructionTouch);
   std::swap(_enableInstructionDetermineEnergyLevel,
             cellController._enableInstructionDetermineEnergyLevel);
   std::swap(_enableInstructionDetermineDepth, cellController._enableInstructionDetermineDepth);
@@ -372,6 +389,12 @@ CellController &CellController::operator=(CellController &&cellController) noexc
             cellController._enableInstructionDeterminePhotosynthesisEnergy);
   std::swap(_enableInstructionDetermineMineralEnergy,
             cellController._enableInstructionDetermineMineralEnergy);
+  std::swap(_enableForcedBuddingOnMaximalEnergyLevel,
+            cellController._enableForcedBuddingOnMaximalEnergyLevel);
+  std::swap(_enableTryingToBudInUnoccupiedDirection,
+            cellController._enableTryingToBudInUnoccupiedDirection);
+  std::swap(_enableDeathOnBuddingIfNotEnoughSpace,
+            cellController._enableDeathOnBuddingIfNotEnoughSpace);
   std::swap(_enableDeadCellPinningOnSinking, cellController._enableDeadCellPinningOnSinking);
   std::swap(_cellIndexList, cellController._cellIndexList);
   std::swap(_cellPtrVector, cellController._cellPtrVector);
@@ -393,7 +416,7 @@ void CellController::act() noexcept {
     const int index = iter.next();
     Cell     &cell  = *_cellPtrVector[index];
 
-    // Moving cell if it is dead
+    // Moving cell if it is dead (organic)
     if (!cell._isAlive) {
       move(cell);
       continue;
@@ -407,7 +430,7 @@ void CellController::act() noexcept {
       continue;
     }
     // Making cell bud if its energy greater or equals to maximal
-    if (cell._energy >= _maxEnergy - 1) {
+    if (_enableForcedBuddingOnMaximalEnergyLevel && cell._energy >= _maxEnergy - 1) {
       bud(cell);
       continue;
     }
@@ -497,9 +520,9 @@ void CellController::act() noexcept {
           incrementGenomCounter(cell);
         } break;
         // Looking forward (conditional instruction)
-        case CellInstructions::LookForward: {
-          if (_enableInstructionLookForward) {
-            lookForward(cell);
+        case CellInstructions::Touch: {
+          if (_enableInstructionTouch) {
+            touch(cell);
           } else {
             incrementGenomCounter(cell);
           }
@@ -608,7 +631,7 @@ void CellController::render(CellRenderingData *cellRenderingData, int cellRender
         } break;
       }
     }
-    // If cell is dead
+    // If cell is dead (organic)
     else {
       colorR = kThreeQuartersColor;
       colorG = kThreeQuartersColor;
@@ -683,7 +706,7 @@ void CellController::gammaFlash() noexcept {
     while (iter.hasNext()) {
       Cell &cell = *_cellPtrVector[iter.next()];
 
-      // Ignoring if cell is dead
+      // Ignoring if cell is dead (organic)
       if (!cell._isAlive) {
         continue;
       }
@@ -712,14 +735,14 @@ void CellController::move(Cell &cell) noexcept {
     int deltaDirection = getNextNthGen(cell, 1);
     targetDirection    = (cell._direction + deltaDirection) % kDirectionCount;
   }
-  // If given cell is dead
+  // If given cell is dead (organic)
   else {
     // If given cell is pinned
     if (_enableDeadCellPinningOnSinking && cell._pinned) {
       return;
     }
 
-    // Setting direction to 4 so it will be moving down (sinking) each tick if cell is dead and not pinned yet
+    // Setting direction to 4 so it will be moving down (sinking) each tick if cell is dead (organic) and not pinned yet
     targetDirection = 4;
   }
   int targetIndex = calculateIndexByIndexAndDirection(cell._index, targetDirection);
@@ -738,15 +761,25 @@ void CellController::move(Cell &cell) noexcept {
     _cellIndexList.replace(_cellPtrVector[targetIndex]->_index, targetIndex);  // 2
     _cellPtrVector[targetIndex]->_index = targetIndex;                         // 3
   }
-  // If there is an obstalce and given cell is dead
-  else if (!cell._isAlive) {
-    // Making cell pinned
-    cell._pinned = true;
+  // If there is an obstacle
+  else {
+    // If given cell is dead (organic)
+    if (!cell._isAlive) {
+      // Making cell pinned
+      cell._pinned = true;
+    }
+    // If given cell is alive
+    else {
+      // Making cell know what has it collided with
+      touch(cell);
+      // Reverting move command counter incremention
+      --cell._counter;
+    }
   }
 }
 
 void CellController::getEnergyFromPhotosynthesis(Cell &cell) const noexcept {
-  // Calculating energy from photosynthesis at current position
+  // Calculating energy from photosynthesis at index
   int deltaEnergy = calculatePhotosynthesisEnergy(cell._index);
 
   // If energy from photosynthesis is positive
@@ -760,7 +793,7 @@ void CellController::getEnergyFromPhotosynthesis(Cell &cell) const noexcept {
 }
 
 void CellController::getEnergyFromMinerals(Cell &cell) const noexcept {
-  // Calculating energy from minerals at current position
+  // Calculating energy from minerals at index
   int deltaEnergy = calculateMineralEnergy(cell._index);
 
   // If energy from minerals is positive
@@ -774,15 +807,17 @@ void CellController::getEnergyFromMinerals(Cell &cell) const noexcept {
 }
 
 void CellController::getEnergyFromFood(Cell &cell) noexcept {
-  // Calculating coordinates by current index and direction
-  int targetIndex = calculateIndexByIndexAndDirection(cell._index, cell._direction);
+  // Calculating coordinates by index and direction
+  int deltaDirection  = getNextNthGen(cell, 1);
+  int targetDirection = (cell._direction + deltaDirection) % kDirectionCount;
+  int targetIndex     = calculateIndexByIndexAndDirection(cell._index, targetDirection);
 
   // If coordinates are beyond simulation world (above top or below bottom)
   if (targetIndex == -1) {
     return;
   }
 
-  // If there is a cell or food
+  // If there is a live cell (prey) or organic
   if (_cellPtrVector[targetIndex] != nullptr) {
     // Getting cell at this direction
     std::unique_ptr<Cell> targetCellPtr = std::move(_cellPtrVector[targetIndex]);
@@ -796,7 +831,7 @@ void CellController::getEnergyFromFood(Cell &cell) noexcept {
     // Making cell color more red
     ++cell._colorR;
 
-    // Removing prey or food
+    // Removing prey or organic
     removeCell(std::move(targetCellPtr));
   }
 }
@@ -809,9 +844,15 @@ void CellController::bud(Cell &cell) noexcept {
 
   // Checking each direction clockwise for ability to bud
   for (int i = 0; i < kDirectionCount; ++i) {
-    // Calculating coordinates by current index and direction
-    int targetIndex =
-        calculateIndexByIndexAndDirection(cell._index, (cell._direction + i) % kDirectionCount);
+    // Calculating coordinates by index and direction
+    int deltaDirection  = getNextNthGen(cell, 1);
+    int targetDirection = (cell._direction + deltaDirection + i) % kDirectionCount;
+    int targetIndex     = calculateIndexByIndexAndDirection(cell._index, targetDirection);
+
+    // Making sure cycle body won't repeat if trying to bud in unoccupied space is not enabled
+    if (!_enableTryingToBudInUnoccupiedDirection) {
+      i = kDirectionCount;
+    }
 
     // If coordinates are beyond simulation world (above top or below bottom)
     if (targetIndex == -1) {
@@ -855,8 +896,10 @@ void CellController::bud(Cell &cell) noexcept {
     }
   }
 
-  // Turning cell into food if it have to but not able to bud
-  cell._isAlive = false;
+  // Turning cell into organic if it have to bud but not able to do it
+  if (_enableDeathOnBuddingIfNotEnoughSpace) {
+    cell._isAlive = false;
+  }
 }
 
 void CellController::mutateRandomGen(Cell &cell) noexcept {
@@ -869,8 +912,10 @@ void CellController::mutateRandomGen(Cell &cell) noexcept {
 }
 
 void CellController::shareEnergy(Cell &cell) const noexcept {
-  // Calculating coordinates by current index and direction
-  int targetIndex = calculateIndexByIndexAndDirection(cell._index, cell._direction);
+  // Calculating coordinates by index and direction
+  int deltaDirection  = getNextNthGen(cell, 1);
+  int targetDirection = (cell._direction + deltaDirection) % kDirectionCount;
+  int targetIndex     = calculateIndexByIndexAndDirection(cell._index, targetDirection);
 
   // If coordinates are beyond simulation world (above top or below bottom)
   if (targetIndex == -1) {
@@ -883,7 +928,7 @@ void CellController::shareEnergy(Cell &cell) const noexcept {
     Cell &targetCell = *_cellPtrVector[targetIndex];
 
     // Calculating energy to share
-    int deltaEnergy = static_cast<int>(static_cast<float>(cell._energy * getNextNthGen(cell, 1)) /
+    int deltaEnergy = static_cast<int>(static_cast<float>(cell._energy * getNextNthGen(cell, 2)) /
                                        static_cast<float>(_genomSize));
 
     // Sharing energy
@@ -900,16 +945,18 @@ void CellController::shareEnergy(Cell &cell) const noexcept {
   }
 }
 
-void CellController::lookForward(Cell &cell) const noexcept {
-  // Calculating coordinates by current index and direction
-  int targetIndex = calculateIndexByIndexAndDirection(cell._index, cell._direction);
+void CellController::touch(Cell &cell) const noexcept {
+  // Calculating coordinates by index and direction
+  int deltaDirection  = getNextNthGen(cell, 1);
+  int targetDirection = (cell._direction + deltaDirection) % kDirectionCount;
+  int targetIndex     = calculateIndexByIndexAndDirection(cell._index, targetDirection);
 
   // If coordinates are beyond simulation world (above top or below bottom)
   if (targetIndex == -1) {
     return;
   }
 
-  // If there is a cell or food
+  // If there is a live cell (prey) or organic
   if (_cellPtrVector[targetIndex] != nullptr) {
     // Getting cell at this direction
     const Cell &targetCell = *_cellPtrVector[targetIndex];
@@ -918,21 +965,21 @@ void CellController::lookForward(Cell &cell) const noexcept {
     if (targetCell._isAlive) {
       // If it is an akin cell
       if (areAkin(cell, targetCell)) {
-        jumpCounter(cell, getNextNthGen(cell, 3));
+        jumpCounter(cell, getNextNthGen(cell, 4));
       }
       // If it is a strange cell
       else {
-        jumpCounter(cell, getNextNthGen(cell, 4));
+        jumpCounter(cell, getNextNthGen(cell, 5));
       }
     }
     // If it is food
     else {
-      jumpCounter(cell, getNextNthGen(cell, 2));
+      jumpCounter(cell, getNextNthGen(cell, 3));
     }
   }
   // If there is nothing at this direction
   else {
-    jumpCounter(cell, getNextNthGen(cell, 1));
+    jumpCounter(cell, getNextNthGen(cell, 2));
   }
 }
 
@@ -945,11 +992,7 @@ void CellController::determineEnergyLevel(Cell &cell) const noexcept {
   if (cell._energy < valueToCompare) {
     jumpCounter(cell, getNextNthGen(cell, 2));
   }
-  // Greater
-  else if (cell._energy > valueToCompare) {
-    jumpCounter(cell, getNextNthGen(cell, 4));
-  }
-  // Equal
+  // Greater or equal
   else {
     jumpCounter(cell, getNextNthGen(cell, 3));
   }
@@ -965,11 +1008,7 @@ void CellController::determineDepth(Cell &cell) const noexcept {
   if (row < valueToCompare) {
     jumpCounter(cell, getNextNthGen(cell, 2));
   }
-  // Greater
-  else if (row > valueToCompare) {
-    jumpCounter(cell, getNextNthGen(cell, 4));
-  }
-  // Equal
+  // Greater or equal
   else {
     jumpCounter(cell, getNextNthGen(cell, 3));
   }
@@ -988,11 +1027,7 @@ void CellController::determinePhotosynthesisEnergy(Cell &cell) const noexcept {
   if (deltaEnergy < valueToCompare) {
     jumpCounter(cell, getNextNthGen(cell, 2));
   }
-  // Greater
-  else if (deltaEnergy > valueToCompare) {
-    jumpCounter(cell, getNextNthGen(cell, 4));
-  }
-  // Equal
+  // Greater or equal
   else {
     jumpCounter(cell, getNextNthGen(cell, 3));
   }
@@ -1011,11 +1046,7 @@ void CellController::determineMineralEnergy(Cell &cell) const noexcept {
   if (deltaEnergy < valueToCompare) {
     jumpCounter(cell, getNextNthGen(cell, 2));
   }
-  // Greater
-  else if (deltaEnergy > valueToCompare) {
-    jumpCounter(cell, getNextNthGen(cell, 4));
-  }
-  // Equal
+  // Greater or equal
   else {
     jumpCounter(cell, getNextNthGen(cell, 3));
   }

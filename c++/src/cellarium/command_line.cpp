@@ -92,8 +92,7 @@ int generateDefaultConfigurationFile() {
                           CellEvolution::kInitEnableInstructionMutateRandomGen);
   configJsonObject.insert("enableInstructionShareEnergy",
                           CellEvolution::kInitEnableInstructionShareEnergy);
-  configJsonObject.insert("enableInstructionLookForward",
-                          CellEvolution::kInitEnableInstructionLookForward);
+  configJsonObject.insert("enableInstructionTouch", CellEvolution::kInitEnableInstructionTouch);
   configJsonObject.insert("enableInstructionDetermineEnergyLevel",
                           CellEvolution::kInitEnableInstructionDetermineEnergyLevel);
   configJsonObject.insert("enableInstructionDetermineDepth",
@@ -102,6 +101,12 @@ int generateDefaultConfigurationFile() {
                           CellEvolution::kInitenableInstructionDeterminePhotosynthesisEnergy);
   configJsonObject.insert("enableInstructionDetermineMineralEnergy",
                           CellEvolution::kInitEnableInstructionDetermineMineralEnergy);
+  configJsonObject.insert("enableForcedBuddingOnMaximalEnergyLevel",
+                          CellEvolution::kInitEnableForcedBuddingOnMaximalEnergyLevel);
+  configJsonObject.insert("enableTryingToBudInUnoccupiedDirection",
+                          CellEvolution::kInitEnableTryingToBudInUnoccupiedDirection);
+  configJsonObject.insert("enableDeathOnBuddingIfNotEnoughSpace",
+                          CellEvolution::kInitEnableDeathOnBuddingIfNotEnoughSpace);
   configJsonObject.insert("enableDeadCellPinningOnSinking",
                           CellEvolution::kInitEnableDeadCellPinningOnSinking);
 
@@ -303,10 +308,10 @@ int processCommandLineArguments(int argc, char *argv[], const std::string &title
       configJsonObject.contains("enableInstructionShareEnergy")
           ? configJsonObject["enableInstructionShareEnergy"].toBool()
           : cellControllerParams.enableInstructionShareEnergy;
-  cellControllerParams.enableInstructionLookForward =
-      configJsonObject.contains("enableInstructionLookForward")
-          ? configJsonObject["enableInstructionLookForward"].toBool()
-          : cellControllerParams.enableInstructionLookForward;
+  cellControllerParams.enableInstructionTouch =
+      configJsonObject.contains("enableInstructionTouch")
+          ? configJsonObject["enableInstructionTouch"].toBool()
+          : cellControllerParams.enableInstructionTouch;
   cellControllerParams.enableInstructionDetermineEnergyLevel =
       configJsonObject.contains("enableInstructionDetermineEnergyLevel")
           ? configJsonObject["enableInstructionDetermineEnergyLevel"].toBool()
@@ -323,6 +328,18 @@ int processCommandLineArguments(int argc, char *argv[], const std::string &title
       configJsonObject.contains("enableInstructionDetermineMineralEnergy")
           ? configJsonObject["enableInstructionDetermineMineralEnergy"].toBool()
           : cellControllerParams.enableInstructionDetermineMineralEnergy;
+  cellControllerParams.enableForcedBuddingOnMaximalEnergyLevel =
+      configJsonObject.contains("enableForcedBuddingOnMaximalEnergyLevel")
+          ? configJsonObject["enableForcedBuddingOnMaximalEnergyLevel"].toBool()
+          : cellControllerParams.enableForcedBuddingOnMaximalEnergyLevel;
+  cellControllerParams.enableTryingToBudInUnoccupiedDirection =
+      configJsonObject.contains("enableTryingToBudInUnoccupiedDirection")
+          ? configJsonObject["enableTryingToBudInUnoccupiedDirection"].toBool()
+          : cellControllerParams.enableTryingToBudInUnoccupiedDirection;
+  cellControllerParams.enableDeathOnBuddingIfNotEnoughSpace =
+      configJsonObject.contains("enableDeathOnBuddingIfNotEnoughSpace")
+          ? configJsonObject["enableDeathOnBuddingIfNotEnoughSpace"].toBool()
+          : cellControllerParams.enableDeathOnBuddingIfNotEnoughSpace;
   cellControllerParams.enableDeadCellPinningOnSinking =
       configJsonObject.contains("enableDeadCellPinningOnSinking")
           ? configJsonObject["enableDeadCellPinningOnSinking"].toBool()
