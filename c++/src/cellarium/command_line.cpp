@@ -69,8 +69,6 @@ int generateDefaultConfigurationFile() {
                           CellEvolution::kInitMaxBurstOfPhotosynthesisEnergy);
   configJsonObject.insert("summerDaytimeToWholeDayRatio",
                           CellEvolution::kInitSummerDaytimeToWholeDayRatio);
-  configJsonObject.insert("enableDaytimes", CellEvolution::kInitEnableDaytimes);
-  configJsonObject.insert("enableSeasons", CellEvolution::kInitEnableSeasons);
   configJsonObject.insert("maxMinerals", CellEvolution::kInitMaxMinerals);
   configJsonObject.insert("maxBurstOfMinerals", CellEvolution::kInitMaxBurstOfMinerals);
   configJsonObject.insert("energyPerMineral", CellEvolution::kInitEnergyPerMineral);
@@ -107,12 +105,17 @@ int generateDefaultConfigurationFile() {
                           CellEvolution::kInitEnableInstructionDetermineBurstOfMinerals);
   configJsonObject.insert("enableInstructionDetermineBurstOfMineralEnergy",
                           CellEvolution::kInitEnableInstructionDetermineBurstOfMineralEnergy);
+  configJsonObject.insert("enableZeroEnergyOrganic", CellEvolution::kInitEnableZeroEnergyOrganic);
   configJsonObject.insert("enableForcedBuddingOnMaximalEnergyLevel",
                           CellEvolution::kInitEnableForcedBuddingOnMaximalEnergyLevel);
   configJsonObject.insert("enableTryingToBudInUnoccupiedDirection",
                           CellEvolution::kInitEnableTryingToBudInUnoccupiedDirection);
   configJsonObject.insert("enableDeathOnBuddingIfNotEnoughSpace",
                           CellEvolution::kInitEnableDeathOnBuddingIfNotEnoughSpace);
+  configJsonObject.insert("enableSeasons", CellEvolution::kInitEnableSeasons);
+  configJsonObject.insert("enableDaytimes", CellEvolution::kInitEnableDaytimes);
+  configJsonObject.insert("enableMaximizingFoodEnergy",
+                          CellEvolution::kInitEnableMaximizingFoodEnergy);
   configJsonObject.insert("enableDeadCellPinningOnSinking",
                           CellEvolution::kInitEnableDeadCellPinningOnSinking);
 
@@ -248,12 +251,6 @@ int processCommandLineArguments(int argc, char *argv[], const std::string &title
       configJsonObject.contains("summerDaytimeToWholeDayRatio")
           ? static_cast<float>(configJsonObject["summerDaytimeToWholeDayRatio"].toDouble())
           : cellControllerParams.summerDaytimeToWholeDayRatio;
-  cellControllerParams.enableDaytimes     = configJsonObject.contains("enableDaytimes")
-                                                ? configJsonObject["enableDaytimes"].toBool()
-                                                : cellControllerParams.enableDaytimes;
-  cellControllerParams.enableSeasons      = configJsonObject.contains("enableSeasons")
-                                                ? configJsonObject["enableSeasons"].toBool()
-                                                : cellControllerParams.enableSeasons;
   cellControllerParams.maxMinerals        = configJsonObject.contains("maxMinerals")
                                                 ? configJsonObject["maxMinerals"].toInt()
                                                 : cellControllerParams.maxMinerals;
@@ -345,6 +342,10 @@ int processCommandLineArguments(int argc, char *argv[], const std::string &title
       configJsonObject.contains("enableInstructionDetermineBurstOfMineralEnergy")
           ? configJsonObject["enableInstructionDetermineBurstOfMineralEnergy"].toBool()
           : cellControllerParams.enableInstructionDetermineBurstOfMineralEnergy;
+  cellControllerParams.enableZeroEnergyOrganic =
+      configJsonObject.contains("enableZeroEnergyOrganic")
+          ? configJsonObject["enableZeroEnergyOrganic"].toBool()
+          : cellControllerParams.enableZeroEnergyOrganic;
   cellControllerParams.enableForcedBuddingOnMaximalEnergyLevel =
       configJsonObject.contains("enableForcedBuddingOnMaximalEnergyLevel")
           ? configJsonObject["enableForcedBuddingOnMaximalEnergyLevel"].toBool()
@@ -357,6 +358,16 @@ int processCommandLineArguments(int argc, char *argv[], const std::string &title
       configJsonObject.contains("enableDeathOnBuddingIfNotEnoughSpace")
           ? configJsonObject["enableDeathOnBuddingIfNotEnoughSpace"].toBool()
           : cellControllerParams.enableDeathOnBuddingIfNotEnoughSpace;
+  cellControllerParams.enableSeasons  = configJsonObject.contains("enableSeasons")
+                                            ? configJsonObject["enableSeasons"].toBool()
+                                            : cellControllerParams.enableSeasons;
+  cellControllerParams.enableDaytimes = configJsonObject.contains("enableDaytimes")
+                                            ? configJsonObject["enableDaytimes"].toBool()
+                                            : cellControllerParams.enableDaytimes;
+  cellControllerParams.enableMaximizingFoodEnergy =
+      configJsonObject.contains("enableMaximizingFoodEnergy")
+          ? configJsonObject["enableMaximizingFoodEnergy"].toBool()
+          : cellControllerParams.enableMaximizingFoodEnergy;
   cellControllerParams.enableDeadCellPinningOnSinking =
       configJsonObject.contains("enableDeadCellPinningOnSinking")
           ? configJsonObject["enableDeadCellPinningOnSinking"].toBool()

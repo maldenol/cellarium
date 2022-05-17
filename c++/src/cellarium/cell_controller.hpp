@@ -32,50 +32,55 @@ namespace CellEvolution {
 // CellController::Params property initial values
 static constexpr unsigned int kInitRandomSeed = 1234567890;
 
-static constexpr int   kInitWidth = 800;
-static constexpr int   kInitHeight = 600;
+static constexpr int   kInitWidth    = 800;
+static constexpr int   kInitHeight   = 600;
 static constexpr float kInitCellSize = 8.0f;
 
 static constexpr float kInitPhotosynthesisDepthMultiplier = 0.7f;
 static constexpr float kInitMineralHeightMultiplier       = 0.7f;
 
-static constexpr int   kInitGenomSize = 64;
-static constexpr int   kInitMaxInstructionsPerTick = 16;
-static constexpr int   kInitMaxAkinGenomDifference = 4;
-static constexpr int   kInitMinChildEnergy = 40;
-static constexpr int   kInitMaxEnergy = 800;
-static constexpr int   kInitMaxBurstOfPhotosynthesisEnergy = 15;
-static constexpr float kInitSummerDaytimeToWholeDayRatio = 0.6f;
-static constexpr bool  kInitEnableDaytimes = true;
-static constexpr bool  kInitEnableSeasons = true;
-static constexpr int   kInitMaxMinerals = 100;
-static constexpr int   kInitMaxBurstOfMinerals = 10;
-static constexpr float kInitEnergyPerMineral = 0.25f;
-static constexpr int   kInitMaxBurstOfFoodEnergy = 20;
-static constexpr float kInitRandomMutationChance = 0.01f;
-static constexpr float kInitBudMutationChance = 0.25f;
-static constexpr int   kInitDayDurationInTicks = 240;
-static constexpr int   kInitSeasonDurationInDays = 92;
-static constexpr int   kInitGammaFlashPeriodInDays = 46;
-static constexpr int   kInitGammaFlashMaxMutationsCount = 8;
-static constexpr bool  kInitEnableInstructionTurn = true;
-static constexpr bool  kInitEnableInstructionMove = true;
-static constexpr bool  kInitEnableInstructionGetEnergyFromPhotosynthesis = true;
-static constexpr bool  kInitEnableInstructionGetEnergyFromMinerals = true;
-static constexpr bool  kInitEnableInstructionGetEnergyFromFood = true;
-static constexpr bool  kInitEnableInstructionBud = true;
-static constexpr bool  kInitEnableInstructionMutateRandomGen = true;
-static constexpr bool  kInitEnableInstructionShareEnergy = true;
-static constexpr bool  kInitEnableInstructionTouch = true;
-static constexpr bool  kInitEnableInstructionDetermineEnergyLevel = true;
-static constexpr bool  kInitEnableInstructionDetermineDepth = true;
+static constexpr int   kInitGenomSize                      = 64;
+static constexpr int   kInitMaxInstructionsPerTick         = 16;
+static constexpr int   kInitMaxAkinGenomDifference         = 4;
+static constexpr int   kInitMinChildEnergy                 = 40;
+static constexpr int   kInitMaxEnergy                      = 400;
+static constexpr int   kInitMaxBurstOfPhotosynthesisEnergy = 10;
+static constexpr float kInitSummerDaytimeToWholeDayRatio   = 0.6f;
+static constexpr int   kInitMaxMinerals                    = 100;
+static constexpr int   kInitMaxBurstOfMinerals             = 10;
+static constexpr float kInitEnergyPerMineral               = 0.2f;
+static constexpr int   kInitMaxBurstOfFoodEnergy           = 20;
+static constexpr float kInitRandomMutationChance           = 0.01f;
+static constexpr float kInitBudMutationChance              = 0.25f;
+static constexpr int   kInitDayDurationInTicks             = 240;
+static constexpr int   kInitSeasonDurationInDays           = 30;
+static constexpr int   kInitGammaFlashPeriodInDays         = 150;
+static constexpr int   kInitGammaFlashMaxMutationsCount    = 8;
+
+static constexpr bool  kInitEnableInstructionTurn                                 = true;
+static constexpr bool  kInitEnableInstructionMove                                 = true;
+static constexpr bool  kInitEnableInstructionGetEnergyFromPhotosynthesis          = true;
+static constexpr bool  kInitEnableInstructionGetEnergyFromMinerals                = true;
+static constexpr bool  kInitEnableInstructionGetEnergyFromFood                    = true;
+static constexpr bool  kInitEnableInstructionBud                                  = true;
+static constexpr bool  kInitEnableInstructionMutateRandomGen                      = true;
+static constexpr bool  kInitEnableInstructionShareEnergy                          = true;
+static constexpr bool  kInitEnableInstructionTouch                                = true;
+static constexpr bool  kInitEnableInstructionDetermineEnergyLevel                 = true;
+static constexpr bool  kInitEnableInstructionDetermineDepth                       = true;
 static constexpr bool  kInitenableInstructionDetermineBurstOfPhotosynthesisEnergy = true;
-static constexpr bool  kInitEnableInstructionDetermineBurstOfMinerals = true;
-static constexpr bool  kInitEnableInstructionDetermineBurstOfMineralEnergy = true;
+static constexpr bool  kInitEnableInstructionDetermineBurstOfMinerals             = true;
+static constexpr bool  kInitEnableInstructionDetermineBurstOfMineralEnergy        = true;
+
+static constexpr bool  kInitEnableZeroEnergyOrganic                 = false;
 static constexpr bool  kInitEnableForcedBuddingOnMaximalEnergyLevel = true;
-static constexpr bool  kInitEnableTryingToBudInUnoccupiedDirection = true;
-static constexpr bool  kInitEnableDeathOnBuddingIfNotEnoughSpace = true;
-static constexpr bool  kInitEnableDeadCellPinningOnSinking = true;
+static constexpr bool  kInitEnableTryingToBudInUnoccupiedDirection  = true;
+static constexpr bool  kInitEnableDeathOnBuddingIfNotEnoughSpace    = true;
+static constexpr bool  kInitEnableSeasons                           = true;
+static constexpr bool  kInitEnableDaytimes                          = false;
+static constexpr bool  kInitEnableMaximizingFoodEnergy              = true;
+static constexpr bool  kInitEnableDeadCellPinningOnSinking          = true;
+
 // Instruction enumeration
 enum class CellInstructions {
   DoNothing,
@@ -95,6 +100,7 @@ enum class CellInstructions {
   DetermineBurstOfMineralEnergy,
   Size
 };
+
 // Cell rendering mode enumeration
 enum class CellRenderingModes {
   Diet,
@@ -126,8 +132,6 @@ class CellController {
     int   maxEnergy{kInitMaxEnergy};
     int   maxBurstOfPhotosynthesisEnergy{kInitMaxBurstOfPhotosynthesisEnergy};
     float summerDaytimeToWholeDayRatio{kInitSummerDaytimeToWholeDayRatio};
-    bool  enableDaytimes{kInitEnableDaytimes};
-    bool  enableSeasons{kInitEnableSeasons};
     int   maxMinerals{kInitMaxMinerals};
     int   maxBurstOfMinerals{kInitMaxBurstOfMinerals};
     float energyPerMineral{kInitEnergyPerMineral};
@@ -138,6 +142,7 @@ class CellController {
     int   seasonDurationInDays{kInitSeasonDurationInDays};
     int   gammaFlashPeriodInDays{kInitGammaFlashPeriodInDays};
     int   gammaFlashMaxMutationsCount{kInitGammaFlashMaxMutationsCount};
+
     bool  enableInstructionTurn{kInitEnableInstructionTurn};
     bool  enableInstructionMove{kInitEnableInstructionMove};
     bool  enableInstructionGetEnergyFromPhotosynthesis{
@@ -154,9 +159,14 @@ class CellController {
         kInitenableInstructionDetermineBurstOfPhotosynthesisEnergy};
     bool enableInstructionDetermineBurstOfMinerals{kInitEnableInstructionDetermineBurstOfMinerals};
     bool enableInstructionDetermineBurstOfMineralEnergy{kInitEnableInstructionDetermineBurstOfMineralEnergy};
+
+    bool enableZeroEnergyOrganic{kInitEnableZeroEnergyOrganic};
     bool enableForcedBuddingOnMaximalEnergyLevel{kInitEnableForcedBuddingOnMaximalEnergyLevel};
     bool enableTryingToBudInUnoccupiedDirection{kInitEnableTryingToBudInUnoccupiedDirection};
     bool enableDeathOnBuddingIfNotEnoughSpace{kInitEnableDeathOnBuddingIfNotEnoughSpace};
+    bool enableSeasons{kInitEnableSeasons};
+    bool enableDaytimes{kInitEnableDaytimes};
+    bool enableMaximizingFoodEnergy{kInitEnableMaximizingFoodEnergy};
     bool enableDeadCellPinningOnSinking{kInitEnableDeadCellPinningOnSinking};
   };
 
@@ -186,8 +196,6 @@ class CellController {
   int   _maxBurstOfPhotosynthesisEnergy{};
   int   _maxPhotosynthesisDepth{};
   float _summerDaytimeToWholeDayRatio{};
-  bool  _enableDaytimes{};
-  bool  _enableSeasons{};
   int   _maxMinerals{};
   int   _maxBurstOfMinerals{};
   float _energyPerMineral{};
@@ -200,7 +208,7 @@ class CellController {
   int   _gammaFlashPeriodInDays{};
   int   _gammaFlashMaxMutationsCount{};
 
-  // Flags for enabling/disabling cell genom instructions and other parameters
+  // Flags for enabling/disabling cell genom instructions
   bool _enableInstructionTurn{};
   bool _enableInstructionMove{};
   bool _enableInstructionGetEnergyFromPhotosynthesis{};
@@ -215,9 +223,15 @@ class CellController {
   bool _enableInstructionDetermineBurstOfPhotosynthesisEnergy{};
   bool _enableInstructionDetermineBurstOfMinerals{};
   bool _enableInstructionDetermineBurstOfMineralEnergy{};
+
+  // Flags for enabling disabling some rules
+  bool _enableZeroEnergyOrganic{};
   bool _enableForcedBuddingOnMaximalEnergyLevel{};
   bool _enableTryingToBudInUnoccupiedDirection{};
   bool _enableDeathOnBuddingIfNotEnoughSpace{};
+  bool _enableSeasons{};
+  bool _enableDaytimes{};
+  bool _enableMaximizingFoodEnergy{};
   bool _enableDeadCellPinningOnSinking{};
 
   // Linked list of cell indices for quick consequent access
