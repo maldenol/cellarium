@@ -29,8 +29,8 @@
 
 namespace CellEvolution {
 
-// CellController::Params property initial values
-static constexpr unsigned int kInitRandomSeed = 1234567890;
+// Initial values of CellController::Params fields
+static constexpr unsigned int kInitRandomSeed = 0;
 
 static constexpr int   kInitWidth    = 800;
 static constexpr int   kInitHeight   = 600;
@@ -80,6 +80,11 @@ static constexpr bool  kInitEnableSeasons                           = true;
 static constexpr bool  kInitEnableDaytimes                          = false;
 static constexpr bool  kInitEnableMaximizingFoodEnergy              = true;
 static constexpr bool  kInitEnableDeadCellPinningOnSinking          = true;
+
+static const std::vector<int> kInitFirstCellGenom            = std::vector<int>(1, 3);
+static constexpr float        kInitFirstCellEnergyMultiplier = 3.0f;
+static constexpr int          kInitFirstCellDirection        = 2;
+static constexpr float        kInitFirstCellIndexMultiplier  = 2.5f;
 
 // Instruction enumeration
 enum class CellInstructions {
@@ -168,6 +173,11 @@ class CellController {
     bool enableDaytimes{kInitEnableDaytimes};
     bool enableMaximizingFoodEnergy{kInitEnableMaximizingFoodEnergy};
     bool enableDeadCellPinningOnSinking{kInitEnableDeadCellPinningOnSinking};
+
+    std::vector<int> firstCellGenom{kInitFirstCellGenom};
+    float            firstCellEnergyMultiplier{kInitFirstCellEnergyMultiplier};
+    int              firstCellDirection{kInitFirstCellDirection};
+    float            firstCellIndexMultiplier{kInitFirstCellIndexMultiplier};
   };
 
   // Struct for storing index and color for rendering cell

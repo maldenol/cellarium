@@ -17,6 +17,7 @@
 #include "./command_line.hpp"
 
 // STD
+#include <algorithm>
 #include <iostream>
 
 // Qt
@@ -25,6 +26,7 @@
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QFile>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QString>
@@ -118,6 +120,15 @@ int generateDefaultConfigurationFile() {
                           CellEvolution::kInitEnableMaximizingFoodEnergy);
   configJsonObject.insert("enableDeadCellPinningOnSinking",
                           CellEvolution::kInitEnableDeadCellPinningOnSinking);
+  QJsonArray firstCellGenomArray;
+  for (int firstCellGenomInstruction : CellEvolution::kInitFirstCellGenom) {
+    firstCellGenomArray.append(firstCellGenomInstruction);
+  }
+  configJsonObject.insert("firstCellGenom", firstCellGenomArray);
+  configJsonObject.insert("firstCellEnergyMultiplier",
+                          CellEvolution::kInitFirstCellEnergyMultiplier);
+  configJsonObject.insert("firstCellDirection", CellEvolution::kInitFirstCellDirection);
+  configJsonObject.insert("firstCellIndexMultiplier", CellEvolution::kInitFirstCellIndexMultiplier);
 
   // Writing configuration to file
   QJsonDocument configJsonDocument{configJsonObject};
@@ -372,6 +383,25 @@ int processCommandLineArguments(int argc, char *argv[], const std::string &title
       configJsonObject.contains("enableDeadCellPinningOnSinking")
           ? configJsonObject["enableDeadCellPinningOnSinking"].toBool()
           : cellControllerParams.enableDeadCellPinningOnSinking;
+  if (configJsonObject.contains("firstCellGenom")) {
+    QJsonArray       firstCellGenomArray = configJsonObject["firstCellGenom"].toArray();
+    std::vector<int> firstCellGenom;
+    for (QJsonValueRef &&firstCellGenomInstruction : firstCellGenomArray) {
+      firstCellGenom.push_back(firstCellGenomInstruction.toInt());
+    }
+    cellControllerParams.firstCellGenom = firstCellGenom;
+  }
+  cellControllerParams.firstCellEnergyMultiplier =
+      configJsonObject.contains("firstCellEnergyMultiplier")
+          ? static_cast<float>(configJsonObject["firstCellEnergyMultiplier"].toDouble())
+          : cellControllerParams.firstCellEnergyMultiplier;
+  cellControllerParams.firstCellDirection = configJsonObject.contains("firstCellDirection")
+                                                ? configJsonObject["firstCellDirection"].toInt()
+                                                : cellControllerParams.firstCellDirection;
+  cellControllerParams.firstCellIndexMultiplier =
+      configJsonObject.contains("firstCellIndexMultiplier")
+          ? static_cast<float>(configJsonObject["firstCellIndexMultiplier"].toDouble())
+          : cellControllerParams.firstCellIndexMultiplier;
 
   return 0;
 }

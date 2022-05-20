@@ -37,15 +37,12 @@ static constexpr std::array<std::array<int, 2>, kDirectionCount> kDirectionOffse
     std::array<int, 2>{-1,  0},
      std::array<int, 2>{-1, -1},
 };
-// First cell properties
-static constexpr int   kFirstCellGenomInstructions = 3;
-static constexpr float kFirstCellEnergyMultiplier  = 3.0f;
-static constexpr int   kFirstCellDirection         = 2;
-static constexpr float kFirstCellIndexMultiplier   = 2.5f;
+
 // Last energy share value fade multiplier
 static constexpr float kLastEnergyShareFadeMultiplier = 0.99f;
 // Budded cell parent color multiplier
 static constexpr float kBuddedCellParentColorMultiplier = 2.0f;
+
 // Mathematical constant
 static constexpr float kTwoPi = 6.28318530f;
 
@@ -148,14 +145,21 @@ CellController::CellController(const Params &params)
   }
   _cellPtrVector.reserve(maxCellCount);
 
-  // Creating the first cell
+  // Creating the first cell genom
   std::vector<int> firstCellGenom;
-  firstCellGenom.assign(_genomSize, kFirstCellGenomInstructions);
+  const size_t     paramsFirstCellGenomSize  = params.firstCellGenom.size();
+  const int firstCellDefaultGenomInstruction = params.firstCellGenom[paramsFirstCellGenomSize - 1];
+  firstCellGenom.assign(_genomSize, firstCellDefaultGenomInstruction);
+  for (size_t i = 0; i < paramsFirstCellGenomSize; ++i) {
+    firstCellGenom[i] = params.firstCellGenom[i];
+  }
+
+  // Constructing and adding the first cell
   addCell(std::make_unique<Cell>(
       firstCellGenom,
-      static_cast<int>(static_cast<float>(_minChildEnergy) * kFirstCellEnergyMultiplier),
-      kFirstCellDirection,
-      static_cast<int>(static_cast<float>(_columns) * kFirstCellIndexMultiplier)));
+      static_cast<int>(static_cast<float>(_minChildEnergy) * params.firstCellEnergyMultiplier),
+      params.firstCellDirection,
+      static_cast<int>(static_cast<float>(_columns) * params.firstCellIndexMultiplier)));
 }
 
 CellController::CellController(const CellController &cellController) noexcept
