@@ -63,7 +63,7 @@ static constexpr bool  kInitEnableInstructionGetEnergyFromPhotosynthesis        
 static constexpr bool  kInitEnableInstructionGetEnergyFromMinerals                = true;
 static constexpr bool  kInitEnableInstructionGetEnergyFromFood                    = true;
 static constexpr bool  kInitEnableInstructionBud                                  = true;
-static constexpr bool  kInitEnableInstructionMutateRandomGen                      = true;
+static constexpr bool  kInitEnableInstructionMutateRandomGene                     = true;
 static constexpr bool  kInitEnableInstructionShareEnergy                          = true;
 static constexpr bool  kInitEnableInstructionTouch                                = true;
 static constexpr bool  kInitEnableInstructionDetermineEnergyLevel                 = true;
@@ -81,7 +81,7 @@ static constexpr bool  kInitEnableDaytimes                          = false;
 static constexpr bool  kInitEnableMaximizingFoodEnergy              = true;
 static constexpr bool  kInitEnableDeadCellPinningOnSinking          = true;
 
-static const std::vector<int> kInitFirstCellGenom            = std::vector<int>(1, 3);
+static const std::vector<int> kInitFirstCellGenome            = std::vector<int>(1, 3);
 static constexpr float        kInitFirstCellEnergyMultiplier = 3.0f;
 static constexpr int          kInitFirstCellDirection        = 2;
 static constexpr float        kInitFirstCellIndexMultiplier  = 2.5f;
@@ -95,7 +95,7 @@ enum class CellInstructions {
   GetEnergyFromMinerals,
   GetEnergyFromFood,
   Bud,
-  MutateRandomGen,
+  MutateRandomGene,
   ShareEnergy,
   Touch,
   DetermineEnergyLevel,
@@ -130,7 +130,7 @@ class CellController {
     float maxPhotosynthesisDepthMultiplier{kInitPhotosynthesisDepthMultiplier};
     float maxMineralHeightMultiplier{kInitMineralHeightMultiplier};
 
-    int   genomSize{kInitGenomSize};
+    int   genomeSize{kInitGenomSize};
     int   maxInstructionsPerTick{kInitMaxInstructionsPerTick};
     int   maxAkinGenomDifference{kInitMaxAkinGenomDifference};
     int   minChildEnergy{kInitMinChildEnergy};
@@ -155,7 +155,7 @@ class CellController {
     bool enableInstructionGetEnergyFromMinerals{kInitEnableInstructionGetEnergyFromMinerals};
     bool enableInstructionGetEnergyFromFood{kInitEnableInstructionGetEnergyFromFood};
     bool enableInstructionBud{kInitEnableInstructionBud};
-    bool enableInstructionMutateRandomGen{kInitEnableInstructionMutateRandomGen};
+    bool enableInstructionMutateRandomGene{kInitEnableInstructionMutateRandomGene};
     bool enableInstructionShareEnergy{kInitEnableInstructionShareEnergy};
     bool enableInstructionTouch{kInitEnableInstructionTouch};
     bool enableInstructionDetermineEnergyLevel{kInitEnableInstructionDetermineEnergyLevel};
@@ -174,7 +174,7 @@ class CellController {
     bool enableMaximizingFoodEnergy{kInitEnableMaximizingFoodEnergy};
     bool enableDeadCellPinningOnSinking{kInitEnableDeadCellPinningOnSinking};
 
-    std::vector<int> firstCellGenom{kInitFirstCellGenom};
+    std::vector<int> firstCellGenome{kInitFirstCellGenome};
     float            firstCellEnergyMultiplier{kInitFirstCellEnergyMultiplier};
     int              firstCellDirection{kInitFirstCellDirection};
     float            firstCellIndexMultiplier{kInitFirstCellIndexMultiplier};
@@ -197,8 +197,8 @@ class CellController {
   int _columns{};
   int _rows{};
 
-  // Genom machine and simulation environment properties
-  int   _genomSize{};
+  // Genome machine and simulation environment properties
+  int   _genomeSize{};
   int   _maxInstructionsPerTick{};
   int   _maxAkinGenomDifference{};
   int   _minChildEnergy{};
@@ -218,14 +218,14 @@ class CellController {
   int   _gammaFlashPeriodInDays{};
   int   _gammaFlashMaxMutationsCount{};
 
-  // Flags for enabling/disabling cell genom instructions
+  // Flags for enabling/disabling cell genome instructions
   bool _enableInstructionTurn{};
   bool _enableInstructionMove{};
   bool _enableInstructionGetEnergyFromPhotosynthesis{};
   bool _enableInstructionGetEnergyFromMinerals{};
   bool _enableInstructionGetEnergyFromFood{};
   bool _enableInstructionBud{};
-  bool _enableInstructionMutateRandomGen{};
+  bool _enableInstructionMutateRandomGene{};
   bool _enableInstructionShareEnergy{};
   bool _enableInstructionTouch{};
   bool _enableInstructionDetermineEnergyLevel{};
@@ -290,14 +290,14 @@ class CellController {
   // Makes every cell mutate
   void gammaFlash() noexcept;
 
-  // Perform appropriate cell genom instructions
+  // Perform appropriate cell genome instructions
   void turn(Cell &cell) const noexcept;
   void move(Cell &cell) noexcept;
   void getEnergyFromPhotosynthesis(Cell &cell) const noexcept;
   void getEnergyFromMinerals(Cell &cell) const noexcept;
   void getEnergyFromFood(Cell &cell) noexcept;
   void bud(Cell &cell) noexcept;
-  void mutateRandomGen(Cell &cell) noexcept;
+  void mutateRandomGene(Cell &cell) noexcept;
   void shareEnergy(Cell &cell) const noexcept;
   void touch(Cell &cell) const noexcept;
   void determineEnergyLevel(Cell &cell) const noexcept;
@@ -307,7 +307,7 @@ class CellController {
   void determineBurstOfMineralEnergy(Cell &cell) const noexcept;
   void incrementGenomCounter(Cell &cell) const noexcept;
 
-  // Perform cell genom calculations
+  // Perform cell genome calculations
   void addGenToCounter(Cell &cell) const noexcept;
   void jumpCounter(Cell &cell, int offset) const noexcept;
   int  getNextNthGen(const Cell &cell, int n) const noexcept;

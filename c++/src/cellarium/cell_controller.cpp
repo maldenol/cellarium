@@ -92,7 +92,7 @@ CellController::CellController(const Params &params)
       _randomSeed{params.randomSeed},
       _columns(static_cast<int>(static_cast<float>(params.width) / params.cellSize)),
       _rows(static_cast<int>(static_cast<float>(params.height) / params.cellSize)),
-      _genomSize{params.genomSize},
+      _genomeSize{params.genomeSize},
       _maxInstructionsPerTick{params.maxInstructionsPerTick},
       _maxAkinGenomDifference{params.maxAkinGenomDifference},
       _minChildEnergy{params.minChildEnergy},
@@ -120,7 +120,7 @@ CellController::CellController(const Params &params)
       _enableInstructionGetEnergyFromMinerals{params.enableInstructionGetEnergyFromMinerals},
       _enableInstructionGetEnergyFromFood{params.enableInstructionGetEnergyFromFood},
       _enableInstructionBud{params.enableInstructionBud},
-      _enableInstructionMutateRandomGen{params.enableInstructionMutateRandomGen},
+      _enableInstructionMutateRandomGene{params.enableInstructionMutateRandomGene},
       _enableInstructionShareEnergy{params.enableInstructionShareEnergy},
       _enableInstructionTouch{params.enableInstructionTouch},
       _enableInstructionDetermineEnergyLevel{params.enableInstructionDetermineEnergyLevel},
@@ -145,18 +145,19 @@ CellController::CellController(const Params &params)
   }
   _cellPtrVector.reserve(maxCellCount);
 
-  // Creating the first cell genom
-  std::vector<int> firstCellGenom;
-  const size_t     paramsFirstCellGenomSize  = params.firstCellGenom.size();
-  const int firstCellDefaultGenomInstruction = params.firstCellGenom[paramsFirstCellGenomSize - 1];
-  firstCellGenom.assign(_genomSize, firstCellDefaultGenomInstruction);
-  for (size_t i = 0; i < paramsFirstCellGenomSize; ++i) {
-    firstCellGenom[i] = params.firstCellGenom[i];
+  // Creating the first cell genome
+  std::vector<int> firstCellGenome;
+  const size_t     paramsFirstCellGenomeSize = params.firstCellGenome.size();
+  const int        firstCellDefaultGenomInstruction =
+      params.firstCellGenome[paramsFirstCellGenomeSize - 1];
+  firstCellGenome.assign(_genomeSize, firstCellDefaultGenomInstruction);
+  for (size_t i = 0; i < paramsFirstCellGenomeSize; ++i) {
+    firstCellGenome[i] = params.firstCellGenome[i];
   }
 
   // Constructing and adding the first cell
   addCell(std::make_unique<Cell>(
-      firstCellGenom,
+      firstCellGenome,
       static_cast<int>(static_cast<float>(_minChildEnergy) * params.firstCellEnergyMultiplier),
       params.firstCellDirection,
       static_cast<int>(static_cast<float>(_columns) * params.firstCellIndexMultiplier)));
@@ -167,7 +168,7 @@ CellController::CellController(const CellController &cellController) noexcept
       _randomSeed{cellController._randomSeed},
       _columns{cellController._columns},
       _rows{cellController._rows},
-      _genomSize{cellController._genomSize},
+      _genomeSize{cellController._genomeSize},
       _maxInstructionsPerTick{cellController._maxInstructionsPerTick},
       _maxAkinGenomDifference{cellController._maxAkinGenomDifference},
       _minChildEnergy{cellController._minChildEnergy},
@@ -194,7 +195,7 @@ CellController::CellController(const CellController &cellController) noexcept
           cellController._enableInstructionGetEnergyFromMinerals},
       _enableInstructionGetEnergyFromFood{cellController._enableInstructionGetEnergyFromFood},
       _enableInstructionBud{cellController._enableInstructionBud},
-      _enableInstructionMutateRandomGen{cellController._enableInstructionMutateRandomGen},
+      _enableInstructionMutateRandomGene{cellController._enableInstructionMutateRandomGene},
       _enableInstructionShareEnergy{cellController._enableInstructionShareEnergy},
       _enableInstructionTouch{cellController._enableInstructionTouch},
       _enableInstructionDetermineEnergyLevel{cellController._enableInstructionDetermineEnergyLevel},
@@ -239,7 +240,7 @@ CellController &CellController::operator=(const CellController &cellController) 
   _randomSeed                     = cellController._randomSeed;
   _columns                        = cellController._columns;
   _rows                           = cellController._rows;
-  _genomSize                      = cellController._genomSize;
+  _genomeSize                     = cellController._genomeSize;
   _maxInstructionsPerTick         = cellController._maxInstructionsPerTick;
   _maxAkinGenomDifference         = cellController._maxAkinGenomDifference;
   _minChildEnergy                 = cellController._minChildEnergy;
@@ -265,7 +266,7 @@ CellController &CellController::operator=(const CellController &cellController) 
   _enableInstructionGetEnergyFromMinerals = cellController._enableInstructionGetEnergyFromMinerals;
   _enableInstructionGetEnergyFromFood     = cellController._enableInstructionGetEnergyFromFood;
   _enableInstructionBud                   = cellController._enableInstructionBud;
-  _enableInstructionMutateRandomGen       = cellController._enableInstructionMutateRandomGen;
+  _enableInstructionMutateRandomGene      = cellController._enableInstructionMutateRandomGene;
   _enableInstructionShareEnergy           = cellController._enableInstructionShareEnergy;
   _enableInstructionTouch                 = cellController._enableInstructionTouch;
   _enableInstructionDetermineEnergyLevel  = cellController._enableInstructionDetermineEnergyLevel;
@@ -312,7 +313,7 @@ CellController::CellController(CellController &&cellController) noexcept
       _randomSeed{std::exchange(cellController._randomSeed, 0)},
       _columns{std::exchange(cellController._columns, 0)},
       _rows{std::exchange(cellController._rows, 0)},
-      _genomSize{std::exchange(cellController._genomSize, 0)},
+      _genomeSize{std::exchange(cellController._genomeSize, 0)},
       _maxInstructionsPerTick{std::exchange(cellController._maxInstructionsPerTick, 0)},
       _maxAkinGenomDifference{std::exchange(cellController._maxAkinGenomDifference, 0)},
       _minChildEnergy{std::exchange(cellController._minChildEnergy, 0)},
@@ -342,8 +343,8 @@ CellController::CellController(CellController &&cellController) noexcept
       _enableInstructionGetEnergyFromFood{
           std::exchange(cellController._enableInstructionGetEnergyFromFood, false)},
       _enableInstructionBud{std::exchange(cellController._enableInstructionBud, false)},
-      _enableInstructionMutateRandomGen{
-          std::exchange(cellController._enableInstructionMutateRandomGen, false)},
+      _enableInstructionMutateRandomGene{
+          std::exchange(cellController._enableInstructionMutateRandomGene, false)},
       _enableInstructionShareEnergy{
           std::exchange(cellController._enableInstructionShareEnergy, false)},
       _enableInstructionTouch{std::exchange(cellController._enableInstructionTouch, false)},
@@ -380,7 +381,7 @@ CellController &CellController::operator=(CellController &&cellController) noexc
   std::swap(_randomSeed, cellController._randomSeed);
   std::swap(_columns, cellController._columns);
   std::swap(_rows, cellController._rows);
-  std::swap(_genomSize, cellController._genomSize);
+  std::swap(_genomeSize, cellController._genomeSize);
   std::swap(_maxInstructionsPerTick, cellController._maxInstructionsPerTick);
   std::swap(_maxAkinGenomDifference, cellController._maxAkinGenomDifference);
   std::swap(_minChildEnergy, cellController._minChildEnergy);
@@ -408,7 +409,7 @@ CellController &CellController::operator=(CellController &&cellController) noexc
   std::swap(_enableInstructionGetEnergyFromFood,
             cellController._enableInstructionGetEnergyFromFood);
   std::swap(_enableInstructionBud, cellController._enableInstructionBud);
-  std::swap(_enableInstructionMutateRandomGen, cellController._enableInstructionMutateRandomGen);
+  std::swap(_enableInstructionMutateRandomGene, cellController._enableInstructionMutateRandomGene);
   std::swap(_enableInstructionShareEnergy, cellController._enableInstructionShareEnergy);
   std::swap(_enableInstructionTouch, cellController._enableInstructionTouch);
   std::swap(_enableInstructionDetermineEnergyLevel,
@@ -491,13 +492,13 @@ void CellController::act() noexcept {
     if (static_cast<float>(_mersenneTwisterEngine()) /
             static_cast<float>(_mersenneTwisterEngine.max()) <
         _randomMutationChance) {
-      mutateRandomGen(cell);
+      mutateRandomGene(cell);
     }
 
-    // Executing genom machine instructions with maximum instructions per tick limit
+    // Executing genome machine instructions with maximum instructions per tick limit
     for (int i = 0; i < _maxInstructionsPerTick; ++i) {
-      // Getting current instruction from genom
-      int instuction = cell._genom[cell._counter];
+      // Getting current instruction from genome
+      int instuction = cell._genome[cell._counter];
 
       // Performing appropriate instruction
       switch (static_cast<CellInstructions>(instuction)) {
@@ -552,11 +553,11 @@ void CellController::act() noexcept {
           }
           incrementGenomCounter(cell);
         } break;
-        // Making random gen mutate (no more instructions permitted)
-        case CellInstructions::MutateRandomGen: {
-          if (_enableInstructionMutateRandomGen) {
+        // Making random gene mutate (no more instructions permitted)
+        case CellInstructions::MutateRandomGene: {
+          if (_enableInstructionMutateRandomGene) {
             i = _maxInstructionsPerTick;
-            mutateRandomGen(cell);
+            mutateRandomGene(cell);
           }
           incrementGenomCounter(cell);
         } break;
@@ -772,7 +773,7 @@ void CellController::gammaFlash() noexcept {
                                      static_cast<float>(_mersenneTwisterEngine()) /
                                      static_cast<float>(_mersenneTwisterEngine.max()));
       for (int i = 0; i < mutationsCount; ++i) {
-        mutateRandomGen(cell);
+        mutateRandomGene(cell);
       }
     }
   }
@@ -931,7 +932,7 @@ void CellController::bud(Cell &cell) noexcept {
     if (_cellPtrVector[targetIndex] == nullptr) {
       // Creating new cell
       std::unique_ptr<Cell> buddedCellPtr =
-          std::make_unique<Cell>(cell._genom, cell._energy / 2, cell._direction, targetIndex);
+          std::make_unique<Cell>(cell._genome, cell._energy / 2, cell._direction, targetIndex);
 
       // Assigning cell color
       float colorVectorLength = static_cast<float>(std::sqrt(
@@ -947,7 +948,7 @@ void CellController::bud(Cell &cell) noexcept {
       if (static_cast<float>(_mersenneTwisterEngine()) /
               static_cast<float>(_mersenneTwisterEngine.max()) <
           _budMutationChance) {
-        mutateRandomGen(*buddedCellPtr);
+        mutateRandomGene(*buddedCellPtr);
       }
 
       // Applying random bud mutation to current cell
@@ -955,7 +956,7 @@ void CellController::bud(Cell &cell) noexcept {
       if (static_cast<float>(_mersenneTwisterEngine()) /
               static_cast<float>(_mersenneTwisterEngine.max()) <
           _budMutationChance) {
-        mutateRandomGen(cell);
+        mutateRandomGene(cell);
       }
 
       addCell(std::move(buddedCellPtr));
@@ -970,13 +971,14 @@ void CellController::bud(Cell &cell) noexcept {
   }
 }
 
-void CellController::mutateRandomGen(Cell &cell) noexcept {
-  // Changing random gen on another random one
-  cell._genom[std::floor(static_cast<float>(_mersenneTwisterEngine()) /
-                         static_cast<float>(_mersenneTwisterEngine.max()) *
-                         static_cast<float>(_genomSize))] =
+void CellController::mutateRandomGene(Cell &cell) noexcept {
+  // Changing random gene on another random one
+  cell._genome[std::floor(static_cast<float>(_mersenneTwisterEngine()) /
+                          static_cast<float>(_mersenneTwisterEngine.max()) *
+                          static_cast<float>(_genomeSize))] =
       std::floor(static_cast<float>(_mersenneTwisterEngine()) /
-                 static_cast<float>(_mersenneTwisterEngine.max()) * static_cast<float>(_genomSize));
+                 static_cast<float>(_mersenneTwisterEngine.max()) *
+                 static_cast<float>(_genomeSize));
 }
 
 void CellController::shareEnergy(Cell &cell) const noexcept {
@@ -997,7 +999,7 @@ void CellController::shareEnergy(Cell &cell) const noexcept {
 
     // Calculating energy to share
     int deltaEnergy = static_cast<int>(static_cast<float>(cell._energy * getNextNthGen(cell, 2)) /
-                                       static_cast<float>(_genomSize));
+                                       static_cast<float>(_genomeSize));
 
     // Sharing energy
     cell._energy -= deltaEnergy;
@@ -1054,7 +1056,7 @@ void CellController::touch(Cell &cell) const noexcept {
 void CellController::determineEnergyLevel(Cell &cell) const noexcept {
   // Calculating value to compare
   int valueToCompare = static_cast<int>(static_cast<float>(_maxEnergy * getNextNthGen(cell, 1)) /
-                                        static_cast<float>(_genomSize));
+                                        static_cast<float>(_genomeSize));
 
   // Less
   if (cell._energy < valueToCompare) {
@@ -1070,7 +1072,7 @@ void CellController::determineDepth(Cell &cell) const noexcept {
   // Calculating values to compare
   int row            = calculateRowByIndex(cell._index);
   int valueToCompare = static_cast<int>(static_cast<float>(_rows * getNextNthGen(cell, 1)) /
-                                        static_cast<float>(_genomSize));
+                                        static_cast<float>(_genomeSize));
 
   // Less
   if (row < valueToCompare) {
@@ -1086,7 +1088,7 @@ void CellController::determineBurstOfPhotosynthesisEnergy(Cell &cell) const noex
   // Calculating value to compare
   int valueToCompare = static_cast<int>(
       static_cast<float>(_maxBurstOfPhotosynthesisEnergy * getNextNthGen(cell, 1)) /
-      static_cast<float>(_genomSize));
+      static_cast<float>(_genomeSize));
 
   // Calculating available photosynthesis energy
   int deltaEnergy = calculateBurstOfPhotosynthesisEnergy(cell._index);
@@ -1105,7 +1107,7 @@ void CellController::determineBurstOfMinerals(Cell &cell) const noexcept {
   // Calculating value to compare
   int valueToCompare =
       static_cast<int>(static_cast<float>(_maxBurstOfMinerals * getNextNthGen(cell, 1)) /
-                       static_cast<float>(_genomSize));
+                       static_cast<float>(_genomeSize));
 
   // Calculating available minerals
   int deltaMinerals = calculateBurstOfMinerals(cell._index);
@@ -1122,9 +1124,9 @@ void CellController::determineBurstOfMinerals(Cell &cell) const noexcept {
 
 void CellController::determineBurstOfMineralEnergy(Cell &cell) const noexcept {
   // Calculating value to compare
-  int valueToCompare =
-      static_cast<int>(_energyPerMineral * static_cast<float>(_maxMinerals) *
-                       static_cast<float>(getNextNthGen(cell, 1)) / static_cast<float>(_genomSize));
+  int valueToCompare = static_cast<int>(_energyPerMineral * static_cast<float>(_maxMinerals) *
+                                        static_cast<float>(getNextNthGen(cell, 1)) /
+                                        static_cast<float>(_genomeSize));
 
   // Calculating available mineral energy
   int deltaEnergy = calculateBurstOfMineralEnergy(cell._minerals);
@@ -1141,29 +1143,29 @@ void CellController::determineBurstOfMineralEnergy(Cell &cell) const noexcept {
 
 void CellController::incrementGenomCounter(Cell &cell) const noexcept {
   // Incrementing instruction counter with overflow handling
-  cell._counter = (cell._counter + 1) % _genomSize;
+  cell._counter = (cell._counter + 1) % _genomeSize;
 }
 
 void CellController::addGenToCounter(Cell &cell) const noexcept {
   // Adding dummy instruction value to instruction counter with overflow handling
-  cell._counter = (cell._counter + cell._genom[cell._counter]) % _genomSize;
+  cell._counter = (cell._counter + cell._genome[cell._counter]) % _genomeSize;
 }
 
 void CellController::jumpCounter(Cell &cell, int offset) const noexcept {
   // Performing jump command on instruction counter with overflow handling
-  cell._counter = (cell._counter + offset) % _genomSize;
+  cell._counter = (cell._counter + offset) % _genomeSize;
 }
 
 int CellController::getNextNthGen(const Cell &cell, int n) const noexcept {
-  // Getting (counter + n)'th gen
-  return cell._genom[(cell._counter + n) % _genomSize];
+  // Getting (counter + n)'th gene
+  return cell._genome[(cell._counter + n) % _genomeSize];
 }
 
 bool CellController::areAkin(const Cell &cell1, const Cell &cell2) const noexcept {
   int diff{};
 
-  for (int i = 0; i < _genomSize; ++i) {
-    if (cell1._genom[i] != cell2._genom[i]) {
+  for (int i = 0; i < _genomeSize; ++i) {
+    if (cell1._genome[i] != cell2._genome[i]) {
       ++diff;
       if (diff > _maxAkinGenomDifference) {
         return false;

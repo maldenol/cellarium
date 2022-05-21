@@ -24,7 +24,7 @@ namespace CellEvolution {
 // Class for storing cell properties
 class Cell {
  private:
-  std::vector<int> _genom{};
+  std::vector<int> _genome{};
   int              _counter{};
 
   int _energy{};
@@ -47,7 +47,7 @@ class Cell {
 
  public:
   Cell() noexcept;
-  Cell(const std::vector<int> &genom, int energy, int direction, int index);
+  Cell(const std::vector<int> &genome, int energy, int direction, int index);
   Cell(const Cell &cell) noexcept;
   Cell &operator=(const Cell &cell) noexcept;
   Cell(Cell &&cell) noexcept;

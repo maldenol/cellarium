@@ -27,11 +27,11 @@ constexpr int kInitIndex = -1;
 
 Cell::Cell() noexcept : _index{kInitIndex} {};
 
-Cell::Cell(const std::vector<int> &genom, int energy, int direction, int index)
-    : _genom{genom}, _energy{energy}, _direction{direction}, _index{index}, _isAlive{true} {}
+Cell::Cell(const std::vector<int> &genome, int energy, int direction, int index)
+    : _genome{genome}, _energy{energy}, _direction{direction}, _index{index}, _isAlive{true} {}
 
 Cell::Cell(const Cell &cell) noexcept
-    : _genom{cell._genom},
+    : _genome{cell._genome},
       _counter{cell._counter},
       _energy{cell._energy},
       _minerals{cell._minerals},
@@ -46,7 +46,7 @@ Cell::Cell(const Cell &cell) noexcept
       _pinned{cell._pinned} {}
 
 Cell &Cell::operator=(const Cell &cell) noexcept {
-  _genom              = cell._genom;
+  _genome             = cell._genome;
   _counter            = cell._counter;
   _energy             = cell._energy;
   _minerals           = cell._minerals;
@@ -64,7 +64,7 @@ Cell &Cell::operator=(const Cell &cell) noexcept {
 }
 
 Cell::Cell(Cell &&cell) noexcept
-    : _genom{std::exchange(cell._genom, std::vector<int>{})},
+    : _genome{std::exchange(cell._genome, std::vector<int>{})},
       _counter{std::exchange(cell._counter, 0)},
       _energy{std::exchange(cell._energy, 0)},
       _minerals{std::exchange(cell._minerals, 0)},
@@ -79,7 +79,7 @@ Cell::Cell(Cell &&cell) noexcept
       _pinned{std::exchange(cell._pinned, false)} {}
 
 Cell &Cell::operator=(Cell &&cell) noexcept {
-  std::swap(_genom, cell._genom);
+  std::swap(_genome, cell._genome);
   std::swap(_counter, cell._counter);
   std::swap(_energy, cell._energy);
   std::swap(_minerals, cell._minerals);

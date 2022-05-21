@@ -18,7 +18,7 @@
     "enableInstructionGetEnergyFromMinerals": true,
     "enableInstructionGetEnergyFromPhotosynthesis": true,
     "enableInstructionMove": true,
-    "enableInstructionMutateRandomGen": true,
+    "enableInstructionMutateRandomGene": true,
     "enableInstructionShareEnergy": true,
     "enableInstructionTouch": true,
     "enableInstructionTurn": true,
@@ -33,13 +33,13 @@
     "energyPerMineral": 0.8,
     "firstCellDirection": 2,
     "firstCellEnergyMultiplier": 3,
-    "firstCellGenom": [
+    "firstCellGenome": [
         3
     ],
     "firstCellIndexMultiplier": 2.5,
     "gammaFlashMaxMutationsCount": 8,
     "gammaFlashPeriodInDays": 150,
-    "genomSize": 64,
+    "genomeSize": 64,
     "height": 600,
     "maxAkinGenomDifference": 4,
     "maxBurstOfFoodEnergy": 20,

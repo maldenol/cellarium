@@ -62,7 +62,7 @@ int generateDefaultConfigurationFile() {
   configJsonObject.insert("width", CellEvolution::kInitWidth);
   configJsonObject.insert("height", CellEvolution::kInitHeight);
   configJsonObject.insert("cellSize", CellEvolution::kInitCellSize);
-  configJsonObject.insert("genomSize", CellEvolution::kInitGenomSize);
+  configJsonObject.insert("genomeSize", CellEvolution::kInitGenomSize);
   configJsonObject.insert("maxInstructionsPerTick", CellEvolution::kInitMaxInstructionsPerTick);
   configJsonObject.insert("maxAkinGenomDifference", CellEvolution::kInitMaxAkinGenomDifference);
   configJsonObject.insert("minChildEnergy", CellEvolution::kInitMinChildEnergy);
@@ -91,8 +91,8 @@ int generateDefaultConfigurationFile() {
   configJsonObject.insert("enableInstructionGetEnergyFromFood",
                           CellEvolution::kInitEnableInstructionGetEnergyFromFood);
   configJsonObject.insert("enableInstructionBud", CellEvolution::kInitEnableInstructionBud);
-  configJsonObject.insert("enableInstructionMutateRandomGen",
-                          CellEvolution::kInitEnableInstructionMutateRandomGen);
+  configJsonObject.insert("enableInstructionMutateRandomGene",
+                          CellEvolution::kInitEnableInstructionMutateRandomGene);
   configJsonObject.insert("enableInstructionShareEnergy",
                           CellEvolution::kInitEnableInstructionShareEnergy);
   configJsonObject.insert("enableInstructionTouch", CellEvolution::kInitEnableInstructionTouch);
@@ -120,11 +120,11 @@ int generateDefaultConfigurationFile() {
                           CellEvolution::kInitEnableMaximizingFoodEnergy);
   configJsonObject.insert("enableDeadCellPinningOnSinking",
                           CellEvolution::kInitEnableDeadCellPinningOnSinking);
-  QJsonArray firstCellGenomArray;
-  for (int firstCellGenomInstruction : CellEvolution::kInitFirstCellGenom) {
-    firstCellGenomArray.append(firstCellGenomInstruction);
+  QJsonArray firstCellGenomeArray;
+  for (int firstCellGenomeInstruction : CellEvolution::kInitFirstCellGenome) {
+    firstCellGenomeArray.append(firstCellGenomeInstruction);
   }
-  configJsonObject.insert("firstCellGenom", firstCellGenomArray);
+  configJsonObject.insert("firstCellGenome", firstCellGenomeArray);
   configJsonObject.insert("firstCellEnergyMultiplier",
                           CellEvolution::kInitFirstCellEnergyMultiplier);
   configJsonObject.insert("firstCellDirection", CellEvolution::kInitFirstCellDirection);
@@ -237,9 +237,9 @@ int processCommandLineArguments(int argc, char *argv[], const std::string &title
       configJsonObject.contains("maxMineralHeightMultiplier")
           ? static_cast<float>(configJsonObject["maxMineralHeightMultiplier"].toDouble())
           : cellControllerParams.maxMineralHeightMultiplier;
-  cellControllerParams.genomSize = configJsonObject.contains("genomSize")
-                                       ? configJsonObject["genomSize"].toInt()
-                                       : cellControllerParams.genomSize;
+  cellControllerParams.genomeSize = configJsonObject.contains("genomeSize")
+                                        ? configJsonObject["genomeSize"].toInt()
+                                        : cellControllerParams.genomeSize;
   cellControllerParams.maxInstructionsPerTick =
       configJsonObject.contains("maxInstructionsPerTick")
           ? configJsonObject["maxInstructionsPerTick"].toInt()
@@ -321,10 +321,10 @@ int processCommandLineArguments(int argc, char *argv[], const std::string &title
       configJsonObject.contains("enableInstructionBud")
           ? configJsonObject["enableInstructionBud"].toBool()
           : cellControllerParams.enableInstructionBud;
-  cellControllerParams.enableInstructionMutateRandomGen =
-      configJsonObject.contains("enableInstructionMutateRandomGen")
-          ? configJsonObject["enableInstructionMutateRandomGen"].toBool()
-          : cellControllerParams.enableInstructionMutateRandomGen;
+  cellControllerParams.enableInstructionMutateRandomGene =
+      configJsonObject.contains("enableInstructionMutateRandomGene")
+          ? configJsonObject["enableInstructionMutateRandomGene"].toBool()
+          : cellControllerParams.enableInstructionMutateRandomGene;
   cellControllerParams.enableInstructionShareEnergy =
       configJsonObject.contains("enableInstructionShareEnergy")
           ? configJsonObject["enableInstructionShareEnergy"].toBool()
@@ -383,13 +383,13 @@ int processCommandLineArguments(int argc, char *argv[], const std::string &title
       configJsonObject.contains("enableDeadCellPinningOnSinking")
           ? configJsonObject["enableDeadCellPinningOnSinking"].toBool()
           : cellControllerParams.enableDeadCellPinningOnSinking;
-  if (configJsonObject.contains("firstCellGenom")) {
-    QJsonArray       firstCellGenomArray = configJsonObject["firstCellGenom"].toArray();
-    std::vector<int> firstCellGenom;
-    for (QJsonValueRef &&firstCellGenomInstruction : firstCellGenomArray) {
-      firstCellGenom.push_back(firstCellGenomInstruction.toInt());
+  if (configJsonObject.contains("firstCellGenome")) {
+    QJsonArray       firstCellGenomeArray = configJsonObject["firstCellGenome"].toArray();
+    std::vector<int> firstCellGenome;
+    for (QJsonValueRef &&firstCellGenomeInstruction : firstCellGenomeArray) {
+      firstCellGenome.push_back(firstCellGenomeInstruction.toInt());
     }
-    cellControllerParams.firstCellGenom = firstCellGenom;
+    cellControllerParams.firstCellGenome = firstCellGenome;
   }
   cellControllerParams.firstCellEnergyMultiplier =
       configJsonObject.contains("firstCellEnergyMultiplier")
