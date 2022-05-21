@@ -279,10 +279,16 @@ Here are available configuration presets and formations that can be found in the
 
 The prototype of application is written in Processing so if you don't want
 to build the application yourself you can download Processing 3.5+ and run it.
+However, Processing version does not contain all available rules,
+configuration feature and GUI.
 
 The final version of application is written in C++ using OpenGL 4.6 and Qt 5.
-Therefore you need to have OpenGL and Qt installed on your system to build it.
-To build the application run these commands from c++/ directory:
+Therefore you need to have Qt installed on your system to build it.
+Download GLFW from [here](https://www.glfw.org/download)
+and GLAD from [here](https://glad.dav1d.de/), build these libraries,
+place builded shared files in ```c++/lib/``` folder
+and includes in ```c++/include/``` folder.
+To build the application run these commands from ```c++/``` directory:
 ```bash
 cmake .
 cmake -build .
