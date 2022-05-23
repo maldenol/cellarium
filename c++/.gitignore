@@ -49,7 +49,14 @@ bin/
 # Documentation
 docs/
 
-# Headers of OpenGL libraries
+# Library headers
 include/glad
 include/GLFW
 include/khr
+
+# Library sources
+src/cellarium/glad
+src/cellarium/dear_imgui
+
+# Dear ImGui
+imgui.ini

@@ -1,10 +1,13 @@
 # cellarium
 **cellarium** is a graphical simulation of a discrete world inhabited by cells
 that exists according to the laws of an evolutionary algorithm.
+<br/>
+<br/>
 
 ## How does it work
 <details>
 <summary>Click to see how does it work</summary>
+<br/>
 
 This is a cellular automaton that is an evolution simulator.
 The world is discrete by space and time.
@@ -70,10 +73,13 @@ This is one of the targets of cybernetics.
 
 ### Demo
 [![Here must be demo](https://media.istockphoto.com/photos/barbary-macaque-picture-id824860820?k=20&m=824860820&s=612x612&w=0&h=W8783ZGcqMfDMJoXvBAyDFcSjnOWdKqKhgLGvf-VIuU=)](https://www.youtube.com/watch?v=dQw4w9WgXcQ "Default configuration demo")
+</br>
+</br>
 
 ### Simulation rules
 <details>
 <summary>Click to see simulation rules</summary>
+<br/>
 
 - features of the environment:
     - discrete in space (square cells) and time (ticks, or steps)
@@ -231,6 +237,7 @@ have a faster "reaction")
 ### Formations
 <details>
 <summary>Click to see formation</summary>
+<br/>
 
 Here are founded formations:
 - gas - cells that move in constant random direction
@@ -257,6 +264,7 @@ Here are founded formations:
 ### Configuration presets
 <details>
 <summary>Click to see configuration presets</summary>
+<br/>
 
 Here are available configuration presets and formations that can be found in them:
 - default: spinners, worms, colonies, gas, chess, sticks, wind
@@ -275,31 +283,48 @@ Here are available configuration presets and formations that can be found in the
 
 ## Building
 <details>
-<summary>Click to see how does it work</summary>
+<summary>Click to see how to build it</summary>
+<br/>
 
 The prototype of application is written in Processing so if you don't want
 to build the application yourself you can download Processing 3.5+ and run it.
 However, Processing version does not contain all available rules,
 configuration feature and GUI.
 
-The final version of application is written in C++ using OpenGL 4.6 and Qt 5.
-Therefore you need to have Qt installed on your system to build it.
-Download GLFW from [here](https://www.glfw.org/download)
-and GLAD from [here](https://glad.dav1d.de/), build these libraries,
-place builded shared files in ```c++/lib/``` folder
-and includes in ```c++/include/``` folder.
+The final version of application is written in C++ using:
+1. Dear ImGui
+2. OpenGL 4.6 (GLFW and GLAD)
+3. Qt 5
+
+Therefore before building you need to satisfy all the dependencies
+by taking these steps:
+1. Install Qt using your system package manager or [official installer](https://www.qt.io/download).
+2. Download [GLFW](https://www.glfw.org/download), build it,
+then place static library file in ```c++/lib/```
+and header directories in ```c++/include/```.
+3. Download [GLAD](https://glad.dav1d.de/),
+build it as static or shared library and place it in ```c++/lib/```
+or place source file in ```c++/src/cellarium/glad/```,
+then place header directory in ```c++/include/```.
+4. Clone [Dear ImGui](https://github.com/ocornut/imgui) repository,
+then copy all the source and header files from the repository's root
+and also ```imgui_impl_glfw*``` with ```imgui_impl_opengl3*``` from ```backends\```
+to ```c++/src/cellarium/dear_imgui/```.
+
 To build the application run these commands from ```c++/``` directory:
 ```bash
 cmake .
 cmake -build .
 ```
+You will have ```./bin/cellarium``` builded.
 
 </details>
 </br>
 
 ## Using
 <details>
-<summary>Click to see how does it work</summary>
+<summary>Click to see how to use it</summary>
+<br/>
 
 Run the application with ```-h``` parameter to see help information.
 Use ```-g``` parameter to generate default configuration so you can edit it and use.
