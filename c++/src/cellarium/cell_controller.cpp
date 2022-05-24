@@ -456,6 +456,8 @@ void CellController::act() noexcept {
     const int index = iter.next();
     Cell     &cell  = *_cellPtrVector[index];
 
+    ++cell._age;
+
     // If cell is dead
     if (!cell._isAlive) {
       // Making organic sink
@@ -647,6 +649,7 @@ void CellController::render(CellRenderingData *cellRenderingData, int cellRender
   static constexpr float kHalfColor{0.5f};
   static constexpr float kThreeQuartersColor{0.75f};
   static constexpr float kMaxColor{1.0f};
+  static constexpr float kMaxAge{1000.0f};
 
   // Initializing count of RenderingData objects
   int renderingDataCount{};
@@ -689,15 +692,24 @@ void CellController::render(CellRenderingData *cellRenderingData, int cellRender
         } break;
         // Energy sharing balance mode
         case CellRenderingModes::EnergySharingBalance: {
-          colorR = map(cell._energyShareBalance, -_maxEnergy, _maxEnergy, kMaxColor, kMinColor);
-          colorG = map(cell._energyShareBalance, -_maxEnergy, _maxEnergy, kHalfColor, kMaxColor);
-          colorB = map(cell._energyShareBalance, -_maxEnergy, _maxEnergy, kMinColor, kMaxColor);
+          colorR =
+              mapClamp(cell._energyShareBalance, -_maxEnergy, _maxEnergy, kMaxColor, kMinColor);
+          colorG =
+              mapClamp(cell._energyShareBalance, -_maxEnergy, _maxEnergy, kHalfColor, kMaxColor);
+          colorB =
+              mapClamp(cell._energyShareBalance, -_maxEnergy, _maxEnergy, kMinColor, kMaxColor);
         } break;
         // Last energy share mode
         case CellRenderingModes::LastEnergyShare: {
           colorR = map(cell._lastEnergyShare, -1.0f, 1.0f, kMaxColor, kMinColor);
           colorG = map(cell._lastEnergyShare, -1.0f, 1.0f, kHalfColor, kMaxColor);
           colorB = map(cell._lastEnergyShare, -1.0f, 1.0f, kMinColor, kMaxColor);
+        } break;
+        // Age mode
+        case CellRenderingModes::Age: {
+          colorR = mapClamp(cell._age, 0.0f, kMaxAge, kMinColor, kMaxColor);
+          colorG = mapClamp(cell._age, 0.0f, kMaxAge, kMaxColor, kMinColor);
+          colorB = mapClamp(cell._age, 0.0f, kMaxAge, kMaxColor, kMinColor);
         } break;
       }
     }

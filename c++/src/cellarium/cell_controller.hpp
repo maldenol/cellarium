@@ -112,6 +112,7 @@ enum class CellRenderingModes {
   EnergyLevel,
   EnergySharingBalance,
   LastEnergyShare,
+  Age,
   Size
 };
 

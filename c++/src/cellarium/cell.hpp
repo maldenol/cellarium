@@ -34,6 +34,8 @@ class Cell {
   int _direction{};
   int _index{};
 
+  int _age{};
+
   int _colorR{};
   int _colorG{};
   int _colorB{};

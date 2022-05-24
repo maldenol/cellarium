@@ -226,9 +226,9 @@ void processStatistics(const CellEvolution::CellController &cellController) {
   static int sTps        = 0;
 
   // Calculating FPS and TPS
-  constexpr double kUpdateInterval = 0.2f;
-  static double    sTime           = glfwGetTime();
-  double           timePassed      = glfwGetTime() - sTime;
+  static constexpr double kUpdateInterval = 0.2f;
+  static double           sTime           = glfwGetTime();
+  double                  timePassed      = glfwGetTime() - sTime;
 
   ++sFrameCount;
 
@@ -284,23 +284,26 @@ void processStatistics(const CellEvolution::CellController &cellController) {
 // Processes controls section in Dear ImGui window
 void processControls(GLFWwindow *window, Controls &controls) {
   // Constant
-  constexpr float kButtonWidth           = 50.0f;
-  const float     buttonHorizontalOffset = ImGui::GetWindowContentRegionWidth() - kButtonWidth;
+  static constexpr float kButtonWidth = 50.0f;
+  const float buttonHorizontalOffset  = ImGui::GetWindowContentRegionWidth() - kButtonWidth;
 
   // Getting cell rendering mode name by its number
   std::string cellRenderingMode{};
-  switch (controls.cellRenderingMode) {
-    case 0:
+  switch (static_cast<CellEvolution::CellRenderingModes>(controls.cellRenderingMode)) {
+    case CellEvolution::CellRenderingModes::Diet:
       cellRenderingMode = "diet";
       break;
-    case 1:
+    case CellEvolution::CellRenderingModes::EnergyLevel:
       cellRenderingMode = "energy level";
       break;
-    case 2:
+    case CellEvolution::CellRenderingModes::EnergySharingBalance:
       cellRenderingMode = "energy sharing balance";
       break;
-    case 3:
+    case CellEvolution::CellRenderingModes::LastEnergyShare:
       cellRenderingMode = "last energy share";
+      break;
+    case CellEvolution::CellRenderingModes::Age:
+      cellRenderingMode = "age";
       break;
   }
 
@@ -372,9 +375,9 @@ void processControls(GLFWwindow *window, Controls &controls) {
 // Processes simulation parameters section in Dear ImGui window (CellController friend function)
 void CellEvolution::processSimulationParameters(CellEvolution::CellController &cellController) {
   // Constant
-  constexpr int   kBigNumber             = 1000;
-  constexpr float kButtonWidth           = 50.0f;
-  const float     buttonHorizontalOffset = ImGui::GetWindowContentRegionWidth() - kButtonWidth;
+  static constexpr int   kBigNumber   = 1000;
+  static constexpr float kButtonWidth = 50.0f;
+  const float buttonHorizontalOffset  = ImGui::GetWindowContentRegionWidth() - kButtonWidth;
 
   // Genome machine and simulation environment properties
   ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f),
