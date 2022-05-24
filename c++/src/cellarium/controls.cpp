@@ -21,9 +21,9 @@
 #include <string>
 
 // Dear ImGui
-#include "dear_imgui/imgui.h"
-#include "dear_imgui/imgui_impl_glfw.h"
-#include "dear_imgui/imgui_impl_opengl3.h"
+#include "./dear_imgui/imgui.h"
+#include "./dear_imgui/imgui_impl_glfw.h"
+#include "./dear_imgui/imgui_impl_opengl3.h"
 
 // "extra" internal library
 #include "./extra/extra.hpp"
@@ -215,8 +215,8 @@ void terminateDearImGui() {
   ImGui::DestroyContext(ImGui::GetCurrentContext());
 }
 
-// Draws statistics section in Dear ImGui window
-void drawStatistics(CellEvolution::CellController &cellController) {
+// Processes statistics section in Dear ImGui window
+void processStatistics(const CellEvolution::CellController &cellController) {
   // Getting CellController statistics
   CellEvolution::CellController::Statistics statistics = cellController.getSimulationStatistics();
 
@@ -261,7 +261,10 @@ void drawStatistics(CellEvolution::CellController &cellController) {
       break;
   }
 
-  // Adding text elements with statistics
+  // Statistics
+  ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Statistics");
+
+  // Adding statistics
   ImGui::Text("Frames per second:                     %d", sFps);
   ImGui::Text("Ticks  per second:                     %d", sTps);
   ImGui::Text("Tick:                                  %d", statistics.tick);
@@ -278,8 +281,8 @@ void drawStatistics(CellEvolution::CellController &cellController) {
   ImGui::Text("Count of food energy bursts:           %ld", statistics.countOfFoodEnergyBursts);
 }
 
-// Draws controls section in Dear ImGui window
-void drawControls(GLFWwindow *window, Controls &controls) {
+// Processes controls section in Dear ImGui window
+void processControls(GLFWwindow *window, Controls &controls) {
   // Constant
   constexpr float kButtonWidth           = 50.0f;
   const float     buttonHorizontalOffset = ImGui::GetWindowContentRegionWidth() - kButtonWidth;
@@ -301,6 +304,9 @@ void drawControls(GLFWwindow *window, Controls &controls) {
       break;
   }
 
+  // Controls
+  ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Controls");
+
   // Switching cell rendering mode
   ImGui::Text("Cell rendering mode: %s", cellRenderingMode.c_str());
   ImGui::SameLine(buttonHorizontalOffset);
@@ -313,7 +319,8 @@ void drawControls(GLFWwindow *window, Controls &controls) {
   ImGui::Text("Number of ticks per one rendering");
   ImGui::SameLine(buttonHorizontalOffset);
   ImGui::SetNextItemWidth(kButtonWidth);
-  ImGui::SliderInt(" (tpr)", &controls.ticksPerRender, 1, kMaxTicksPerRender);
+  ImGui::SliderInt(" Slider (Number of ticks per one rendering)", &controls.ticksPerRender, 1,
+                   kMaxTicksPerRender);
 
   // Toggling rendering environment flag
   ImGui::Text("Rendering environment flag: %d", controls.enableRenderingEnvironment);
@@ -362,15 +369,293 @@ void drawControls(GLFWwindow *window, Controls &controls) {
   }
 }
 
-// Draws simulation parameters section in Dear ImGui window
-void drawSimulationParameters(CellEvolution::CellController &cellController) {}
+// Processes simulation parameters section in Dear ImGui window (CellController friend function)
+void CellEvolution::processSimulationParameters(CellEvolution::CellController &cellController) {
+  // Constant
+  constexpr int   kBigNumber             = 1000;
+  constexpr float kButtonWidth           = 50.0f;
+  const float     buttonHorizontalOffset = ImGui::GetWindowContentRegionWidth() - kButtonWidth;
 
-// Draws genom overview section in Dear ImGui window
-void drawGenomOverview(CellEvolution::CellController &cellController) {}
+  // Genome machine and simulation environment properties
+  ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f),
+                     "Genome machine and simulation environment properties");
 
-// Draws Dear ImGui windows
-void drawDearImGui(GLFWwindow *window, Controls &controls,
-                   CellEvolution::CellController &cellController) {
+  // _maxInstructionsPerTick
+  ImGui::Text("Max instructions per tick: ");
+  ImGui::SameLine(buttonHorizontalOffset);
+  ImGui::SetNextItemWidth(kButtonWidth);
+  ImGui::SliderInt(" Slider (Max instructions per tick)", &cellController._maxInstructionsPerTick,
+                   1, cellController._genomeSize);
+  // _maxAkinGenomDifference
+  ImGui::Text("Max akin genom difference: ");
+  ImGui::SameLine(buttonHorizontalOffset);
+  ImGui::SetNextItemWidth(kButtonWidth);
+  ImGui::SliderInt(" Slider (Max akin genom difference)", &cellController._maxAkinGenomDifference,
+                   0, cellController._genomeSize);
+  // _minChildEnergy
+  ImGui::Text("Min child energy: ");
+  ImGui::SameLine(buttonHorizontalOffset);
+  ImGui::SetNextItemWidth(kButtonWidth);
+  ImGui::SliderInt(" Slider (Min child energy)", &cellController._minChildEnergy, 1,
+                   cellController._maxEnergy);
+  // _maxEnergy
+  ImGui::Text("Max energy: ");
+  ImGui::SameLine(buttonHorizontalOffset);
+  ImGui::SetNextItemWidth(kButtonWidth);
+  ImGui::SliderInt(" Slider (Max energy)", &cellController._maxEnergy, 2, kBigNumber);
+  // _maxBurstOfPhotosynthesisEnergy
+  ImGui::Text("Max burst of photosynthesis energy: ");
+  ImGui::SameLine(buttonHorizontalOffset);
+  ImGui::SetNextItemWidth(kButtonWidth);
+  ImGui::SliderInt(" Slider (Max burst of photosynthesis energy)",
+                   &cellController._maxBurstOfPhotosynthesisEnergy, 0, cellController._maxEnergy);
+  // _maxPhotosynthesisDepth
+  ImGui::Text("Max photosynthesis depth: ");
+  ImGui::SameLine(buttonHorizontalOffset);
+  ImGui::SetNextItemWidth(kButtonWidth);
+  ImGui::SliderInt(" Slider (Max photosynthesis depth)", &cellController._maxPhotosynthesisDepth, 0,
+                   cellController._rows);
+  // _summerDaytimeToWholeDayRatio
+  ImGui::Text("Summer daytime to whole day ratio: ");
+  ImGui::SameLine(buttonHorizontalOffset);
+  ImGui::SetNextItemWidth(kButtonWidth);
+  ImGui::SliderFloat(" Slider (Summer daytime to whole day ratio)",
+                     &cellController._summerDaytimeToWholeDayRatio, 0.0f, 1.0f);
+  // _maxMinerals
+  ImGui::Text("Max minerals: ");
+  ImGui::SameLine(buttonHorizontalOffset);
+  ImGui::SetNextItemWidth(kButtonWidth);
+  ImGui::SliderInt(" Slider (Max minerals)", &cellController._maxMinerals, 0,
+                   cellController._maxEnergy);
+  // _maxBurstOfMinerals
+  ImGui::Text("Max burst of minerals: ");
+  ImGui::SameLine(buttonHorizontalOffset);
+  ImGui::SetNextItemWidth(kButtonWidth);
+  ImGui::SliderInt(" Slider (Max burst of minerals)", &cellController._maxBurstOfMinerals, 0,
+                   cellController._maxMinerals);
+  // _energyPerMineral
+  ImGui::Text("Energy per mineral: ");
+  ImGui::SameLine(buttonHorizontalOffset);
+  ImGui::SetNextItemWidth(kButtonWidth);
+  ImGui::SliderFloat(" Slider (Energy per mineral)", &cellController._energyPerMineral, 0.0f,
+                     cellController._maxEnergy);
+  // _maxMineralHeight
+  ImGui::Text("Max mineral height: ");
+  ImGui::SameLine(buttonHorizontalOffset);
+  ImGui::SetNextItemWidth(kButtonWidth);
+  ImGui::SliderInt(" Slider (Max mineral height)", &cellController._maxMineralHeight, 0,
+                   cellController._rows);
+  // _maxBurstOfFoodEnergy
+  ImGui::Text("Max burst of food energy: ");
+  ImGui::SameLine(buttonHorizontalOffset);
+  ImGui::SetNextItemWidth(kButtonWidth);
+  ImGui::SliderInt(" Slider (Max burst of food energy)", &cellController._maxBurstOfFoodEnergy, 0,
+                   cellController._maxEnergy);
+  // _randomMutationChance
+  ImGui::Text("Random mutation chance: ");
+  ImGui::SameLine(buttonHorizontalOffset);
+  ImGui::SetNextItemWidth(kButtonWidth);
+  ImGui::SliderFloat(" Slider (Random mutation chance)", &cellController._randomMutationChance,
+                     0.0f, 1.0f);
+  // _budMutationChance
+  ImGui::Text("Bud mutation chance: ");
+  ImGui::SameLine(buttonHorizontalOffset);
+  ImGui::SetNextItemWidth(kButtonWidth);
+  ImGui::SliderFloat(" Slider (Bud mutation chance)", &cellController._budMutationChance, 0.0f,
+                     1.0f);
+  // _dayDurationInTicks
+  ImGui::Text("Day duration in ticks: ");
+  ImGui::SameLine(buttonHorizontalOffset);
+  ImGui::SetNextItemWidth(kButtonWidth);
+  ImGui::SliderInt(" Slider (Day duration in ticks)", &cellController._dayDurationInTicks, 1,
+                   kBigNumber);
+  // _seasonDurationInDays
+  ImGui::Text("Season duration in days: ");
+  ImGui::SameLine(buttonHorizontalOffset);
+  ImGui::SetNextItemWidth(kButtonWidth);
+  ImGui::SliderInt(" Slider (Season duration in days)", &cellController._seasonDurationInDays, 1,
+                   kBigNumber);
+  // _gammaFlashPeriodInDays
+  ImGui::Text("Gamma flash period in days: ");
+  ImGui::SameLine(buttonHorizontalOffset);
+  ImGui::SetNextItemWidth(kButtonWidth);
+  ImGui::SliderInt(" Slider (Gamma flash period in days)", &cellController._gammaFlashPeriodInDays,
+                   1, kBigNumber);
+  // _gammaFlashMaxMutationsCount
+  ImGui::Text("Gamma flash max mutations count: ");
+  ImGui::SameLine(buttonHorizontalOffset);
+  ImGui::SetNextItemWidth(kButtonWidth);
+  ImGui::SliderInt(" Slider (Gamma flash max mutations count)",
+                   &cellController._gammaFlashMaxMutationsCount, 0, cellController._genomeSize);
+
+  // Cell genome instruction enabling flags
+  ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Cell genome instruction enabling flags");
+
+  // _enableInstructionTurn
+  ImGui::Text("Turn: %d", cellController._enableInstructionTurn);
+  ImGui::SameLine(buttonHorizontalOffset);
+  if (ImGui::Button("Toggle (Turn)", {kButtonWidth, 0.0f})) {
+    cellController._enableInstructionTurn = !cellController._enableInstructionTurn;
+  }
+  // _enableInstructionMove
+  ImGui::Text("Move: %d", cellController._enableInstructionMove);
+  ImGui::SameLine(buttonHorizontalOffset);
+  if (ImGui::Button("Toggle (Move)", {kButtonWidth, 0.0f})) {
+    cellController._enableInstructionMove = !cellController._enableInstructionMove;
+  }
+  // _enableInstructionGetEnergyFromPhotosynthesis
+  ImGui::Text("Get energy from photosynthesis: %d",
+              cellController._enableInstructionGetEnergyFromPhotosynthesis);
+  ImGui::SameLine(buttonHorizontalOffset);
+  if (ImGui::Button("Toggle (Get energy from photosynthesis)", {kButtonWidth, 0.0f})) {
+    cellController._enableInstructionGetEnergyFromPhotosynthesis =
+        !cellController._enableInstructionGetEnergyFromPhotosynthesis;
+  }
+  // _enableInstructionGetEnergyFromMinerals
+  ImGui::Text("Get energy from minerals: %d",
+              cellController._enableInstructionGetEnergyFromMinerals);
+  ImGui::SameLine(buttonHorizontalOffset);
+  if (ImGui::Button("Toggle (Get energy from minerals)", {kButtonWidth, 0.0f})) {
+    cellController._enableInstructionGetEnergyFromMinerals =
+        !cellController._enableInstructionGetEnergyFromMinerals;
+  }
+  // _enableInstructionGetEnergyFromFood
+  ImGui::Text("Get energy from food: %d", cellController._enableInstructionGetEnergyFromFood);
+  ImGui::SameLine(buttonHorizontalOffset);
+  if (ImGui::Button("Toggle (Get energy from food)", {kButtonWidth, 0.0f})) {
+    cellController._enableInstructionGetEnergyFromFood =
+        !cellController._enableInstructionGetEnergyFromFood;
+  }
+  // _enableInstructionBud
+  ImGui::Text("Bud: %d", cellController._enableInstructionBud);
+  ImGui::SameLine(buttonHorizontalOffset);
+  if (ImGui::Button("Toggle (Bud)", {kButtonWidth, 0.0f})) {
+    cellController._enableInstructionBud = !cellController._enableInstructionBud;
+  }
+  // _enableInstructionMutateRandomGene
+  ImGui::Text("Mutate random gene: %d", cellController._enableInstructionMutateRandomGene);
+  ImGui::SameLine(buttonHorizontalOffset);
+  if (ImGui::Button("Toggle (Mutate random gene)", {kButtonWidth, 0.0f})) {
+    cellController._enableInstructionMutateRandomGene =
+        !cellController._enableInstructionMutateRandomGene;
+  }
+  // _enableInstructionShareEnergy
+  ImGui::Text("Share energy: %d", cellController._enableInstructionShareEnergy);
+  ImGui::SameLine(buttonHorizontalOffset);
+  if (ImGui::Button("Toggle (Share energy)", {kButtonWidth, 0.0f})) {
+    cellController._enableInstructionShareEnergy = !cellController._enableInstructionShareEnergy;
+  }
+  // _enableInstructionTouch
+  ImGui::Text("Touch: %d", cellController._enableInstructionTouch);
+  ImGui::SameLine(buttonHorizontalOffset);
+  if (ImGui::Button("Toggle (Touch)", {kButtonWidth, 0.0f})) {
+    cellController._enableInstructionTouch = !cellController._enableInstructionTouch;
+  }
+  // _enableInstructionDetermineEnergyLevel
+  ImGui::Text("Determine energy level: %d", cellController._enableInstructionDetermineEnergyLevel);
+  ImGui::SameLine(buttonHorizontalOffset);
+  if (ImGui::Button("Toggle (Determine energy level)", {kButtonWidth, 0.0f})) {
+    cellController._enableInstructionDetermineEnergyLevel =
+        !cellController._enableInstructionDetermineEnergyLevel;
+  }
+  // _enableInstructionDetermineDepth
+  ImGui::Text("Determine depth: %d", cellController._enableInstructionDetermineDepth);
+  ImGui::SameLine(buttonHorizontalOffset);
+  if (ImGui::Button("Toggle (Determine depth)", {kButtonWidth, 0.0f})) {
+    cellController._enableInstructionDetermineDepth =
+        !cellController._enableInstructionDetermineDepth;
+  }
+  // _enableInstructionDetermineBurstOfPhotosynthesisEnergy
+  ImGui::Text("Determine burst of photosynthesis energy: %d",
+              cellController._enableInstructionDetermineBurstOfPhotosynthesisEnergy);
+  ImGui::SameLine(buttonHorizontalOffset);
+  if (ImGui::Button("Toggle (Determine burst of photosynthesis energy)", {kButtonWidth, 0.0f})) {
+    cellController._enableInstructionDetermineBurstOfPhotosynthesisEnergy =
+        !cellController._enableInstructionDetermineBurstOfPhotosynthesisEnergy;
+  }
+  // _enableInstructionDetermineBurstOfMinerals
+  ImGui::Text("Determine burst of minerals: %d",
+              cellController._enableInstructionDetermineBurstOfMinerals);
+  ImGui::SameLine(buttonHorizontalOffset);
+  if (ImGui::Button("Toggle (Determine burst of minerals)", {kButtonWidth, 0.0f})) {
+    cellController._enableInstructionDetermineBurstOfMinerals =
+        !cellController._enableInstructionDetermineBurstOfMinerals;
+  }
+  // _enableInstructionDetermineBurstOfMineralEnergy
+  ImGui::Text("Determine burst of mineral energy: %d",
+              cellController._enableInstructionDetermineBurstOfMineralEnergy);
+  ImGui::SameLine(buttonHorizontalOffset);
+  if (ImGui::Button("Toggle (Determine burst of mineral energy)", {kButtonWidth, 0.0f})) {
+    cellController._enableInstructionDetermineBurstOfMineralEnergy =
+        !cellController._enableInstructionDetermineBurstOfMineralEnergy;
+  }
+
+  // Other simulation rule enabling flags
+  ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Other simulation rule enabling flags");
+
+  // _enableZeroEnergyOrganic
+  ImGui::Text("Zero energy organic: %d", cellController._enableZeroEnergyOrganic);
+  ImGui::SameLine(buttonHorizontalOffset);
+  if (ImGui::Button("Toggle (Zero energy organic)", {kButtonWidth, 0.0f})) {
+    cellController._enableZeroEnergyOrganic = !cellController._enableZeroEnergyOrganic;
+  }
+  // _enableForcedBuddingOnMaximalEnergyLevel
+  ImGui::Text("Forced budding on maximal energy level: %d",
+              cellController._enableForcedBuddingOnMaximalEnergyLevel);
+  ImGui::SameLine(buttonHorizontalOffset);
+  if (ImGui::Button("Toggle (Forced budding on maximal energy level)", {kButtonWidth, 0.0f})) {
+    cellController._enableForcedBuddingOnMaximalEnergyLevel =
+        !cellController._enableForcedBuddingOnMaximalEnergyLevel;
+  }
+  // _enableTryingToBudInUnoccupiedDirection
+  ImGui::Text("Trying to bud in unoccupied direction: %d",
+              cellController._enableTryingToBudInUnoccupiedDirection);
+  ImGui::SameLine(buttonHorizontalOffset);
+  if (ImGui::Button("Toggle (Trying to bud in unoccupied direction)", {kButtonWidth, 0.0f})) {
+    cellController._enableTryingToBudInUnoccupiedDirection =
+        !cellController._enableTryingToBudInUnoccupiedDirection;
+  }
+  // _enableDeathOnBuddingIfNotEnoughSpace
+  ImGui::Text("Death on budding if not enough space: %d",
+              cellController._enableDeathOnBuddingIfNotEnoughSpace);
+  ImGui::SameLine(buttonHorizontalOffset);
+  if (ImGui::Button("Toggle (Death on budding if not enough space)", {kButtonWidth, 0.0f})) {
+    cellController._enableDeathOnBuddingIfNotEnoughSpace =
+        !cellController._enableDeathOnBuddingIfNotEnoughSpace;
+  }
+  // _enableSeasons
+  ImGui::Text("Seasons: %d", cellController._enableSeasons);
+  ImGui::SameLine(buttonHorizontalOffset);
+  if (ImGui::Button("Toggle (Seasons)", {kButtonWidth, 0.0f})) {
+    cellController._enableSeasons = !cellController._enableSeasons;
+  }
+  // _enableDaytimes
+  ImGui::Text("Daytimes: %d", cellController._enableDaytimes);
+  ImGui::SameLine(buttonHorizontalOffset);
+  if (ImGui::Button("Toggle (Daytimes)", {kButtonWidth, 0.0f})) {
+    cellController._enableDaytimes = !cellController._enableDaytimes;
+  }
+  // _enableMaximizingFoodEnergy
+  ImGui::Text("Maximizing food energy: %d", cellController._enableMaximizingFoodEnergy);
+  ImGui::SameLine(buttonHorizontalOffset);
+  if (ImGui::Button("Toggle (Maximizing food energy)", {kButtonWidth, 0.0f})) {
+    cellController._enableMaximizingFoodEnergy = !cellController._enableMaximizingFoodEnergy;
+  }
+  // _enableDeadCellPinningOnSinking
+  ImGui::Text("Dead cell pinning on sinking: %d", cellController._enableDeadCellPinningOnSinking);
+  ImGui::SameLine(buttonHorizontalOffset);
+  if (ImGui::Button("Toggle (Dead cell pinning on sinking)", {kButtonWidth, 0.0f})) {
+    cellController._enableDeadCellPinningOnSinking =
+        !cellController._enableDeadCellPinningOnSinking;
+  }
+}
+
+// Processes genom overview section in Dear ImGui window
+void processGenomOverview(CellEvolution::CellController &cellController) {}
+
+// Processes Dear ImGui windows
+void processDearImGui(GLFWwindow *window, Controls &controls,
+                      CellEvolution::CellController &cellController) {
   // Preparing Dear ImGui for the new frame
   ImGui_ImplGlfw_NewFrame();
   ImGui_ImplOpenGL3_NewFrame();
@@ -396,26 +681,26 @@ void drawDearImGui(GLFWwindow *window, Controls &controls,
     childSize.y -= kBorderOffset;
     childSize.y /= 2.0f;
 
-    // Drawing statistics section
+    // Processing statistics section
     ImGui::BeginChild("Statistics", childSize, true);
-    drawStatistics(cellController);
+    processStatistics(cellController);
     ImGui::EndChild();
 
-    // Drawing controls section
+    // Processing controls section
     ImGui::SameLine(0.0f, kBorderOffset);
     ImGui::BeginChild("Controls", childSize, true);
-    drawControls(window, controls);
+    processControls(window, controls);
     ImGui::EndChild();
 
-    // Drawing simulation parameters section
+    // Processing simulation parameters section
     ImGui::BeginChild("Simulation parameters", childSize, true);
-    drawSimulationParameters(cellController);
+    CellEvolution::processSimulationParameters(cellController);
     ImGui::EndChild();
 
-    // Drawing genom overview section
+    // Processing genom overview section
     ImGui::SameLine(0.0f, kBorderOffset);
     ImGui::BeginChild("Genom overview", childSize, true);
-    drawGenomOverview(cellController);
+    processGenomOverview(cellController);
     ImGui::EndChild();
 
     ImGui::End();

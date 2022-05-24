@@ -238,7 +238,7 @@ class CellController {
   int   _gammaFlashPeriodInDays{};
   int   _gammaFlashMaxMutationsCount{};
 
-  // Flags for enabling/disabling cell genome instructions
+  // Cell genome instruction enabling flags
   bool _enableInstructionTurn{};
   bool _enableInstructionMove{};
   bool _enableInstructionGetEnergyFromPhotosynthesis{};
@@ -254,7 +254,7 @@ class CellController {
   bool _enableInstructionDetermineBurstOfMinerals{};
   bool _enableInstructionDetermineBurstOfMineralEnergy{};
 
-  // Flags for enabling disabling some rules
+  // Other simulation rule enabling flags
   bool _enableZeroEnergyOrganic{};
   bool _enableForcedBuddingOnMaximalEnergyLevel{};
   bool _enableTryingToBudInUnoccupiedDirection{};
@@ -313,6 +313,9 @@ class CellController {
   int getRows() const noexcept;
   int getMaxPhotosynthesisDepth() const noexcept;
   int getMaxMineralHeight() const noexcept;
+
+  // Friend function for viewing and changing class properties
+  friend void processSimulationParameters(CellController &cellController);
 
  private:
   // Updates tick counters

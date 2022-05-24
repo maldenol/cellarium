@@ -147,8 +147,8 @@ int main(int argc, char *argv[]) {
       renderCellBuffer(cellShaderProgram, cellVAO, cellVBO, cellController,
                        controls.cellRenderingMode);
 
-      // Drawing Dear ImGui windows
-      drawDearImGui(window, controls, cellController);
+      // Processing Dear ImGui windows
+      processDearImGui(window, controls, cellController);
 
       // Swapping front and back buffers
       glfwSwapBuffers(window);

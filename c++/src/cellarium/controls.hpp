@@ -48,7 +48,7 @@ void initDearImGui(GLFWwindow *window);
 // Terminates Dear ImGui context
 void terminateDearImGui();
 
-// Draws Dear ImGui windows
-void drawDearImGui(GLFWwindow *window, Controls &controls, CellEvolution::CellController &cellController);
+// Processes Dear ImGui windows
+void processDearImGui(GLFWwindow *window, Controls &controls, CellEvolution::CellController &cellController);
 
 #endif
