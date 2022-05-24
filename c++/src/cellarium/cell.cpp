@@ -37,13 +37,14 @@ Cell::Cell(const Cell &cell) noexcept
       _minerals{cell._minerals},
       _direction{cell._direction},
       _index{cell._index},
+      _age{cell._age},
       _colorR{cell._colorR},
       _colorG{cell._colorG},
       _colorB{cell._colorB},
       _energyShareBalance{cell._energyShareBalance},
       _lastEnergyShare{cell._lastEnergyShare},
       _isAlive{cell._isAlive},
-      _pinned{cell._pinned} {}
+      _isPinned{cell._isPinned} {}
 
 Cell &Cell::operator=(const Cell &cell) noexcept {
   _genome             = cell._genome;
@@ -52,13 +53,14 @@ Cell &Cell::operator=(const Cell &cell) noexcept {
   _minerals           = cell._minerals;
   _direction          = cell._direction;
   _index              = cell._index;
+  _age                = cell._age;
   _colorR             = cell._colorR;
   _colorG             = cell._colorG;
   _colorB             = cell._colorB;
   _energyShareBalance = cell._energyShareBalance;
   _lastEnergyShare    = cell._lastEnergyShare;
   _isAlive            = cell._isAlive;
-  _pinned             = cell._pinned;
+  _isPinned           = cell._isPinned;
 
   return *this;
 }
@@ -70,13 +72,14 @@ Cell::Cell(Cell &&cell) noexcept
       _minerals{std::exchange(cell._minerals, 0)},
       _direction{std::exchange(cell._direction, 0)},
       _index{std::exchange(cell._index, kInitIndex)},
+      _age{std::exchange(cell._age, 0)},
       _colorR{std::exchange(cell._colorR, 0)},
       _colorG{std::exchange(cell._colorG, 0)},
       _colorB{std::exchange(cell._colorB, 0)},
       _energyShareBalance{std::exchange(cell._energyShareBalance, 0)},
       _lastEnergyShare{std::exchange(cell._lastEnergyShare, 0.0f)},
       _isAlive{std::exchange(cell._isAlive, false)},
-      _pinned{std::exchange(cell._pinned, false)} {}
+      _isPinned{std::exchange(cell._isPinned, false)} {}
 
 Cell &Cell::operator=(Cell &&cell) noexcept {
   std::swap(_genome, cell._genome);
@@ -85,13 +88,14 @@ Cell &Cell::operator=(Cell &&cell) noexcept {
   std::swap(_minerals, cell._minerals);
   std::swap(_direction, cell._direction);
   std::swap(_index, cell._index);
+  std::swap(_age, cell._age);
   std::swap(_colorR, cell._colorR);
   std::swap(_colorG, cell._colorG);
   std::swap(_colorB, cell._colorB);
   std::swap(_energyShareBalance, cell._energyShareBalance);
   std::swap(_lastEnergyShare, cell._lastEnergyShare);
   std::swap(_isAlive, cell._isAlive);
-  std::swap(_pinned, cell._pinned);
+  std::swap(_isPinned, cell._isPinned);
 
   return *this;
 }

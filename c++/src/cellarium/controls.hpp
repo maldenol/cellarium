@@ -27,13 +27,18 @@
 struct Controls {
   int  cellRenderingMode{};
   int  ticksPerRender{};
+
   bool enableRendering{};
   bool enableRenderingEnvironment{};
   bool enablePause{};
   bool enableFullscreenMode{};
   bool enableVSync{};
   bool enableGUI{};
+
   bool tickRequest{};
+
+  CellEvolution::CellController *cellControllerPtr{};
+  CellEvolution::Cell            selectedCell{};
 };
 
 // User input processing function
@@ -42,6 +47,9 @@ void processUserInput(GLFWwindow *window, Controls& controls);
 // Window size callback function
 void windowSizeCallback(GLFWwindow *window, int width, int height);
 
+// Mouse button callback function
+void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods);
+
 // Initializes Dear ImGui context
 void initDearImGui(GLFWwindow *window);
 
@@ -49,6 +57,6 @@ void initDearImGui(GLFWwindow *window);
 void terminateDearImGui();
 
 // Processes Dear ImGui windows
-void processDearImGui(GLFWwindow *window, Controls &controls, CellEvolution::CellController &cellController);
+void processDearImGui(GLFWwindow *window, Controls &controls);
 
 #endif

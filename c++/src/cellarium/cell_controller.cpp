@@ -661,8 +661,14 @@ void CellController::render(CellRenderingData *cellRenderingData, int cellRender
 
     float colorR{}, colorG{}, colorB{};
 
-    // If cell is alive
-    if (cell._isAlive) {
+    // If cell is selected
+    if (_selectedCellPtr == &cell) {
+      colorR = kMinColor;
+      colorG = kMinColor;
+      colorB = kMinColor;
+    }
+    // Else if cell is alive
+    else if (cell._isAlive) {
       // Choosing appropriate cell rendering mode
       switch (static_cast<CellRenderingModes>(cellRenderingMode)) {
         // Diet mode
@@ -713,7 +719,7 @@ void CellController::render(CellRenderingData *cellRenderingData, int cellRender
         } break;
       }
     }
-    // If cell is dead
+    // Else if cell is dead
     else {
       colorR = kThreeQuartersColor;
       colorG = kThreeQuartersColor;
@@ -787,6 +793,26 @@ int CellController::getMaxPhotosynthesisDepth() const noexcept { return _maxPhot
 
 int CellController::getMaxMineralHeight() const noexcept { return _maxMineralHeight; }
 
+bool CellController::selectCell(int column, int row) noexcept {
+  int index = calculateIndexByColumnAndRow(column, row);
+
+  if (index < 0 || index >= _columns * _rows) {
+    _selectedCellPtr = nullptr;
+
+    return false;
+  }
+
+  _selectedCellPtr = _cellPtrVector[index].get();
+
+  if (_selectedCellPtr == nullptr) {
+    return false;
+  }
+
+  return true;
+}
+
+const Cell *CellController::getSelectedCell() const noexcept { return _selectedCellPtr; }
+
 void CellController::updateTime() noexcept {
   // Updating ticks
   ++_ticksNumber;
@@ -841,7 +867,7 @@ void CellController::move(Cell &cell) noexcept {
   // If given cell is dead
   else {
     // If given cell is pinned
-    if (_enableDeadCellPinningOnSinking && cell._pinned) {
+    if (_enableDeadCellPinningOnSinking && cell._isPinned) {
       return;
     }
 
@@ -869,7 +895,7 @@ void CellController::move(Cell &cell) noexcept {
     // If given cell is dead
     if (!cell._isAlive) {
       // Making cell pinned
-      cell._pinned = true;
+      cell._isPinned = true;
     }
     // If given cell is alive
     else {
@@ -1331,6 +1357,11 @@ void CellController::addCell(std::unique_ptr<Cell> cellPtr) noexcept {
 }
 
 void CellController::removeCell(std::unique_ptr<Cell> cellPtr) noexcept {
+  // Unselect cell if it is selected
+  if (cellPtr.get() == _selectedCellPtr) {
+    _selectedCellPtr = nullptr;
+  }
+
   // Order matters
   _cellIndexList.remove(cellPtr->_index);     // 1
   _cellPtrVector[cellPtr->_index] = nullptr;  // 2

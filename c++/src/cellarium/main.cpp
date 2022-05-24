@@ -46,8 +46,17 @@ int main(int argc, char *argv[]) {
   // Initializing simulation parameters
   CellEvolution::CellController::Params cellControllerParams{};
 
-  // Initializing controls struct
-  Controls controls{0, 1, true, true, false, false, true, false, false};
+  // Initializing and configuring Controls struct
+  Controls controls{};
+  controls.cellRenderingMode          = static_cast<int>(CellEvolution::CellRenderingModes::Diet);
+  controls.ticksPerRender             = 1;
+  controls.enableRendering            = true;
+  controls.enableRenderingEnvironment = true;
+  controls.enablePause                = false;
+  controls.enableFullscreenMode       = false;
+  controls.enableVSync                = true;
+  controls.enableGUI                  = false;
+  controls.tickRequest                = false;
 
   // Processing command line arguments updating CellController::Params and Controls
   int success{processCommandLineArguments(argc, argv, std::string{kWindowTitle}, controls,
@@ -59,6 +68,9 @@ int main(int argc, char *argv[]) {
   // Initializing simulation itself
   CellEvolution::CellController cellController{cellControllerParams};
 
+  // Configuring Controls struct
+  controls.cellControllerPtr = &cellController;
+
   // Initializing GLFW and getting configured window with OpenGL context
   GLFWwindow *window =
       extra::createWindow(cellControllerParams.width, cellControllerParams.height,
@@ -67,13 +79,18 @@ int main(int argc, char *argv[]) {
   // Capturing OpenGL context
   glfwMakeContextCurrent(window);
 
-  // Initializing Dear ImGui context
+  // Setting window use pointer for access from callback functions
+  glfwSetWindowUserPointer(window, &controls);
+  // Setting window size callback function
+  glfwSetWindowSizeCallback(window, windowSizeCallback);
+  // Setting mouse button callback function
+  glfwSetMouseButtonCallback(window, mouseButtonCallback);
+
+  // Initializing Dear ImGui context (after GLFW callbacks specified)
   initDearImGui(window);
 
   // Setting OpenGL viewport
   glViewport(0, 0, cellControllerParams.width, cellControllerParams.height);
-  // Setting window size callback function
-  glfwSetWindowSizeCallback(window, windowSizeCallback);
   // Setting OpenGL clear color
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
   // Enable blending for environment rendering
@@ -148,7 +165,7 @@ int main(int argc, char *argv[]) {
                        controls.cellRenderingMode);
 
       // Processing Dear ImGui windows
-      processDearImGui(window, controls, cellController);
+      processDearImGui(window, controls);
 
       // Swapping front and back buffers
       glfwSwapBuffers(window);

@@ -275,12 +275,15 @@ class CellController {
   int _yearsNumber{};
 
   // Simulation statistics counters
-  int _countOfLiveCells{};
-  int _countOfDeadCells{};
+  int  _countOfLiveCells{};
+  int  _countOfDeadCells{};
   long _countOfBuds{};
   long _countOfPhotosynthesisEnergyBursts{};
   long _countOfMineralEnergyBursts{};
   long _countOfFoodEnergyBursts{};
+
+  // Selected cell pointer
+  const Cell *_selectedCellPtr{};
 
  public:
   // Constructors
@@ -314,6 +317,10 @@ class CellController {
   int getRows() const noexcept;
   int getMaxPhotosynthesisDepth() const noexcept;
   int getMaxMineralHeight() const noexcept;
+
+  // Select cell and return selected cell
+  bool selectCell(int column, int row) noexcept;
+  const Cell *getSelectedCell() const noexcept;
 
   // Friend function for viewing and changing class properties
   friend void processSimulationParameters(CellController &cellController);

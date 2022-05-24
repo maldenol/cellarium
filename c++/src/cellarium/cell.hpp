@@ -44,8 +44,7 @@ class Cell {
   float _lastEnergyShare{};
 
   bool _isAlive{};
-
-  bool _pinned{};
+  bool _isPinned{};
 
  public:
   Cell() noexcept;
@@ -60,6 +59,9 @@ class Cell {
   bool operator!=(const Cell &cell) const noexcept;
 
   friend class CellController;
+
+  // Friend function for viewing struct properties
+  friend void processCellOverview(Cell &cell, bool selectedCellExists);
 };
 
 }

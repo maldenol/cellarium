@@ -18,6 +18,7 @@
 
 // STD
 #include <algorithm>
+#include <cmath>
 #include <string>
 
 // Dear ImGui
@@ -197,6 +198,31 @@ void windowSizeCallback(GLFWwindow *window, int width, int height) {
   glViewport(0, 0, width, height);
 }
 
+// Mouse button callback function
+void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods) {
+  // If left mouse button pressed with left ctrl holded
+  if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS && button == GLFW_MOUSE_BUTTON_LEFT &&
+      action == GLFW_PRESS) {
+    // Getting mouse position in screen space
+    double xpos = 0, ypos = 0;
+    glfwGetCursorPos(window, &xpos, &ypos);
+    int width = 0, height = 0;
+    glfwGetWindowSize(window, &width, &height);
+
+    // Getting selected cell
+    Controls *controls = static_cast<Controls *>(glfwGetWindowUserPointer(window));
+
+    const int columns = controls->cellControllerPtr->getColumns();
+    const int rows    = controls->cellControllerPtr->getRows();
+    const int column  = static_cast<int>(columns * xpos / width);
+    const int row     = static_cast<int>(rows * ypos / height);
+
+    if (controls->cellControllerPtr->selectCell(column, row)) {
+      controls->selectedCell = *controls->cellControllerPtr->getSelectedCell();
+    }
+  }
+}
+
 // Initializes Dear ImGui context
 void initDearImGui(GLFWwindow *window) {
   // Creating Dear ImGui core context
@@ -265,20 +291,21 @@ void processStatistics(const CellEvolution::CellController &cellController) {
   ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Statistics");
 
   // Adding statistics
-  ImGui::Text("Frames per second:                     %d", sFps);
-  ImGui::Text("Ticks  per second:                     %d", sTps);
-  ImGui::Text("Tick:                                  %d", statistics.tick);
-  ImGui::Text("Day:                                   %d", statistics.day);
-  ImGui::Text("Year:                                  %d", statistics.year);
-  ImGui::Text("Season:                                %s", season.c_str());
-  ImGui::Text("Days to gamma flash:                   %d", statistics.daysToGammaFlash);
-  ImGui::Text("Count of live cells:                   %d", statistics.countOfLiveCells);
-  ImGui::Text("Count of dead cells:                   %d", statistics.countOfDeadCells);
-  ImGui::Text("Count of buds:                         %ld", statistics.countOfBuds);
-  ImGui::Text("Count of photosynthesis energy bursts: %ld",
+  ImGui::Text("Frames per second:                         %d", sFps);
+  ImGui::Text("Ticks  per second:                         %d", sTps);
+  ImGui::Text("Tick:                                      %d", statistics.tick);
+  ImGui::Text("Day:                                       %d", statistics.day);
+  ImGui::Text("Year:                                      %d", statistics.year);
+  ImGui::Text("Season:                                    %s", season.c_str());
+  ImGui::Text("Days to gamma flash:                       %d", statistics.daysToGammaFlash);
+  ImGui::Text("Count of live cells:                       %d", statistics.countOfLiveCells);
+  ImGui::Text("Count of dead cells:                       %d", statistics.countOfDeadCells);
+  ImGui::Text("Count of buds:                             %ld", statistics.countOfBuds);
+  ImGui::Text("Count of photosynthesis energy bursts:     %ld",
               statistics.countOfPhotosynthesisEnergyBursts);
-  ImGui::Text("Count of mineral energy bursts:        %ld", statistics.countOfMineralEnergyBursts);
-  ImGui::Text("Count of food energy bursts:           %ld", statistics.countOfFoodEnergyBursts);
+  ImGui::Text("Count of mineral energy bursts:            %ld",
+              statistics.countOfMineralEnergyBursts);
+  ImGui::Text("Count of food energy bursts:               %ld", statistics.countOfFoodEnergyBursts);
 }
 
 // Processes controls section in Dear ImGui window
@@ -441,7 +468,7 @@ void CellEvolution::processSimulationParameters(CellEvolution::CellController &c
   ImGui::SameLine(buttonHorizontalOffset);
   ImGui::SetNextItemWidth(kButtonWidth);
   ImGui::SliderFloat(" Slider (Energy per mineral)", &cellController._energyPerMineral, 0.0f,
-                     cellController._maxEnergy);
+                     static_cast<float>(cellController._maxEnergy));
   // _maxMineralHeight
   ImGui::Text("Max mineral height: ");
   ImGui::SameLine(buttonHorizontalOffset);
@@ -653,12 +680,56 @@ void CellEvolution::processSimulationParameters(CellEvolution::CellController &c
   }
 }
 
-// Processes genom overview section in Dear ImGui window
-void processGenomOverview(CellEvolution::CellController &cellController) {}
+// Processes cell overview section in Dear ImGui window
+void CellEvolution::processCellOverview(Cell &cell, bool selectedCellExists) {
+  // Constant
+  static constexpr float kButtonWidth = 50.0f;
+  const float buttonHorizontalOffset  = ImGui::GetWindowContentRegionWidth() - kButtonWidth;
+
+  // Cell overview
+  ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Cell overview");
+
+  // Adding cell properties
+  const int genomSize = static_cast<int>(cell._genome.size());
+  if (genomSize > 0) {
+    const int columns = static_cast<int>(std::sqrt(genomSize));
+    const int rows =
+        static_cast<int>(std::ceil(static_cast<float>(genomSize) / static_cast<float>(columns)));
+
+    ImGui::BeginTable("Genome", columns);
+    for (int c = 0; c < columns; ++c) {
+      ImGui::TableNextColumn();
+      for (int r = 0; r < rows; ++r) {
+        ImGui::Text("%d", cell._genome[r * columns + c]);
+      }
+    }
+    ImGui::EndTable();
+  }
+  ImGui::Text("Command counter:                           %d", cell._counter);
+  ImGui::Text("Energy:                                    %d", cell._energy);
+  ImGui::Text("Minerals:                                  %d", cell._minerals);
+  ImGui::Text("Index:                                     %d", cell._index);
+  ImGui::Text("Direction:                                 %d", cell._direction);
+  ImGui::Text("Age:                                       %d", cell._age);
+  ImGui::Text("Count of food energy bursts:               %d", cell._colorR);
+  ImGui::Text("Count of photosynthesis energy bursts:     %d", cell._colorG);
+  ImGui::Text("Count of mineral energy bursts:            %d", cell._colorB);
+  ImGui::Text("Energy share balance:                      %d", cell._energyShareBalance);
+  ImGui::Text("Last energy share:                         %f", cell._lastEnergyShare);
+  ImGui::Text("Is alive:                                  %d", cell._isAlive);
+  ImGui::Text("Is pinned:                                 %d", cell._isPinned);
+
+  if (!selectedCellExists) {
+    ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Selected cell does not exist anymore: ");
+    ImGui::SameLine(buttonHorizontalOffset);
+    if (ImGui::Button("Drop", {kButtonWidth, 0.0f})) {
+      cell = CellEvolution::Cell{};
+    }
+  }
+}
 
 // Processes Dear ImGui windows
-void processDearImGui(GLFWwindow *window, Controls &controls,
-                      CellEvolution::CellController &cellController) {
+void processDearImGui(GLFWwindow *window, Controls &controls) {
   // Preparing Dear ImGui for the new frame
   ImGui_ImplGlfw_NewFrame();
   ImGui_ImplOpenGL3_NewFrame();
@@ -686,7 +757,7 @@ void processDearImGui(GLFWwindow *window, Controls &controls,
 
     // Processing statistics section
     ImGui::BeginChild("Statistics", childSize, true);
-    processStatistics(cellController);
+    processStatistics(*controls.cellControllerPtr);
     ImGui::EndChild();
 
     // Processing controls section
@@ -697,13 +768,18 @@ void processDearImGui(GLFWwindow *window, Controls &controls,
 
     // Processing simulation parameters section
     ImGui::BeginChild("Simulation parameters", childSize, true);
-    CellEvolution::processSimulationParameters(cellController);
+    CellEvolution::processSimulationParameters(*controls.cellControllerPtr);
     ImGui::EndChild();
 
     // Processing genom overview section
     ImGui::SameLine(0.0f, kBorderOffset);
-    ImGui::BeginChild("Genom overview", childSize, true);
-    processGenomOverview(cellController);
+    ImGui::BeginChild("Cell overview", childSize, true);
+    const CellEvolution::Cell *selectedCellPtr    = controls.cellControllerPtr->getSelectedCell();
+    bool                       selectedCellExists = selectedCellPtr != nullptr;
+    if (selectedCellExists) {
+      controls.selectedCell = *selectedCellPtr;
+    }
+    CellEvolution::processCellOverview(controls.selectedCell, selectedCellExists);
     ImGui::EndChild();
 
     ImGui::End();
