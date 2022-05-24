@@ -44,11 +44,11 @@ static constexpr int              kOpenGLVersionMinor = 6;
 // Main function
 int main(int argc, char *argv[]) {
   // Initializing simulation parameters
-  CellEvolution::CellController::Params cellControllerParams{};
+  cellarium::CellController::Params cellControllerParams{};
 
   // Initializing and configuring Controls struct
   Controls controls{};
-  controls.cellRenderingMode          = static_cast<int>(CellEvolution::CellRenderingModes::Diet);
+  controls.cellRenderingMode          = static_cast<int>(cellarium::CellRenderingModes::Diet);
   controls.ticksPerRender             = 1;
   controls.enableRendering            = true;
   controls.enableRenderingEnvironment = true;
@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
   }
 
   // Initializing simulation itself
-  CellEvolution::CellController cellController{cellControllerParams};
+  cellarium::CellController cellController{cellControllerParams};
 
   // Configuring Controls struct
   controls.cellControllerPtr = &cellController;

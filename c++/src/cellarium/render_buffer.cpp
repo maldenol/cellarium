@@ -18,7 +18,7 @@
 
 // Renders cells from buffer
 void renderCellBuffer(GLuint shaderProgram, GLuint vao, GLuint vbo,
-                      CellEvolution::CellController &cellController, int cellRenderingMode) {
+                      cellarium::CellController &cellController, int cellRenderingMode) {
   // Using shader program
   glUseProgram(shaderProgram);
   // Binding VAO and VBO
@@ -27,8 +27,8 @@ void renderCellBuffer(GLuint shaderProgram, GLuint vao, GLuint vbo,
   // Getting current count of cells in simulation
   int renderingDataSize = static_cast<int>(cellController.getCellCount());
   // Mapping VBO buffer partly
-  CellEvolution::CellController::CellRenderingData *cellRenderingData =
-      static_cast<CellEvolution::CellController::CellRenderingData *>(
+  cellarium::CellController::CellRenderingData *cellRenderingData =
+      static_cast<cellarium::CellController::CellRenderingData *>(
           glMapBufferRange(GL_ARRAY_BUFFER, 0, renderingDataSize, GL_MAP_WRITE_BIT));
   // Passing VBO buffer to CellController that fills it with rendering data
   cellController.render(cellRenderingData, cellRenderingMode);

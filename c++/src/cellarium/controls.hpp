@@ -37,8 +37,8 @@ struct Controls {
 
   bool tickRequest{};
 
-  CellEvolution::CellController *cellControllerPtr{};
-  CellEvolution::Cell            selectedCell{};
+  cellarium::CellController *cellControllerPtr{};
+  cellarium::Cell            selectedCell{};
 };
 
 // User input processing function

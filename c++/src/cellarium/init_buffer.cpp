@@ -40,13 +40,13 @@ void initCellBuffers(int maxCount, GLuint &vao, GLuint &vbo) {
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
   glBufferData(
       GL_ARRAY_BUFFER,
-      static_cast<GLsizeiptr>(maxCount * sizeof(CellEvolution::CellController::CellRenderingData)),
+      static_cast<GLsizeiptr>(maxCount * sizeof(cellarium::CellController::CellRenderingData)),
       nullptr, GL_DYNAMIC_DRAW);
-  glVertexAttribIPointer(0, 1, GL_INT, sizeof(CellEvolution::CellController::CellRenderingData),
+  glVertexAttribIPointer(0, 1, GL_INT, sizeof(cellarium::CellController::CellRenderingData),
                          reinterpret_cast<void *>(0));
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
-                        sizeof(CellEvolution::CellController::CellRenderingData),
+                        sizeof(cellarium::CellController::CellRenderingData),
                         reinterpret_cast<void *>(sizeof(int)));
   glEnableVertexAttribArray(1);
 

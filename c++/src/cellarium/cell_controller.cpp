@@ -23,7 +23,7 @@
 #include <utility>
 
 // Using header file namespace
-using namespace CellEvolution;
+using namespace cellarium;
 
 // Position offsets per 2D direction
 static constexpr int                                             kDirectionCount = 8;

@@ -20,7 +20,7 @@
 #include <utility>
 
 // Using header file namespace
-using namespace CellEvolution;
+using namespace cellarium;
 
 // Global constants
 constexpr int kInitIndex = -1;

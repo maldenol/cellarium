@@ -19,7 +19,7 @@
 // STD
 #include <vector>
 
-namespace CellEvolution {
+namespace cellarium {
 
 // Class for storing cell properties
 class Cell {

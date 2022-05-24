@@ -47,8 +47,8 @@ void processUserInput(GLFWwindow *window, Controls &controls) {
     if (!sPressed) {
       sPressed = true;
 
-      controls.cellRenderingMode = (controls.cellRenderingMode + 1) %
-                                   static_cast<int>(CellEvolution::CellRenderingModes::Size);
+      controls.cellRenderingMode =
+          (controls.cellRenderingMode + 1) % static_cast<int>(cellarium::CellRenderingModes::Size);
     }
   }
 
@@ -242,9 +242,9 @@ void terminateDearImGui() {
 }
 
 // Processes statistics section in Dear ImGui window
-void processStatistics(const CellEvolution::CellController &cellController) {
+void processStatistics(const cellarium::CellController &cellController) {
   // Getting CellController statistics
-  CellEvolution::CellController::Statistics statistics = cellController.getSimulationStatistics();
+  cellarium::CellController::Statistics statistics = cellController.getSimulationStatistics();
 
   // Static variables for FPS and TPS counters
   static int sFrameCount = 0;
@@ -316,20 +316,20 @@ void processControls(GLFWwindow *window, Controls &controls) {
 
   // Getting cell rendering mode name by its number
   std::string cellRenderingMode{};
-  switch (static_cast<CellEvolution::CellRenderingModes>(controls.cellRenderingMode)) {
-    case CellEvolution::CellRenderingModes::Diet:
+  switch (static_cast<cellarium::CellRenderingModes>(controls.cellRenderingMode)) {
+    case cellarium::CellRenderingModes::Diet:
       cellRenderingMode = "diet";
       break;
-    case CellEvolution::CellRenderingModes::EnergyLevel:
+    case cellarium::CellRenderingModes::EnergyLevel:
       cellRenderingMode = "energy level";
       break;
-    case CellEvolution::CellRenderingModes::EnergySharingBalance:
+    case cellarium::CellRenderingModes::EnergySharingBalance:
       cellRenderingMode = "energy sharing balance";
       break;
-    case CellEvolution::CellRenderingModes::LastEnergyShare:
+    case cellarium::CellRenderingModes::LastEnergyShare:
       cellRenderingMode = "last energy share";
       break;
-    case CellEvolution::CellRenderingModes::Age:
+    case cellarium::CellRenderingModes::Age:
       cellRenderingMode = "age";
       break;
   }
@@ -341,8 +341,8 @@ void processControls(GLFWwindow *window, Controls &controls) {
   ImGui::Text("Cell rendering mode: %s", cellRenderingMode.c_str());
   ImGui::SameLine(buttonHorizontalOffset);
   if (ImGui::Button("Switch (Cell rendering mode)", {kButtonWidth, 0.0f})) {
-    controls.cellRenderingMode = (controls.cellRenderingMode + 1) %
-                                 static_cast<int>(CellEvolution::CellRenderingModes::Size);
+    controls.cellRenderingMode =
+        (controls.cellRenderingMode + 1) % static_cast<int>(cellarium::CellRenderingModes::Size);
   }
 
   // Setting number of ticks per one rendering
@@ -400,7 +400,7 @@ void processControls(GLFWwindow *window, Controls &controls) {
 }
 
 // Processes simulation parameters section in Dear ImGui window (CellController friend function)
-void CellEvolution::processSimulationParameters(CellEvolution::CellController &cellController) {
+void cellarium::processSimulationParameters(cellarium::CellController &cellController) {
   // Constant
   static constexpr int   kBigNumber   = 1000;
   static constexpr float kButtonWidth = 50.0f;
@@ -687,7 +687,7 @@ void CellEvolution::processSimulationParameters(CellEvolution::CellController &c
 }
 
 // Processes cell overview section in Dear ImGui window
-void CellEvolution::processCellOverview(Cell &cell, bool selectedCellExists) {
+void cellarium::processCellOverview(Cell &cell, bool selectedCellExists) {
   // Constant
   static constexpr float kButtonWidth = 50.0f;
   const float buttonHorizontalOffset  = ImGui::GetWindowContentRegionWidth() - kButtonWidth;
@@ -729,7 +729,7 @@ void CellEvolution::processCellOverview(Cell &cell, bool selectedCellExists) {
     ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Selected cell does not exist anymore: ");
     ImGui::SameLine(buttonHorizontalOffset);
     if (ImGui::Button("Drop", {kButtonWidth, 0.0f})) {
-      cell = CellEvolution::Cell{};
+      cell = cellarium::Cell{};
     }
   }
 }
@@ -774,18 +774,18 @@ void processDearImGui(GLFWwindow *window, Controls &controls) {
 
     // Processing simulation parameters section
     ImGui::BeginChild("Simulation parameters", childSize, true);
-    CellEvolution::processSimulationParameters(*controls.cellControllerPtr);
+    cellarium::processSimulationParameters(*controls.cellControllerPtr);
     ImGui::EndChild();
 
     // Processing genom overview section
     ImGui::SameLine(0.0f, kBorderOffset);
     ImGui::BeginChild("Cell overview", childSize, true);
-    const CellEvolution::Cell *selectedCellPtr    = controls.cellControllerPtr->getSelectedCell();
-    bool                       selectedCellExists = selectedCellPtr != nullptr;
+    const cellarium::Cell *selectedCellPtr    = controls.cellControllerPtr->getSelectedCell();
+    bool                   selectedCellExists = selectedCellPtr != nullptr;
     if (selectedCellExists) {
       controls.selectedCell = *selectedCellPtr;
     }
-    CellEvolution::processCellOverview(controls.selectedCell, selectedCellExists);
+    cellarium::processCellOverview(controls.selectedCell, selectedCellExists);
     ImGui::EndChild();
 
     ImGui::End();

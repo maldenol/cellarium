@@ -26,6 +26,6 @@
 int generateDefaultConfigurationFile();
 
 // Processes command line arguments updating CellController::Params and Controls
-int processCommandLineArguments(int argc, char *argv[], const std::string &title, Controls &controls, CellEvolution::CellController::Params &cellControllerParams);
+int processCommandLineArguments(int argc, char *argv[], const std::string &title, Controls &controls, cellarium::CellController::Params &cellControllerParams);
 
 #endif

@@ -70,81 +70,77 @@ int generateDefaultConfigurationFile() {
   configJsonObject.insert("enableFullscreenMode", false);
   configJsonObject.insert("enableVSync", true);
   configJsonObject.insert("maxPhotosynthesisDepthMultiplier",
-                          CellEvolution::kInitPhotosynthesisDepthMultiplier);
-  configJsonObject.insert("maxMineralHeightMultiplier",
-                          CellEvolution::kInitMineralHeightMultiplier);
-  configJsonObject.insert("randomSeed", static_cast<int>(CellEvolution::kInitRandomSeed));
-  configJsonObject.insert("width", CellEvolution::kInitWidth);
-  configJsonObject.insert("height", CellEvolution::kInitHeight);
-  configJsonObject.insert("cellSize", CellEvolution::kInitCellSize);
-  configJsonObject.insert("genomeSize", CellEvolution::kInitGenomSize);
-  configJsonObject.insert("maxInstructionsPerTick", CellEvolution::kInitMaxInstructionsPerTick);
-  configJsonObject.insert("maxAkinGenomDifference", CellEvolution::kInitMaxAkinGenomDifference);
-  configJsonObject.insert("minChildEnergy", CellEvolution::kInitMinChildEnergy);
-  configJsonObject.insert("maxEnergy", CellEvolution::kInitMaxEnergy);
+                          cellarium::kInitPhotosynthesisDepthMultiplier);
+  configJsonObject.insert("maxMineralHeightMultiplier", cellarium::kInitMineralHeightMultiplier);
+  configJsonObject.insert("randomSeed", static_cast<int>(cellarium::kInitRandomSeed));
+  configJsonObject.insert("width", cellarium::kInitWidth);
+  configJsonObject.insert("height", cellarium::kInitHeight);
+  configJsonObject.insert("cellSize", cellarium::kInitCellSize);
+  configJsonObject.insert("genomeSize", cellarium::kInitGenomSize);
+  configJsonObject.insert("maxInstructionsPerTick", cellarium::kInitMaxInstructionsPerTick);
+  configJsonObject.insert("maxAkinGenomDifference", cellarium::kInitMaxAkinGenomDifference);
+  configJsonObject.insert("minChildEnergy", cellarium::kInitMinChildEnergy);
+  configJsonObject.insert("maxEnergy", cellarium::kInitMaxEnergy);
   configJsonObject.insert("maxBurstOfPhotosynthesisEnergy",
-                          CellEvolution::kInitMaxBurstOfPhotosynthesisEnergy);
+                          cellarium::kInitMaxBurstOfPhotosynthesisEnergy);
   configJsonObject.insert("summerDaytimeToWholeDayRatio",
-                          CellEvolution::kInitSummerDaytimeToWholeDayRatio);
-  configJsonObject.insert("maxMinerals", CellEvolution::kInitMaxMinerals);
-  configJsonObject.insert("maxBurstOfMinerals", CellEvolution::kInitMaxBurstOfMinerals);
-  configJsonObject.insert("energyPerMineral", CellEvolution::kInitEnergyPerMineral);
-  configJsonObject.insert("maxBurstOfFoodEnergy", CellEvolution::kInitMaxBurstOfFoodEnergy);
-  configJsonObject.insert("childBudMutationChance", CellEvolution::kInitChildBudMutationChance);
-  configJsonObject.insert("parentBudMutationChance", CellEvolution::kInitParentBudMutationChance);
-  configJsonObject.insert("randomMutationChance", CellEvolution::kInitRandomMutationChance);
-  configJsonObject.insert("dayDurationInTicks", CellEvolution::kInitDayDurationInTicks);
-  configJsonObject.insert("seasonDurationInDays", CellEvolution::kInitSeasonDurationInDays);
-  configJsonObject.insert("gammaFlashPeriodInDays", CellEvolution::kInitGammaFlashPeriodInDays);
+                          cellarium::kInitSummerDaytimeToWholeDayRatio);
+  configJsonObject.insert("maxMinerals", cellarium::kInitMaxMinerals);
+  configJsonObject.insert("maxBurstOfMinerals", cellarium::kInitMaxBurstOfMinerals);
+  configJsonObject.insert("energyPerMineral", cellarium::kInitEnergyPerMineral);
+  configJsonObject.insert("maxBurstOfFoodEnergy", cellarium::kInitMaxBurstOfFoodEnergy);
+  configJsonObject.insert("childBudMutationChance", cellarium::kInitChildBudMutationChance);
+  configJsonObject.insert("parentBudMutationChance", cellarium::kInitParentBudMutationChance);
+  configJsonObject.insert("randomMutationChance", cellarium::kInitRandomMutationChance);
+  configJsonObject.insert("dayDurationInTicks", cellarium::kInitDayDurationInTicks);
+  configJsonObject.insert("seasonDurationInDays", cellarium::kInitSeasonDurationInDays);
+  configJsonObject.insert("gammaFlashPeriodInDays", cellarium::kInitGammaFlashPeriodInDays);
   configJsonObject.insert("gammaFlashMaxMutationsCount",
-                          CellEvolution::kInitGammaFlashMaxMutationsCount);
-  configJsonObject.insert("enableInstructionTurn", CellEvolution::kInitEnableInstructionTurn);
-  configJsonObject.insert("enableInstructionMove", CellEvolution::kInitEnableInstructionMove);
+                          cellarium::kInitGammaFlashMaxMutationsCount);
+  configJsonObject.insert("enableInstructionTurn", cellarium::kInitEnableInstructionTurn);
+  configJsonObject.insert("enableInstructionMove", cellarium::kInitEnableInstructionMove);
   configJsonObject.insert("enableInstructionGetEnergyFromPhotosynthesis",
-                          CellEvolution::kInitEnableInstructionGetEnergyFromPhotosynthesis);
+                          cellarium::kInitEnableInstructionGetEnergyFromPhotosynthesis);
   configJsonObject.insert("enableInstructionGetEnergyFromMinerals",
-                          CellEvolution::kInitEnableInstructionGetEnergyFromMinerals);
+                          cellarium::kInitEnableInstructionGetEnergyFromMinerals);
   configJsonObject.insert("enableInstructionGetEnergyFromFood",
-                          CellEvolution::kInitEnableInstructionGetEnergyFromFood);
-  configJsonObject.insert("enableInstructionBud", CellEvolution::kInitEnableInstructionBud);
+                          cellarium::kInitEnableInstructionGetEnergyFromFood);
+  configJsonObject.insert("enableInstructionBud", cellarium::kInitEnableInstructionBud);
   configJsonObject.insert("enableInstructionMutateRandomGene",
-                          CellEvolution::kInitEnableInstructionMutateRandomGene);
+                          cellarium::kInitEnableInstructionMutateRandomGene);
   configJsonObject.insert("enableInstructionShareEnergy",
-                          CellEvolution::kInitEnableInstructionShareEnergy);
-  configJsonObject.insert("enableInstructionTouch", CellEvolution::kInitEnableInstructionTouch);
+                          cellarium::kInitEnableInstructionShareEnergy);
+  configJsonObject.insert("enableInstructionTouch", cellarium::kInitEnableInstructionTouch);
   configJsonObject.insert("enableInstructionDetermineEnergyLevel",
-                          CellEvolution::kInitEnableInstructionDetermineEnergyLevel);
+                          cellarium::kInitEnableInstructionDetermineEnergyLevel);
   configJsonObject.insert("enableInstructionDetermineDepth",
-                          CellEvolution::kInitEnableInstructionDetermineDepth);
-  configJsonObject.insert(
-      "enableInstructionDetermineBurstOfPhotosynthesisEnergy",
-      CellEvolution::kInitenableInstructionDetermineBurstOfPhotosynthesisEnergy);
+                          cellarium::kInitEnableInstructionDetermineDepth);
+  configJsonObject.insert("enableInstructionDetermineBurstOfPhotosynthesisEnergy",
+                          cellarium::kInitenableInstructionDetermineBurstOfPhotosynthesisEnergy);
   configJsonObject.insert("enableInstructionDetermineBurstOfMinerals",
-                          CellEvolution::kInitEnableInstructionDetermineBurstOfMinerals);
+                          cellarium::kInitEnableInstructionDetermineBurstOfMinerals);
   configJsonObject.insert("enableInstructionDetermineBurstOfMineralEnergy",
-                          CellEvolution::kInitEnableInstructionDetermineBurstOfMineralEnergy);
-  configJsonObject.insert("enableZeroEnergyOrganic", CellEvolution::kInitEnableZeroEnergyOrganic);
+                          cellarium::kInitEnableInstructionDetermineBurstOfMineralEnergy);
+  configJsonObject.insert("enableZeroEnergyOrganic", cellarium::kInitEnableZeroEnergyOrganic);
   configJsonObject.insert("enableForcedBuddingOnMaximalEnergyLevel",
-                          CellEvolution::kInitEnableForcedBuddingOnMaximalEnergyLevel);
+                          cellarium::kInitEnableForcedBuddingOnMaximalEnergyLevel);
   configJsonObject.insert("enableTryingToBudInUnoccupiedDirection",
-                          CellEvolution::kInitEnableTryingToBudInUnoccupiedDirection);
+                          cellarium::kInitEnableTryingToBudInUnoccupiedDirection);
   configJsonObject.insert("enableDeathOnBuddingIfNotEnoughSpace",
-                          CellEvolution::kInitEnableDeathOnBuddingIfNotEnoughSpace);
-  configJsonObject.insert("enableSeasons", CellEvolution::kInitEnableSeasons);
-  configJsonObject.insert("enableDaytimes", CellEvolution::kInitEnableDaytimes);
-  configJsonObject.insert("enableMaximizingFoodEnergy",
-                          CellEvolution::kInitEnableMaximizingFoodEnergy);
+                          cellarium::kInitEnableDeathOnBuddingIfNotEnoughSpace);
+  configJsonObject.insert("enableSeasons", cellarium::kInitEnableSeasons);
+  configJsonObject.insert("enableDaytimes", cellarium::kInitEnableDaytimes);
+  configJsonObject.insert("enableMaximizingFoodEnergy", cellarium::kInitEnableMaximizingFoodEnergy);
   configJsonObject.insert("enableDeadCellPinningOnSinking",
-                          CellEvolution::kInitEnableDeadCellPinningOnSinking);
+                          cellarium::kInitEnableDeadCellPinningOnSinking);
   QJsonArray firstCellGenomeArray;
-  for (int firstCellGenomeInstruction : CellEvolution::kInitFirstCellGenome) {
+  for (int firstCellGenomeInstruction : cellarium::kInitFirstCellGenome) {
     firstCellGenomeArray.append(firstCellGenomeInstruction);
   }
   configJsonObject.insert("firstCellGenome", firstCellGenomeArray);
-  configJsonObject.insert("firstCellEnergyMultiplier",
-                          CellEvolution::kInitFirstCellEnergyMultiplier);
-  configJsonObject.insert("firstCellDirection", CellEvolution::kInitFirstCellDirection);
-  configJsonObject.insert("firstCellIndexMultiplier", CellEvolution::kInitFirstCellIndexMultiplier);
+  configJsonObject.insert("firstCellEnergyMultiplier", cellarium::kInitFirstCellEnergyMultiplier);
+  configJsonObject.insert("firstCellDirection", cellarium::kInitFirstCellDirection);
+  configJsonObject.insert("firstCellIndexMultiplier", cellarium::kInitFirstCellIndexMultiplier);
 
   // Writing configuration to file
   QJsonDocument configJsonDocument{configJsonObject};
@@ -155,7 +151,7 @@ int generateDefaultConfigurationFile() {
 
 // Load configuration file
 int loadConfigurationFile(const QString &filename, Controls &controls,
-                          CellEvolution::CellController::Params &cellControllerParams) {
+                          cellarium::CellController::Params &cellControllerParams) {
   // Opening config file
   QFile configFile{filename};
   if (!configFile.open(QFile::ReadOnly | QFile::Text)) {
@@ -392,8 +388,8 @@ int loadConfigurationFile(const QString &filename, Controls &controls,
 
 // Processes command line arguments updating CellController::Params and Controls
 int processCommandLineArguments(int argc, char *argv[], const std::string &title,
-                                Controls                              &controls,
-                                CellEvolution::CellController::Params &cellControllerParams) {
+                                Controls                          &controls,
+                                cellarium::CellController::Params &cellControllerParams) {
   // Initializing and configuring QCoreApplication
   QCoreApplication qCoreApplication{argc, argv};
   QCoreApplication::setApplicationName(QString{title.c_str()});

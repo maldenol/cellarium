@@ -27,7 +27,7 @@
 // "cell" internal header
 #include "./cell.hpp"
 
-namespace CellEvolution {
+namespace cellarium {
 
 // Initial values of CellController::Params fields
 static constexpr unsigned int kInitRandomSeed = 0;
