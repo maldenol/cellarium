@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
   CellEvolution::CellController::Params cellControllerParams{};
 
   // Initializing controls struct
-  Controls controls{0, 1, true, true, false, false, true};
+  Controls controls{0, 1, true, true, false, false, true, false, false};
 
   // Processing command line arguments updating CellController::Params and Controls
   int success{processCommandLineArguments(argc, argv, std::string{kWindowTitle}, controls,
@@ -66,6 +66,9 @@ int main(int argc, char *argv[]) {
 
   // Capturing OpenGL context
   glfwMakeContextCurrent(window);
+
+  // Initializing Dear ImGui context
+  initDearImGui(window);
 
   // Setting OpenGL viewport
   glViewport(0, 0, cellControllerParams.width, cellControllerParams.height);
@@ -115,10 +118,13 @@ int main(int argc, char *argv[]) {
     // Checking if current tick should be rendered
     bool renderCurrTick = controls.enableRendering && (ticksPassed % controls.ticksPerRender == 0);
 
-    // If simulation is not paused
-    if (!controls.enablePause) {
+    // If simulation is not paused or a tick is requested
+    if (!controls.enablePause || controls.tickRequest) {
       // Computing next simulation tick
       cellController.act();
+
+      // Tick request is satisfied
+      controls.tickRequest = false;
     }
 
     // If current tick should be rendered
@@ -141,6 +147,9 @@ int main(int argc, char *argv[]) {
       renderCellBuffer(cellShaderProgram, cellVAO, cellVBO, cellController,
                        controls.cellRenderingMode);
 
+      // Drawing Dear ImGui windows
+      drawDearImGui(window, controls, cellController);
+
       // Swapping front and back buffers
       glfwSwapBuffers(window);
     }
@@ -148,6 +157,9 @@ int main(int argc, char *argv[]) {
     // Updating ticks passed value
     ++ticksPassed;
   }
+
+  // Terminating Dear ImGui context
+  terminateDearImGui();
 
   // Terminating window with OpenGL context and GLFW
   extra::terminateWindow(window);

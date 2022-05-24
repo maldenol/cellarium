@@ -60,3 +60,6 @@ src/cellarium/dear_imgui
 
 # Dear ImGui
 imgui.ini
+
+# Configuration files
+*.json

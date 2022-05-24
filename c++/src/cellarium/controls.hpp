@@ -20,6 +20,9 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
+// CellController
+#include "./cell_controller.hpp"
+
 // Struct with controls variables
 struct Controls {
   int  cellRenderingMode{};
@@ -29,6 +32,8 @@ struct Controls {
   bool enablePause{};
   bool enableFullscreenMode{};
   bool enableVSync{};
+  bool enableGUI{};
+  bool tickRequest{};
 };
 
 // User input processing function
@@ -36,5 +41,14 @@ void processUserInput(GLFWwindow *window, Controls& controls);
 
 // Window size callback function
 void windowSizeCallback(GLFWwindow *window, int width, int height);
+
+// Initializes Dear ImGui context
+void initDearImGui(GLFWwindow *window);
+
+// Terminates Dear ImGui context
+void terminateDearImGui();
+
+// Draws Dear ImGui windows
+void drawDearImGui(GLFWwindow *window, Controls &controls, CellEvolution::CellController &cellController);
 
 #endif

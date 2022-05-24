@@ -182,10 +182,30 @@ class CellController {
 
   // Struct for storing index and color for rendering cell
   struct CellRenderingData {
-    int   index;
-    float colorR;
-    float colorG;
-    float colorB;
+    int   index{};
+
+    float colorR{};
+    float colorG{};
+    float colorB{};
+  };
+
+  // Struct for storing simulation statistics
+  struct Statistics {
+    int tick{};
+    int day{};
+    int year{};
+    int season{};
+
+    int daysToGammaFlash{};
+
+    int countOfLiveCells{};
+    int countOfDeadCells{};
+
+    long countOfBuds{};
+
+    long countOfPhotosynthesisEnergyBursts{};
+    long countOfMineralEnergyBursts{};
+    long countOfFoodEnergyBursts{};
   };
 
  private:
@@ -253,6 +273,14 @@ class CellController {
   int _ticksNumber{};
   int _yearsNumber{};
 
+  // Simulation statistics counters
+  int _countOfLiveCells{};
+  int _countOfDeadCells{};
+  long _countOfBuds{};
+  long _countOfPhotosynthesisEnergyBursts{};
+  long _countOfMineralEnergyBursts{};
+  long _countOfFoodEnergyBursts{};
+
  public:
   // Constructors
   CellController();
@@ -277,6 +305,9 @@ class CellController {
   // Returns daytime width in range from 0 to 1
   float getDaytimeWidth() const noexcept;
 
+  // Returns simulation statistics
+  Statistics getSimulationStatistics() const noexcept;
+
   // Getters
   int getColumns() const noexcept;
   int getRows() const noexcept;
@@ -293,8 +324,8 @@ class CellController {
   // Perform appropriate cell genome instructions
   void turn(Cell &cell) const noexcept;
   void move(Cell &cell) noexcept;
-  void getEnergyFromPhotosynthesis(Cell &cell) const noexcept;
-  void getEnergyFromMinerals(Cell &cell) const noexcept;
+  void getEnergyFromPhotosynthesis(Cell &cell) noexcept;
+  void getEnergyFromMinerals(Cell &cell) noexcept;
   void getEnergyFromFood(Cell &cell) noexcept;
   void bud(Cell &cell) noexcept;
   void mutateRandomGene(Cell &cell) noexcept;

@@ -446,17 +446,29 @@ void CellController::act() noexcept {
   // Updating world time
   updateTime();
 
+  // Updating some staticstics counters
+  _countOfLiveCells = 0;
+  _countOfDeadCells = 0;
+
   // Going through all cells sequently
   LinkedList<int>::Iterator iter{_cellIndexList.getIterator()};
   while (iter.hasNext()) {
     const int index = iter.next();
     Cell     &cell  = *_cellPtrVector[index];
 
-    // Moving cell if it is dead (organic)
+    // If cell is dead
     if (!cell._isAlive) {
+      // Making organic sink
       move(cell);
+
+      // Updating statistics counter
+      ++_countOfDeadCells;
+
       continue;
     }
+
+    // Updating statistics counter
+    _countOfLiveCells++;
 
     // Updating cell energy
     cell._energy--;
@@ -689,7 +701,7 @@ void CellController::render(CellRenderingData *cellRenderingData, int cellRender
         } break;
       }
     }
-    // If cell is dead (organic)
+    // If cell is dead
     else {
       colorR = kThreeQuartersColor;
       colorG = kThreeQuartersColor;
@@ -734,6 +746,27 @@ float CellController::getDaytimeWidth() const noexcept {
   return daytimeWidthRatio;
 }
 
+CellController::Statistics CellController::getSimulationStatistics() const noexcept {
+  Statistics statistics{};
+
+  statistics.tick   = _ticksNumber;
+  statistics.day    = _ticksNumber / _dayDurationInTicks;
+  statistics.year   = _yearsNumber;
+  statistics.season = statistics.day / _seasonDurationInDays;
+  statistics.daysToGammaFlash =
+      _gammaFlashPeriodInDays -
+      (_ticksNumber / _dayDurationInTicks + _yearsNumber * _seasonDurationInDays * 4) %
+          _gammaFlashPeriodInDays;
+  statistics.countOfLiveCells                  = _countOfLiveCells;
+  statistics.countOfDeadCells                  = _countOfDeadCells;
+  statistics.countOfBuds                       = _countOfBuds;
+  statistics.countOfPhotosynthesisEnergyBursts = _countOfPhotosynthesisEnergyBursts;
+  statistics.countOfMineralEnergyBursts        = _countOfMineralEnergyBursts;
+  statistics.countOfFoodEnergyBursts           = _countOfFoodEnergyBursts;
+
+  return statistics;
+}
+
 int CellController::getColumns() const noexcept { return _columns; }
 
 int CellController::getRows() const noexcept { return _rows; }
@@ -764,7 +797,7 @@ void CellController::gammaFlash() noexcept {
     while (iter.hasNext()) {
       Cell &cell = *_cellPtrVector[iter.next()];
 
-      // Ignoring if cell is dead (organic)
+      // Ignoring if cell is dead
       if (!cell._isAlive) {
         continue;
       }
@@ -793,14 +826,14 @@ void CellController::move(Cell &cell) noexcept {
     int deltaDirection = getNextNthGen(cell, 1);
     targetDirection    = (cell._direction + deltaDirection) % kDirectionCount;
   }
-  // If given cell is dead (organic)
+  // If given cell is dead
   else {
     // If given cell is pinned
     if (_enableDeadCellPinningOnSinking && cell._pinned) {
       return;
     }
 
-    // Setting direction to 4 so it will be moving down (sinking) each tick if cell is dead (organic) and not pinned yet
+    // Setting direction to 4 so it will be moving down (sinking) each tick if cell is dead and not pinned yet
     targetDirection = 4;
   }
   int targetIndex = calculateIndexByIndexAndDirection(cell._index, targetDirection);
@@ -821,7 +854,7 @@ void CellController::move(Cell &cell) noexcept {
   }
   // If there is an obstacle
   else {
-    // If given cell is dead (organic)
+    // If given cell is dead
     if (!cell._isAlive) {
       // Making cell pinned
       cell._pinned = true;
@@ -836,7 +869,7 @@ void CellController::move(Cell &cell) noexcept {
   }
 }
 
-void CellController::getEnergyFromPhotosynthesis(Cell &cell) const noexcept {
+void CellController::getEnergyFromPhotosynthesis(Cell &cell) noexcept {
   // Calculating energy from photosynthesis at index
   int deltaEnergy = calculateBurstOfPhotosynthesisEnergy(cell._index);
 
@@ -847,10 +880,13 @@ void CellController::getEnergyFromPhotosynthesis(Cell &cell) const noexcept {
 
     // Making cell color more green
     ++cell._colorG;
+
+    // Updating statistics counter
+    ++_countOfPhotosynthesisEnergyBursts;
   }
 }
 
-void CellController::getEnergyFromMinerals(Cell &cell) const noexcept {
+void CellController::getEnergyFromMinerals(Cell &cell) noexcept {
   // Calculating energy from minerals at index
   int deltaEnergy = calculateBurstOfMineralEnergy(cell._minerals);
 
@@ -864,6 +900,9 @@ void CellController::getEnergyFromMinerals(Cell &cell) const noexcept {
 
     // Making cell color more blue
     ++cell._colorB;
+
+    // Updating statistics counter
+    ++_countOfMineralEnergyBursts;
   }
 }
 
@@ -899,6 +938,9 @@ void CellController::getEnergyFromFood(Cell &cell) noexcept {
 
     // Making cell color more red
     ++cell._colorR;
+
+    // Updating statistics counter
+    ++_countOfFoodEnergyBursts;
 
     // Removing prey or organic
     removeCell(std::move(targetCellPtr));
@@ -959,6 +1001,10 @@ void CellController::bud(Cell &cell) noexcept {
         mutateRandomGene(cell);
       }
 
+      // Updating statistics counter
+      ++_countOfBuds;
+
+      // Adding budded cell
       addCell(std::move(buddedCellPtr));
 
       return;
