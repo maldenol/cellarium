@@ -75,8 +75,9 @@ int generateDefaultConfigurationFile() {
   configJsonObject.insert("maxBurstOfMinerals", CellEvolution::kInitMaxBurstOfMinerals);
   configJsonObject.insert("energyPerMineral", CellEvolution::kInitEnergyPerMineral);
   configJsonObject.insert("maxBurstOfFoodEnergy", CellEvolution::kInitMaxBurstOfFoodEnergy);
+  configJsonObject.insert("childBudMutationChance", CellEvolution::kInitChildBudMutationChance);
+  configJsonObject.insert("parentBudMutationChance", CellEvolution::kInitParentBudMutationChance);
   configJsonObject.insert("randomMutationChance", CellEvolution::kInitRandomMutationChance);
-  configJsonObject.insert("budMutationChance", CellEvolution::kInitBudMutationChance);
   configJsonObject.insert("dayDurationInTicks", CellEvolution::kInitDayDurationInTicks);
   configJsonObject.insert("seasonDurationInDays", CellEvolution::kInitSeasonDurationInDays);
   configJsonObject.insert("gammaFlashPeriodInDays", CellEvolution::kInitGammaFlashPeriodInDays);
@@ -275,14 +276,18 @@ int processCommandLineArguments(int argc, char *argv[], const std::string &title
   cellControllerParams.maxBurstOfFoodEnergy = configJsonObject.contains("maxBurstOfFoodEnergy")
                                                   ? configJsonObject["maxBurstOfFoodEnergy"].toInt()
                                                   : cellControllerParams.maxBurstOfFoodEnergy;
+  cellControllerParams.childBudMutationChance =
+      configJsonObject.contains("childBudMutationChance")
+          ? static_cast<float>(configJsonObject["childBudMutationChance"].toDouble())
+          : cellControllerParams.childBudMutationChance;
+  cellControllerParams.parentBudMutationChance =
+      configJsonObject.contains("parentBudMutationChance")
+          ? static_cast<float>(configJsonObject["parentBudMutationChance"].toDouble())
+          : cellControllerParams.parentBudMutationChance;
   cellControllerParams.randomMutationChance =
       configJsonObject.contains("randomMutationChance")
           ? static_cast<float>(configJsonObject["randomMutationChance"].toDouble())
           : cellControllerParams.randomMutationChance;
-  cellControllerParams.budMutationChance =
-      configJsonObject.contains("budMutationChance")
-          ? static_cast<float>(configJsonObject["budMutationChance"].toDouble())
-          : cellControllerParams.budMutationChance;
   cellControllerParams.dayDurationInTicks   = configJsonObject.contains("dayDurationInTicks")
                                                   ? configJsonObject["dayDurationInTicks"].toInt()
                                                   : cellControllerParams.dayDurationInTicks;

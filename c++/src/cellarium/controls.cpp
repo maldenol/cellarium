@@ -481,18 +481,24 @@ void CellEvolution::processSimulationParameters(CellEvolution::CellController &c
   ImGui::SetNextItemWidth(kButtonWidth);
   ImGui::SliderInt(" Slider (Max burst of food energy)", &cellController._maxBurstOfFoodEnergy, 0,
                    cellController._maxEnergy);
+  // _childBudMutationChance
+  ImGui::Text("Child bud mutation chance: ");
+  ImGui::SameLine(buttonHorizontalOffset);
+  ImGui::SetNextItemWidth(kButtonWidth);
+  ImGui::SliderFloat(" Slider (Child bud mutation chance)", &cellController._childBudMutationChance,
+                     0.0f, 1.0f);
+  // _parentBudMutationChance
+  ImGui::Text("Parent bud mutation chance: ");
+  ImGui::SameLine(buttonHorizontalOffset);
+  ImGui::SetNextItemWidth(kButtonWidth);
+  ImGui::SliderFloat(" Slider (Parent bud mutation chance)",
+                     &cellController._parentBudMutationChance, 0.0f, 1.0f);
   // _randomMutationChance
   ImGui::Text("Random mutation chance: ");
   ImGui::SameLine(buttonHorizontalOffset);
   ImGui::SetNextItemWidth(kButtonWidth);
   ImGui::SliderFloat(" Slider (Random mutation chance)", &cellController._randomMutationChance,
                      0.0f, 1.0f);
-  // _budMutationChance
-  ImGui::Text("Bud mutation chance: ");
-  ImGui::SameLine(buttonHorizontalOffset);
-  ImGui::SetNextItemWidth(kButtonWidth);
-  ImGui::SliderFloat(" Slider (Bud mutation chance)", &cellController._budMutationChance, 0.0f,
-                     1.0f);
   // _dayDurationInTicks
   ImGui::Text("Day duration in ticks: ");
   ImGui::SameLine(buttonHorizontalOffset);

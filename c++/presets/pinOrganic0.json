@@ -1,7 +1,7 @@
 {
-    "budMutationChance": 0.25,
     "cellRenderingMode": 0,
     "cellSize": 8,
+    "childBudMutationChance": 0.25,
     "dayDurationInTicks": 240,
     "enableDaytimes": false,
     "enableDeadCellPinningOnSinking": false,
@@ -51,6 +51,7 @@
     "maxMinerals": 100,
     "maxPhotosynthesisDepthMultiplier": 0.7,
     "minChildEnergy": 40,
+    "parentBudMutationChance": 0.25,
     "randomMutationChance": 0.001,
     "randomSeed": 0,
     "seasonDurationInDays": 30,

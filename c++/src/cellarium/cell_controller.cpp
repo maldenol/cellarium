@@ -107,8 +107,9 @@ CellController::CellController(const Params &params)
       _maxMineralHeight(
           static_cast<int>(static_cast<float>(_rows) * params.maxMineralHeightMultiplier)),
       _maxBurstOfFoodEnergy{params.maxBurstOfFoodEnergy},
+      _childBudMutationChance{params.childBudMutationChance},
+      _parentBudMutationChance{params.parentBudMutationChance},
       _randomMutationChance{params.randomMutationChance},
-      _budMutationChance{params.budMutationChance},
       _dayDurationInTicks{params.dayDurationInTicks},
       _seasonDurationInDays{params.seasonDurationInDays},
       _gammaFlashPeriodInDays{params.gammaFlashPeriodInDays},
@@ -181,8 +182,9 @@ CellController::CellController(const CellController &cellController) noexcept
       _energyPerMineral{cellController._energyPerMineral},
       _maxMineralHeight{cellController._maxMineralHeight},
       _maxBurstOfFoodEnergy{cellController._maxBurstOfFoodEnergy},
+      _childBudMutationChance{cellController._childBudMutationChance},
+      _parentBudMutationChance{cellController._parentBudMutationChance},
       _randomMutationChance{cellController._randomMutationChance},
-      _budMutationChance{cellController._budMutationChance},
       _dayDurationInTicks{cellController._dayDurationInTicks},
       _seasonDurationInDays{cellController._seasonDurationInDays},
       _gammaFlashPeriodInDays{cellController._gammaFlashPeriodInDays},
@@ -253,8 +255,9 @@ CellController &CellController::operator=(const CellController &cellController) 
   _energyPerMineral               = cellController._energyPerMineral;
   _maxMineralHeight               = cellController._maxMineralHeight;
   _maxBurstOfFoodEnergy           = cellController._maxBurstOfFoodEnergy;
+  _childBudMutationChance         = cellController._childBudMutationChance;
+  _parentBudMutationChance        = cellController._parentBudMutationChance;
   _randomMutationChance           = cellController._randomMutationChance;
-  _budMutationChance              = cellController._budMutationChance;
   _dayDurationInTicks             = cellController._dayDurationInTicks;
   _seasonDurationInDays           = cellController._seasonDurationInDays;
   _gammaFlashPeriodInDays         = cellController._gammaFlashPeriodInDays;
@@ -328,8 +331,9 @@ CellController::CellController(CellController &&cellController) noexcept
       _energyPerMineral{std::exchange(cellController._energyPerMineral, 0)},
       _maxMineralHeight{std::exchange(cellController._maxMineralHeight, 0)},
       _maxBurstOfFoodEnergy{std::exchange(cellController._maxBurstOfFoodEnergy, 0)},
+      _childBudMutationChance{std::exchange(cellController._childBudMutationChance, 0.0f)},
+      _parentBudMutationChance{std::exchange(cellController._parentBudMutationChance, 0.0f)},
       _randomMutationChance{std::exchange(cellController._randomMutationChance, 0.0f)},
-      _budMutationChance{std::exchange(cellController._budMutationChance, 0.0f)},
       _dayDurationInTicks{std::exchange(cellController._dayDurationInTicks, 0)},
       _seasonDurationInDays{std::exchange(cellController._seasonDurationInDays, 0)},
       _gammaFlashPeriodInDays{std::exchange(cellController._gammaFlashPeriodInDays, 0)},
@@ -394,8 +398,9 @@ CellController &CellController::operator=(CellController &&cellController) noexc
   std::swap(_energyPerMineral, cellController._energyPerMineral);
   std::swap(_maxMineralHeight, cellController._maxMineralHeight);
   std::swap(_maxBurstOfFoodEnergy, cellController._maxBurstOfFoodEnergy);
+  std::swap(_childBudMutationChance, cellController._childBudMutationChance);
+  std::swap(_parentBudMutationChance, cellController._parentBudMutationChance);
   std::swap(_randomMutationChance, cellController._randomMutationChance);
-  std::swap(_budMutationChance, cellController._budMutationChance);
   std::swap(_dayDurationInTicks, cellController._dayDurationInTicks);
   std::swap(_seasonDurationInDays, cellController._seasonDurationInDays);
   std::swap(_gammaFlashPeriodInDays, cellController._gammaFlashPeriodInDays);
@@ -1027,7 +1032,7 @@ void CellController::bud(Cell &cell) noexcept {
       // Applying random bud mutation to the budded cell
       if (static_cast<float>(_mersenneTwisterEngine()) /
               static_cast<float>(_mersenneTwisterEngine.max()) <
-          _budMutationChance) {
+          _childBudMutationChance) {
         mutateRandomGene(*buddedCellPtr);
       }
 
@@ -1035,7 +1040,7 @@ void CellController::bud(Cell &cell) noexcept {
       cell._energy -= cell._energy / 2;
       if (static_cast<float>(_mersenneTwisterEngine()) /
               static_cast<float>(_mersenneTwisterEngine.max()) <
-          _budMutationChance) {
+          _parentBudMutationChance) {
         mutateRandomGene(cell);
       }
 
