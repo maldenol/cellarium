@@ -32,6 +32,21 @@
 #include <QString>
 #include <QStringList>
 
+// Outputs controls help
+void outputControlsHelp() {
+  std::cout << "Controls help\n";
+  std::cout << "Switch cell rendering mode:                              m\n";
+  std::cout << "Decrease/increase number of ticks per one rendering:     -/+\n";
+  std::cout << "Toggle environment rendering:                            e\n";
+  std::cout << "Toggle rendering:                                        r\n";
+  std::cout << "Toggle pause:                                            p\n";
+  std::cout << "Toggle fullscreen mode:                                  f11\n";
+  std::cout << "Disable fullscren mode:                                  esc\n";
+  std::cout << "Toggle V-sync:                                           v\n";
+  std::cout << "Toggle GUI:                                              tab\n";
+  std::cout << "Request a tick:                                          space" << std::endl;
+}
+
 // Generates default configuration file
 int generateDefaultConfigurationFile() {
   // Opening config file
@@ -138,49 +153,13 @@ int generateDefaultConfigurationFile() {
   return 0;
 }
 
-// Processes command line arguments updating CellController::Params and Controls
-int processCommandLineArguments(int argc, char *argv[], const std::string &title,
-                                Controls                              &controls,
-                                CellEvolution::CellController::Params &cellControllerParams) {
-  // Initializing and configuring QCoreApplication
-  QCoreApplication qCoreApplication{argc, argv};
-  QCoreApplication::setApplicationName(QString{title.c_str()});
-  QCoreApplication::setApplicationVersion("1.0");
-
-  // Initializing and configuring QCommandLineParser
-  QCommandLineParser commandLineParser{};
-  commandLineParser.setApplicationDescription(
-      "Graphical simulation of a discrete world inhabited by cells that exists according to the "
-      "laws of the evolutionary algorithm.");
-  commandLineParser.addHelpOption();
-  commandLineParser.addVersionOption();
-  commandLineParser.addPositionalArgument(
-      "config", QCoreApplication::translate("main", "Path to configuration file."));
-  commandLineParser.addOption(
-      {QStringList() << "g"
-                     << "generate",
-       QCoreApplication::translate("main", "Generates default configuration file.")});
-
-  // Processing QCommandLineParser and getting positional arguments
-  commandLineParser.process(qCoreApplication);
-  const QStringList positionalArgumentList{commandLineParser.positionalArguments()};
-
-  // If config file generation requested
-  if (commandLineParser.isSet("generate")) {
-    generateDefaultConfigurationFile();
-    return -1;
-  }
-
-  // If no config file specified
-  if (positionalArgumentList.size() < 1) {
-    std::cout << "No config file specified. See help with -h or --help." << std::endl;
-    return -1;
-  }
-
+// Load configuration file
+int loadConfigurationFile(const QString &filename, Controls &controls,
+                          CellEvolution::CellController::Params &cellControllerParams) {
   // Opening config file
-  QFile configFile{positionalArgumentList.at(0)};
+  QFile configFile{filename};
   if (!configFile.open(QFile::ReadOnly | QFile::Text)) {
-    std::cout << "error: cannot open " << positionalArgumentList.at(0).toStdString() << std::endl;
+    std::cout << "error: cannot open " << filename.toStdString() << std::endl;
     return -1;
   }
 
@@ -409,4 +388,56 @@ int processCommandLineArguments(int argc, char *argv[], const std::string &title
           : cellControllerParams.firstCellIndexMultiplier;
 
   return 0;
+}
+
+// Processes command line arguments updating CellController::Params and Controls
+int processCommandLineArguments(int argc, char *argv[], const std::string &title,
+                                Controls                              &controls,
+                                CellEvolution::CellController::Params &cellControllerParams) {
+  // Initializing and configuring QCoreApplication
+  QCoreApplication qCoreApplication{argc, argv};
+  QCoreApplication::setApplicationName(QString{title.c_str()});
+  QCoreApplication::setApplicationVersion("1.0");
+
+  // Initializing and configuring QCommandLineParser
+  QCommandLineParser commandLineParser{};
+  commandLineParser.setApplicationDescription(
+      "Graphical simulation of a discrete world inhabited by cells that exists according to the "
+      "laws of the evolutionary algorithm.");
+  commandLineParser.addHelpOption();
+  commandLineParser.addVersionOption();
+  commandLineParser.addPositionalArgument(
+      "config", QCoreApplication::translate("main", "Path to configuration file."));
+  commandLineParser.addOption({QStringList() << "c"
+                                             << "controls",
+                               QCoreApplication::translate("main", "Shows controls help.")});
+  commandLineParser.addOption(
+      {QStringList() << "g"
+                     << "generate",
+       QCoreApplication::translate("main", "Generates default configuration file.")});
+
+  // Processing QCommandLineParser and getting positional arguments
+  commandLineParser.process(qCoreApplication);
+  const QStringList positionalArgumentList{commandLineParser.positionalArguments()};
+
+  // If config file generation requested
+  if (commandLineParser.isSet("controls")) {
+    outputControlsHelp();
+    return -1;
+  }
+
+  // If config file generation requested
+  if (commandLineParser.isSet("generate")) {
+    generateDefaultConfigurationFile();
+    return -1;
+  }
+
+  // If no config file specified
+  if (positionalArgumentList.size() < 1) {
+    std::cout << "No config file specified. See help with -h or --help." << std::endl;
+    return -1;
+  }
+
+  // Loading configuration file
+  return loadConfigurationFile(positionalArgumentList.at(0), controls, cellControllerParams);
 }

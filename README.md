@@ -327,6 +327,7 @@ You will have ```./bin/cellarium``` builded.
 <br/>
 
 Run the application with ```-h``` parameter to see help information.
+Use ```-c``` parameter to see controls help information.
 Use ```-g``` parameter to generate default configuration so you can edit it and use.
 Run the application with configuration file specified to start simulation.
 
