@@ -23,6 +23,12 @@
 #include <QString>
 #include <QStringList>
 
+// Outputs version and license
+void outputVersionAndLicense() {
+  std::cout << "cellarium (maldenol) 1.0.0\n";
+  std::cout << "Copyright (c) 2021 Malovanyi Denys Olehovych (maldenol)" << std::endl;
+}
+
 // Outputs controls help
 void outputControlsHelp() {
   std::cout << "Controls help\n";
@@ -389,12 +395,16 @@ int processCommandLineArguments(int argc, char *argv[], const std::string &title
   // Initializing and configuring QCommandLineParser
   QCommandLineParser commandLineParser{};
   commandLineParser.setApplicationDescription(
-      "Graphical simulation of a discrete world inhabited by cells that exists according to the "
+      "cellarium is a graphical simulation of a discrete world inhabited by cells that exists "
+      "according to the "
       "laws of the evolutionary algorithm.");
   commandLineParser.addHelpOption();
-  commandLineParser.addVersionOption();
   commandLineParser.addPositionalArgument(
       "config", QCoreApplication::translate("main", "Path to configuration file."));
+  commandLineParser.addOption(
+      {QStringList() << "v"
+                     << "version",
+       QCoreApplication::translate("main", "Shows application version and license.")});
   commandLineParser.addOption({QStringList() << "c"
                                              << "controls",
                                QCoreApplication::translate("main", "Shows controls help.")});
@@ -407,7 +417,13 @@ int processCommandLineArguments(int argc, char *argv[], const std::string &title
   commandLineParser.process(qCoreApplication);
   const QStringList positionalArgumentList{commandLineParser.positionalArguments()};
 
-  // If config file generation requested
+  // If version and license requested
+  if (commandLineParser.isSet("version")) {
+    outputVersionAndLicense();
+    return -1;
+  }
+
+  // If controls help requested
   if (commandLineParser.isSet("controls")) {
     outputControlsHelp();
     return -1;
