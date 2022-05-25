@@ -41,7 +41,8 @@ void outputControlsHelp() {
   std::cout << "Disable fullscren mode:                                  esc\n";
   std::cout << "Toggle V-sync:                                           v\n";
   std::cout << "Toggle GUI:                                              tab\n";
-  std::cout << "Request a tick:                                          space" << std::endl;
+  std::cout << "Request a tick:                                          space\n";
+  std::cout << "Select a cell:                                           lctrl+lbm" << std::endl;
 }
 
 // Generates default configuration file
