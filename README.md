@@ -9,70 +9,76 @@ that exists according to the laws of an evolutionary algorithm.
 <summary>Click to see how does it work</summary>
 <br/>
 
-This is a cellular automaton that is an evolution simulator.
-The world is discrete by space and time.
-Space is verticaly limited and horizontaly closed.
-In fact simulation world is a two-dimensional section of water
-where there are surface on top and bottom down below.
+It is a cellular automaton that is a simulator of evolution.
+The world is discrete in space and time.
+Space is limited vertically and closed horizontally.
+In fact, the world of simulation is a two-dimensional section of a reservoir where
+top surface and bottom - bottom.
 
-Water is habited by cells. At the beginning there is only one cell.
-Each cell ocuppies its own space cell, has own energy level,
-command counter, genome, etc.
+The reservoir is inhabited by cells. At first only one.
+Each cell occupies one cell in space,
+has a certain energy level, command counter and genome.
 
-Genome is a tape of certain size closed at the ends that consists of
-separate gens expressed by integers.
-Each gene means certain instruction, for example: turn, move, eat, touch.
+The genome is a closed tape of constant size,
+consisting of genes that are expressed as integers.
+Each such gene means a certain instruction, for example:
+return, move, eat, touch.
 
-Command counter is an integer that means an address of current gene.
+The command counter is a number that is the address of the current gene.
 
-On each step each cell looks at its command counter, looks at this address
-in genome and executes instruction.
-Than command counter is incremented.
-Conditional and inconditional jumps are available.
-According to the principle of the genome, the cell
-is similar to the Turing machine.
+Every step each cell looks at its command counter,
+finds the gene - the instruction, and executes it.
+After each command is executed, the counter is incremented.
+Conditional and unconditional transitions are also possible.
+According to the principle of the genome, the cell is somewhat similar to the Turing machine.
 
-On each step energy level of cell is decremented and in the case
-it reaches zero the cell dies and can disappear or turn into organic.
+Each step the energy level of the cell is decremented, and,
+if it drops to zero, the cell dies and may disappear
+or turn into organic.
 
-Energy can be received from photosynthesis, minerals or food.
-Photosynthesis is possible during daytime and is more effective
-closer to the surface.
-Minerals are accumulated more effective closer to the bottom
-and can be converted into energy.
-Food can be living cells and organic.
+Energy can be obtained from photosynthesis, minerals and food.
+Photosynthesis is available during the day and is more efficient closer to the surface.
+Minerals accumulate more efficiently closer to the bottom and can
+be converted into energy.
+Food can be living cells and organic matter.
 
-The cell that gains enough energy for reproduction is able to bud.
-If the cell gains maximal amount of energy it has to bud
-and if it can't - it turns into organic.
-During budding genome from maternal cell is copied to daughterly one
-with some chance of mutation. That's how benign and malignant
-behaviour changes can appear.
+A cell that gets enough energy to reproduce
+can rest.
+If the cell has received the maximum amount of energy, it is obliged
+rest, and if this is not possible, it turns
+in organic.
+The genome is copied from the mother cell to the daughter, and at the same time is
+some chance of mutation. This is how benign or malignant can occur
+changes in cell behavior.
 
-So cell genome determines its behaviour in simulation.
+So the cell's genome determines its behavior in the simulation.
 Cells with the most successful genome survive and give offspring,
-other cells die.
-Thus the simulation has basic evolutionary factors implemented:
+and cells with a less successful genome die.
+Thus, the main factors of evolution are realized in the simulation:
 mutations and natural selection.
 
-Since genome determines behaviour of the cell several formation
-can arise in the simulation, for example: colonies, winds,
-singletons, worms, etc.
+Because the cell's genome determines its behavior, in a simulation
+certain formations may occur, for example:
+colonies, solitaries, worms, etc.
+Changing environment properties and switching simulation rules
+directly affect the formation of such formations.
 
-Application interface allows you to change simulation speed,
-show cells in different modes (diet, energy, etc.)
-and also follow specific cell and review its genome.
+The program interface allows you to control the progress of the simulation,
+view statistics, monitor individual cells
+and view all their properties, including the genome,
+as well as display its simulation in different modes:
+diet, energy, age, etc.
 
-All simulation parameters can be setted which allows
-to establish correspondence of sets of rules to formations
-that arise in such conditions.
-This is one of the targets of cybernetics.
+All simulation settings can be configured before startup,
+that allows to establish correspondence of set of rules to formations,
+which occur in such conditions.
 
 </details>
 </br>
 
 ### Demo
-[![Here must be demo](https://media.istockphoto.com/photos/barbary-macaque-picture-id824860820?k=20&m=824860820&s=612x612&w=0&h=W8783ZGcqMfDMJoXvBAyDFcSjnOWdKqKhgLGvf-VIuU=)](https://www.youtube.com/watch?v=dQw4w9WgXcQ "Default configuration demo")
+[![Here must be demo](https://img.youtube.com/vi/T9Jqv2ou00k/hqdefault.jpg)](https://www.youtube.com/watch?v=T9Jqv2ou00k "\"default\" preset demo")
+[![Here must be demo](https://img.youtube.com/vi/zMXJDCG_DDw/hqdefault.jpg)](https://www.youtube.com/watch?v=zMXJDCG_DDw "GUI demo")
 </br>
 </br>
 
@@ -84,152 +90,112 @@ This is one of the targets of cybernetics.
 - features of the environment:
     - discrete in space (square cells) and time (ticks, or steps)
     - space above and below is limited, on the sides - closed
-    - the ability to get energy from photosynthesis closer
-    to the top and minerals - to the bottom
-    - change of seasons (moving vertical boundaries that determine
-    light zone; can be disabled)
-    - change of seasons (the distance between these vertical boundaries changes;
-    can be disabled)
-    - neighboring cells interfere with the passage of solar energy
-    - gamma flash every few steps, causing mutations
-    random number of genes of each cell
-    - the energy of the dead cell (organic) does not change and is equal to the energy
-    cell at the time of her death
-    - dead cells (organic) with each tick fall to one cell
-    down if there is free space and then settle to the bottom or
-    (adjustable) stops after the first obstacle
-- in each run, each cell executes a command according to the genome
-- cells are processed sequentially with increasing age (so younger cells
-have a faster "reaction")
+    - the ability to obtain energy from photosynthesis closer to the top and minerals - to the bottom
+    - change of time of day (the vertical borders defining a zone of light move; it is possible to disconnect)
+    - change of seasons (changes the distance between these vertical boundaries; can be disabled)
+    - Neighboring cells interfere with the passage of solar energy
+    - gamma flash once in a certain number of steps, which causes mutations in a random number of genes in each cell
+    - the energy of a dead cell (organic) does not change and is equal to the energy of the cell at the time of its death
+    - dead cells (organics) with each tick fall one cell down if there is free space and then settle to the bottom or (tuned) stop after the first obstacle
+- In each run, each cell executes a command according to the genome
+- cells are processed sequentially with increasing age (so younger cells have a faster "reaction")
 - each cell has a certain set of properties:
     - energy level - an indicator of cell viability:
         - with each tick the level is decremented
-        - With the depletion of energy, the cell dies and disappears or becomes organic
-        (customizable)
-    - cell direction - is determined by an integer from 0 to 7 (0 - up,
-    7 - left up)
+        - with the depletion of energy, the cell dies and disappears or becomes organic (tuned)
+    - cell direction - determined by an integer from 0 to 7 (0 - up, 7 - left up)
     - cell position - two positive integers (x - column, y - row)
     - command counter - indicates the command in the genome to be executed
-    - genome - closed from the ends of the tape of constant size of integers - genes,
-    each of which corresponds to a specific command:
-        - commands are divided into final (command counter is incremented)
-        and intermediate (conditional transition is performed):
-            - the number of intermediate commands per turn is limited to a certain number,
-            the number of finals is one
-        - the number of commands is equal to the size of the genome (for unconditional transitions)
-        and a multiple of 8 (for the number of directions)
+    - genome - a closed from the ends of a strip of constant size of integers - genes, each of which corresponds to a specific command:
+        - commands are divided into final (command counter is incremented) and intermediate (conditional transition is performed):
+            - the number of intermediate commands per turn is limited to a certain number, the number of final - one
+        - the number of commands is equal to the size of the genome (for unconditional transitions) and a multiple of 8 (for the number of directions)
         - list of teams:
-            - 0 - inaction (final)
+        - 0 - inaction (final)
             - 1 - return (intermediate):
                 - the angle of rotation is the remainder of the division by 8 values ​​of the gene № + 1
             - 2 - move (final):
-                - movement in the direction that is the remainder of the division by 8 sums
-                own direction and the value of the gene № + 1
-                - if the movement failed, the command to touch is executed,
-                and the command counter is not incremented
+                - movement in the direction that is the remainder of the division by 8 of the sum of its own direction and the value of the gene № + 1
+                - if the movement fails, the command to touch is executed, and the command counter is not incremented
             - 3 - photosynthesis (final):
                 - getting energy from the sun
-                - the farther from the ellipse formed by the Sun, the less solar
-                light
-                - time of day affects the horizontal placement of the maximum
-                light
+                - the farther from the ellipse formed by the Sun, the less sunlight
+                - time of day affects the horizontal placement of maximum light
                 - time of year affects the intensity of light
             - 4 - mineralosynthesis (final):
                 - extraction of energy from accumulated minerals
                 - minerals accumulate every step (there is a limit)
                 - the deeper, the more minerals
             - 5 - eat (final):
-                - conversion into food energy in the direction that is the remainder of
-                division by 8 sums of the self-direction and the value of the gene № + 1
-                - the received energy is equal to the energy of food and does not exceed a certain one
-                maximum energy from food or equal to this maximum
-                energy (customizable)
+                - conversion into food energy in the direction that is the remainder of the division by 8 of the sum of its own direction and the value of the gene № + 1
+                - the received energy is equal to the energy of food and does not exceed a certain maximum energy from food or equal to this maximum energy (adjustable)
             - 6 - bud (final):
-                - the daughter cell buds in the direction that is the rest
-                from the division by 8 of the sum of its own direction and the value of the gene № + 1
+                - the daughter cell buds in the direction that is the remainder of the division by 8 sums of its own direction and the value of the gene № + 1
             - 7 - mutate (final):
                 - mutation of an arbitrary gene
             - 8 - transfer energy (final):
-                - energy transfer in the direction that is the remainder of the division by 8
-                the sum of its own direction and the value of the gene № + 1
-                - the amount of transmitted energy is equal to the given value
-                (value / number of commands * current energy level)
-                gene № + 2
+                - energy transfer in the direction that is the remainder of the division by 8 of the sum of its own direction and the value of the gene № + 1
+                - the amount of transmitted energy is equal to the given value (value / number of commands * current energy level) of the gene № + 2
             - 9 - touch (intermediate):
-                - determine the object in the direction that is the remainder of the division by 8
-                the sum of its own direction and the value of the gene № + 1
-                - if the front is empty - is added to the command counter
-                the value of the gene № + 2
-                - if there is organic in front - it is added to the command counter
-                the value of the gene № + 3
-                - if there is a related cell in front - to the command counter
-                the value of the gene № + 4 is added
-                - if someone else's cell is in front - to the command counter
-                the value of the gene № + 5 is added
-                - in a friendly cell the genome differs no more than in
-                a certain number of genes
+                - determine the object in the direction that is the remainder of the division by 8 of the sum of its own direction and the value of the gene № + 1
+                - if the front is empty - the value of the gene № + 2 is added to the command counter
+                - if in front of the organic - the value of the gene № + 3 is added to the command counter
+                - if there is a related cell in front - the value of the gene № + 4 is added to the command counter
+                - if there is a foreign cell in front - the value of the gene № + 5 is added to the command counter
+                - in a friendly cell the genome differs by no more than a certain number of genes
             - 10 - determine the level of own energy (intermediate):
-                - control level is a reduced value (value /
-                number of commands * maximum energy) gene № + 1
-                - if own level is less than control - to command
-                the value of the gene № + 2 is added to the counter
-                - if the own level is greater than or equal to the control -
-                the value of the gene № + 3 is added to the command counter
+                - control level is the reduced value (value / number of commands * maximum energy) of the gene № + 1
+                - if the intrinsic level is less than the control - the value of the gene № + 2 is added to the command counter
+                - if the intrinsic level is greater than or equal to the control - the value of the gene № + 3 is added to the command counter
             - 11 - determine the depth (intermediate):
-                - control depth is the given value (value /
-                number of commands * maximum depth) of the gene № + 1
-                - if the own depth is less than the control - to the command
-                the value of the gene № + 2 is added to the counter
-                - if the own depth is greater than or equal to the control -
-                the value of the gene № + 3 is added to the command counter
+                - control depth is the reduced value (value / number of commands * maximum depth) of the gene № + 1
+                - if the natural depth is less than the control - the value of the gene № + 2 is added to the command counter
+                - if the natural depth is greater than or equal to the control - the value of the gene № + 3 is added to the command counter
             - 12 - determine the level of available solar energy (intermediate):
-                - control level is a reduced value (value /
-                number of commands * maximum energy from the sun) gene № + 1
-                - if own level is less than control - to command
-                the value of the gene № + 2 is added to the counter
-                - if the own level is greater than or equal to the control -
-                the value of the gene № + 3 is added to the command counter
+                - control level is the reduced value (value / number of commands * maximum energy from the sun) of the gene № + 1
+                - if the intrinsic level is less than the control - the value of the gene № + 2 is added to the command counter
+                - if the intrinsic level is greater than or equal to the control - the value of the gene № + 3 is added to the command counter
             - 13 - determine the level of available minerals (intermediate):
-                - control level is a reduced value (value /
-                number of commands * maximum energy from minerals) gene № + 1
-                - if own level is less than control - to command
-                the value of the gene № + 2 is added to the counter
-                - if the own level is greater than or equal to the control -
-                the value of the gene № + 3 is added to the command counter
-            - 14 - determine the level of available energy from accumulated minerals
-            (intermediate):
-                - control level is a reduced value (value /
-                number of commands * maximum energy from minerals) gene № + 1
-                - if own level is less than control - to command
-                the value of the gene № + 2 is added to the counter
-                - if the own level is greater than or equal to the control -
-                the value of the gene № + 3 is added to the command counter
-            - all other numbers are unconditional transition commands (add to
-            command counter its value)
+                - the control level is the reduced value (value / number of commands * maximum energy from minerals) of the gene № + 1
+                - if the intrinsic level is less than the control - the value of the gene № + 2 is added to the command counter
+                - if the intrinsic level is greater than or equal to the control - the value of the gene № + 3 is added to the command counter
+            - 14 - determine the level of available energy from accumulated minerals (intermediate):
+                - the control level is the reduced value (value / number of commands * maximum energy from minerals) of the gene № + 1
+                - if the intrinsic level is less than the control - the value of the gene № + 2 is added to the command counter
+                - if the intrinsic level is greater than or equal to the control - the value of the gene № + 3 is added to the command counter
+            - all other numbers - unconditional transition commands (add their value to the command counter)
         - cell color - three positive integers (RGB)
-        - energy transfer balance - the difference between transmitted and received energy
-        for all time
-        - past energy transfer - the symbolic value of the last transferred
-        energy (-1, 0 or 1), the value of which fades with time
+        - energy transfer balance - the difference between transmitted and received energy for all time
+        - past energy transfer - the sign value of the last transferred energy (-1, 0 or 1), the value of which fades with time
     - mutations:
         - mutation - change of a random gene to a random value
-        - the highest chance of mutation in budding (equal to the maternal,
-        and the daughter cell), the smallest - when following instructions
+        - separate chances of mutation for parent and daughter cells during budding, and the chance of random mutation
     - reproduction:
         - reproduction occurs by budding of a daughter cell
         - energy is divided in half
         - the daughter cell inherits the color and direction of the mother
         - there is a complete copying of the genome into a daughter cell
         - there is a separate chance of mutation in budding, the same for both cells
-        - the daughter cell buds in the first direction of the first free
-        cells that are checked clockwise starting from the direction
-        mother cell (optional)
-        - a cell must multiply if its energy is not less than the maximum
-        energy (optional)
-        - a cell can multiply if its energy is not less than the minimum
-        energy for separation, and the budding command is executed
-        - if the cell needs to bud but does not have room for it -
-        it becomes organic with energy conservation (optional)
+        - the daughter cell is budded in the first direction of the first free cell, which is checked clockwise starting from the direction of the mother cell (optional)
+        - the cell must multiply if its energy is not less than the maximum energy (optional)
+        - a cell can multiply if its energy is not less than the minimum energy for division, and the budding command is executed
+        - if the cell needs to bud but does not have space for it - it becomes organic with energy conservation (optional)
+- interface:
+    - setting simulation parameters, genome, energy level, direction and position of the stem cell, as well as simulation grains in JSON format
+    - pause rendering, pause simulation, set the number of ticks per drawing, step-by-step mode
+    - switching on / off the image of photosynthesis and mineral nutrition zones
+    - change the simulation image mode:
+        - diet (greener - more energy from photosynthesis, blue - from minerals, red - from food, gray - organic)
+        - energy level mode (redder - more energy, yellower - less, gray - organic)
+        - energy transfer balance mode (more brown - more energy, more turquoise - more transmission, gray - organic)
+        - mode of past energy transfer (more brown - recently received, more turquoise - recently transferred, gray - organic)
+        - age regime (redder - older, more turquoise - younger, gray - organic)
+    - display simulation statistics: frames per second, steps per second, step, day, year, season, number of days before gamma-ray flash, live / dead cells, number of buds, amount of energy consumption from photosynthesis / minerals / food
+    - change the simulation parameters and enable / disable individual cell instructions on the go
+    - select the cell with the cursor:
+        - view all its properties
+        - memorizing the properties of the cell, if it has disappeared, with the possibility of reset
+        - highlight it in black
 
 </details>
 </br>
@@ -239,7 +205,8 @@ have a faster "reaction")
 <summary>Click to see formation</summary>
 <br/>
 
-Here are founded formations:
+You can discover different formation yourself.
+Here are formations that I have found:
 - gas - cells that move in constant random direction
 - singletons - stationary cells that keep distance to each other
 - chess - stationary cells located in chess order
@@ -273,7 +240,7 @@ Here are available configuration presets and formations that can be found in the
 - childEnergy1maximizeFood1: red terror
 - daytimes: spinners, gas, wind, colonies
 - pinOrganic0: gas, sticks, diagonal sticks, colonies, wind
-- cellSize4: just a little bigger world
+- cellSize4: chess, spinners, colonies, worms, singletons
 - mineralEnergy04: worms, spinners, diagonal sticks, jumpers, colonies
 - mineralEnergy08: wind, singletons, colonies
 - mineralEnergy10: sticks, singletons, jumpers, spinners, colonies
@@ -325,6 +292,10 @@ You will have ```./bin/cellarium``` builded.
 <details>
 <summary>Click to see how to use it</summary>
 <br/>
+
+You can download released binaries and presets
+on [release page](https://github.com/maldenol/cellarium/releases)
+or build the source code yourself (see Building section).
 
 Run the application with ```-h``` parameter to see help information.  
 Use ```-c``` parameter to see controls help information.  
