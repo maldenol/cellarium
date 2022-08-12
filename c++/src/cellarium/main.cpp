@@ -50,10 +50,10 @@ int main(int argc, char *argv[]) {
   controls.tickRequest                = false;
 
   // Processing command line arguments updating CellController::Params and Controls
-  int success{processCommandLineArguments(argc, argv, std::string{kWindowTitle}, controls,
-                                          cellControllerParams)};
-  if (success != 0) {
-    return 0;
+  int error{processCommandLineArguments(argc, argv, std::string{kWindowTitle}, controls,
+                                        cellControllerParams)};
+  if (error != 0) {
+    return error;
   }
 
   // Initializing simulation itself
@@ -63,9 +63,13 @@ int main(int argc, char *argv[]) {
   controls.cellControllerPtr = &cellController;
 
   // Initializing GLFW and getting configured window with OpenGL context
+  extra::initGLFW();
   GLFWwindow *window =
       extra::createWindow(cellControllerParams.width, cellControllerParams.height,
                           std::string{kWindowTitle}, kOpenGLVersionMajor, kOpenGLVersionMinor);
+  if (window == nullptr) {
+    return 1;
+  }
 
   // Capturing OpenGL context
   glfwMakeContextCurrent(window);
@@ -145,9 +149,9 @@ int main(int argc, char *argv[]) {
 
       // Rendering environment if needed
       if (controls.enableRenderingEnvironment) {
-        renderMineralEnergyBuffer(mineralEnergyShaderProgram, mineralEnergyVAO, mineralEnergyVBO);
+        renderMineralEnergyBuffer(mineralEnergyShaderProgram, mineralEnergyVAO);
         renderPhotosynthesisEnergyBuffer(photosynthesisEnergyShaderProgram, photosynthesisEnergyVAO,
-                                         photosynthesisEnergyVBO, cellController.getSunPosition(),
+                                         cellController.getSunPosition(),
                                          cellController.getDaytimeWidth());
       }
 
@@ -169,8 +173,20 @@ int main(int argc, char *argv[]) {
   // Terminating Dear ImGui context
   terminateDearImGui();
 
+  // Deleting OpenGL objects
+  glDeleteBuffers(1, &mineralEnergyVBO);
+  glDeleteVertexArrays(1, &mineralEnergyVAO);
+  glDeleteBuffers(1, &photosynthesisEnergyVBO);
+  glDeleteVertexArrays(1, &photosynthesisEnergyVAO);
+  glDeleteBuffers(1, &cellVBO);
+  glDeleteVertexArrays(1, &cellVAO);
+  glDeleteProgram(mineralEnergyShaderProgram);
+  glDeleteProgram(photosynthesisEnergyShaderProgram);
+  glDeleteProgram(cellShaderProgram);
+
   // Terminating window with OpenGL context and GLFW
   extra::terminateWindow(window);
+  extra::terminateGLFW();
 
   return 0;
 }

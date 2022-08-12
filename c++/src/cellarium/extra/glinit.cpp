@@ -13,16 +13,23 @@
 // OpenGL
 #include <glad/glad.h>
 
-// Initializes GLFW and returns configured window with OpenGL context
-GLFWwindow *extra::createWindow(int width, int height, const std::string &title,
-                                int openGLVersionMajor, int openGLVersionMinor) {
-  // Initializing GLFW
+// Initializes GLFW
+int extra::initGLFW() {
   if (glfwInit() == GLFW_FALSE) {
     std::cout << "error: failed to initialize GLFW" << std::endl;
 
-    return nullptr;
+    return 1;
   }
 
+  return 0;
+}
+
+// Terminates GLFW
+void extra::terminateGLFW() { glfwTerminate(); }
+
+// Initializes configured window with OpenGL context
+GLFWwindow *extra::createWindow(int width, int height, const std::string &title,
+                                int openGLVersionMajor, int openGLVersionMinor) {
   // Setting OpenGL version and profile
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, openGLVersionMajor);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, openGLVersionMinor);
@@ -56,14 +63,8 @@ GLFWwindow *extra::createWindow(int width, int height, const std::string &title,
   return window;
 }
 
-// Terminates window with OpenGL context and GLFW
-void extra::terminateWindow(GLFWwindow *window) {
-  // Closing GLFW window
-  glfwSetWindowShouldClose(window, true);
-
-  // Terminating GLFW
-  glfwTerminate();
-}
+// Terminates window with OpenGL context
+void extra::terminateWindow(GLFWwindow *window) { glfwSetWindowShouldClose(window, true); }
 
 // Enables fullscreen mode for given window
 void extra::enableFullscreenMode(GLFWwindow *window) {

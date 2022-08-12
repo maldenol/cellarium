@@ -17,9 +17,9 @@
 void renderCellBuffer(GLuint shaderProgram, GLuint vao, GLuint vbo, cellarium::CellController &cellController, int cellRenderingMode);
 
 // Renders photosynthesis energy from buffer
-void renderPhotosynthesisEnergyBuffer(GLuint shaderProgram, GLuint vao, GLuint vbo, float offsetX, float widthScale);
+void renderPhotosynthesisEnergyBuffer(GLuint shaderProgram, GLuint vao, float offsetX, float widthScale);
 
 // Renders mineral energy from buffer
-void renderMineralEnergyBuffer(GLuint shaderProgram, GLuint vao, GLuint vbo);
+void renderMineralEnergyBuffer(GLuint shaderProgram, GLuint vao);
 
 #endif

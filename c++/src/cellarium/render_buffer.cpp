@@ -10,10 +10,7 @@
 // Renders cells from buffer
 void renderCellBuffer(GLuint shaderProgram, GLuint vao, GLuint vbo,
                       cellarium::CellController &cellController, int cellRenderingMode) {
-  // Using shader program
-  glUseProgram(shaderProgram);
-  // Binding VAO and VBO
-  glBindVertexArray(vao);
+  // Binding VBO
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
   // Getting current count of cells in simulation
   int renderingDataSize = static_cast<int>(cellController.getCellCount());
@@ -21,16 +18,31 @@ void renderCellBuffer(GLuint shaderProgram, GLuint vao, GLuint vbo,
   cellarium::CellController::CellRenderingData *cellRenderingData =
       static_cast<cellarium::CellController::CellRenderingData *>(
           glMapBufferRange(GL_ARRAY_BUFFER, 0, renderingDataSize, GL_MAP_WRITE_BIT));
+
   // Passing VBO buffer to CellController that fills it with rendering data
   cellController.render(cellRenderingData, cellRenderingMode);
-  // Rendering elements
-  glDrawArrays(GL_POINTS, 0, renderingDataSize);
+
   // Unmapping VBO buffer
   glUnmapBuffer(GL_ARRAY_BUFFER);
+  // Unbinding VBO
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+  // Using shader program
+  glUseProgram(shaderProgram);
+  // Binding VAO
+  glBindVertexArray(vao);
+
+  // Rendering elements
+  glDrawArrays(GL_POINTS, 0, renderingDataSize);
+
+  // Unbinding VAO
+  glBindVertexArray(0);
+  // Using shader program
+  glUseProgram(0);
 }
 
 // Renders photosynthesis energy from buffer
-void renderPhotosynthesisEnergyBuffer(GLuint shaderProgram, GLuint vao, GLuint vbo, float offsetX,
+void renderPhotosynthesisEnergyBuffer(GLuint shaderProgram, GLuint vao, float offsetX,
                                       float widthScale) {
   // Local constant
   static constexpr int kIndicesCount = 6;
@@ -40,23 +52,33 @@ void renderPhotosynthesisEnergyBuffer(GLuint shaderProgram, GLuint vao, GLuint v
   // Updating shader program uniform variables
   glUniform1f(glGetUniformLocation(shaderProgram, "kOffsetX"), offsetX);
   glUniform1f(glGetUniformLocation(shaderProgram, "kWidthScale"), widthScale);
-  // Binding VAO and VBO
+  // Binding VAO
   glBindVertexArray(vao);
-  glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
   // Rendering elements
   glDrawElementsInstanced(GL_TRIANGLES, kIndicesCount, GL_UNSIGNED_INT, 0, 3);
+
+  // Unbinding VAO
+  glBindVertexArray(0);
+  // Using shader program
+  glUseProgram(0);
 }
 
 // Renders mineral energy from buffer
-void renderMineralEnergyBuffer(GLuint shaderProgram, GLuint vao, GLuint vbo) {
+void renderMineralEnergyBuffer(GLuint shaderProgram, GLuint vao) {
   // Local constant
   static constexpr int kIndicesCount = 6;
 
   // Using shader program
   glUseProgram(shaderProgram);
-  // Binding VAO and VBO
+  // Binding VAO
   glBindVertexArray(vao);
-  glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
   // Rendering elements
   glDrawElements(GL_TRIANGLES, kIndicesCount, GL_UNSIGNED_INT, 0);
+
+  // Unbinding VAO
+  glBindVertexArray(0);
+  // Using shader program
+  glUseProgram(0);
 }
