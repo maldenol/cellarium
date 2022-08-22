@@ -281,7 +281,7 @@ to ```c++/src/cellarium/dear_imgui/```.
 To build the application run these commands from ```c++/``` directory:
 ```bash
 cmake .
-cmake -build .
+cmake --build .
 ```
 You will have ```./bin/cellarium``` builded.
 
