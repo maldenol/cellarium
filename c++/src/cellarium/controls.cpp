@@ -13,9 +13,9 @@
 #include <string>
 
 // Dear ImGui
-#include "./dear_imgui/imgui.h"
-#include "./dear_imgui/imgui_impl_glfw.h"
-#include "./dear_imgui/imgui_impl_opengl3.h"
+#include <dear_imgui/imgui.h>
+#include <dear_imgui/imgui_impl_glfw.h>
+#include <dear_imgui/imgui_impl_opengl3.h>
 
 // "extra" internal library
 #include "./extra/extra.hpp"

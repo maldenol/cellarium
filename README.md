@@ -265,25 +265,26 @@ The final version of application is written in C++ using:
 
 Therefore before building you need to satisfy all the dependencies
 by taking these steps:
-1. Install Qt using your system package manager or [official installer](https://www.qt.io/download).
+1. Install Qt using your system package manager or [official installer](https://www.qt.io/download)
+and add it to PATH if on Windows.
 2. Download [GLFW](https://www.glfw.org/download), build it,
 then place static library file in ```c++/lib/```
 and header directories in ```c++/include/```.
 3. Download [GLAD](https://glad.dav1d.de/),
 build it as static or shared library and place it in ```c++/lib/```
-or place source file in ```c++/src/cellarium/glad/```,
+or place source file in ```c++/src/glad/```,
 then place header directory in ```c++/include/```.
 4. Clone [Dear ImGui](https://github.com/ocornut/imgui) repository,
 then copy all the source and header files from the repository's root
-and also ```imgui_impl_glfw*``` with ```imgui_impl_opengl3*``` from ```backends\```
-to ```c++/src/cellarium/dear_imgui/```.
+and also ```imgui_impl_glfw*``` with ```imgui_impl_opengl3*``` from ```backends/```
+to ```c++/src/dear_imgui/```.
 
 To build the application run these commands from ```c++/``` directory:
 ```bash
 cmake .
-cmake --build .
+cmake --build . --config Release
 ```
-You will have ```./bin/cellarium``` builded.
+You will have ```./bin/cellarium``` or ```./bin/cellarium.exe``` builded.
 
 </details>
 </br>

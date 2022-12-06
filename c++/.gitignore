@@ -31,6 +31,9 @@
 *.out
 *.app
 
+# External includes
+include/
+
 # Static and shared libraries
 lib/
 
@@ -45,20 +48,30 @@ build.ninja
 
 # Compilation output
 bin/
+x86/
+x64/
+Debug/
+Release/
+
+# Visual Studio
+.vs/
+.vscode/
+
+# MSVC
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.dir/
+*.sln
 
 # Documentation
 docs/
 
-# Library headers
-include/glad
-include/GLFW
-include/khr
+# External libraries' sources
+src/dear_imgui/
+src/glad/
 
-# Library sources
-src/cellarium/glad
-src/cellarium/dear_imgui
-
-# Dear ImGui
+# Dear ImGui configs
 imgui.ini
 
 # Configuration files
