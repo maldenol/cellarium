@@ -47,7 +47,7 @@ build.ninja
 .ninja_log
 
 # Compilation output
-bin/
+build/
 x86/
 x64/
 Debug/

@@ -20,30 +20,52 @@ SET_TARGET_PROPERTIES(${TARGET} PROPERTIES CXX_STANDARD_REQUIRED ON)
 
 TARGET_COMPILE_OPTIONS(${TARGET} PUBLIC
   $<$<PLATFORM_ID:Linux>:
-    $<$<COMPILE_LANG_AND_ID:C,GNU,Clang>: -Wall -Wextra -Wpedantic -O3>
-    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>: -Wall -Wextra -Wpedantic -O3>
+    $<$<COMPILE_LANG_AND_ID:C,GNU,Clang>:
+      -Wall -Wextra -Wpedantic
+      $<$<CONFIG:Debug>: -g -fsanitize=address,undefined>
+      $<$<CONFIG:Release>: -O3>
+    >
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:
+      -Wall -Wextra -Wpedantic
+      $<$<CONFIG:Debug>: -g -fsanitize=address,undefined>
+      $<$<CONFIG:Release>: -O3>
+    >
   >
   $<$<PLATFORM_ID:Windows>:
-    $<$<COMPILE_LANG_AND_ID:C,GNU>: -Wall -Wextra -Wpedantic -O3> # not supported
-    $<$<COMPILE_LANG_AND_ID:C,Clang>: -Wall -Wextra -Wpedantic -O3> # not supported
-    $<$<COMPILE_LANG_AND_ID:C,MSVC>: /Wall /O2>
-    $<$<COMPILE_LANG_AND_ID:CXX,GNU>: -Wall -Wextra -Wpedantic -O3> # not supported
-    $<$<COMPILE_LANG_AND_ID:CXX,Clang>: -Wall -Wextra -Wpedantic -O3> # not supported
-    $<$<COMPILE_LANG_AND_ID:CXX,MSVC>: /Wall /O2>
+    $<$<COMPILE_LANG_AND_ID:C,MSVC>:
+      /Wall
+      $<$<CONFIG:Debug>: /DEBUG /fsanitize=address,undefined>
+      $<$<CONFIG:Release>: /O2>
+    >
+    $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:
+      /Wall
+      $<$<CONFIG:Debug>: /DEBUG /fsanitize=address,undefined>
+      $<$<CONFIG:Release>: /O2>
+    >
   >
 )
 TARGET_LINK_OPTIONS(${TARGET} PUBLIC
   $<$<PLATFORM_ID:Linux>:
-    $<$<LINK_LANG_AND_ID:C,GNU,Clang>: -lX11 -O3>
-    $<$<LINK_LANG_AND_ID:CXX,GNU,Clang>: -lX11 -O3>
+    $<$<LINK_LANG_AND_ID:C,GNU,Clang>:
+      -lX11
+      $<$<CONFIG:Debug>: -g -fsanitize=address,undefined>
+      $<$<CONFIG:Release>: -O3>
+    >
+    $<$<LINK_LANG_AND_ID:CXX,GNU,Clang>:
+      -lX11
+      $<$<CONFIG:Debug>: -g -fsanitize=address,undefined>
+      $<$<CONFIG:Release>: -O3>
+    >
   >
   $<$<PLATFORM_ID:Windows>:
-    $<$<LINK_LANG_AND_ID:C,GNU>: -O3> # not supported
-    $<$<LINK_LANG_AND_ID:C,Clang>: -O3> # not supported
-    $<$<LINK_LANG_AND_ID:C,MSVC>: /O2>
-    $<$<LINK_LANG_AND_ID:CXX,GNU>: -O3> # not supported
-    $<$<LINK_LANG_AND_ID:CXX,Clang>: -O3> # not supported
-    $<$<LINK_LANG_AND_ID:CXX,MSVC>: /O2>
+    $<$<LINK_LANG_AND_ID:C,MSVC>:
+      $<$<CONFIG:Debug>: /DEBUG /fsanitize=address,undefined>
+      $<$<CONFIG:Release>: /O2>
+    >
+    $<$<LINK_LANG_AND_ID:CXX,MSVC>:
+      $<$<CONFIG:Debug>: /DEBUG /fsanitize=address,undefined>
+      $<$<CONFIG:Release>: /O2>
+    >
   >
 )
 
