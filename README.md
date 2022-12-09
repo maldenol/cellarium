@@ -283,7 +283,7 @@ to ```c++/src/dear_imgui/```.
 To build the application run these commands from ```c++/``` directory:
 ```bash
 cmake . -DCMAKE_BUILD_TYPE=Release
-cmake --build .
+cmake --build . --config Release
 ```
 You will have ```./build/bin/Release/cellarium```
 or ```./build/bin/Release/cellarium.exe``` built.
