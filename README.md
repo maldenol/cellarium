@@ -76,7 +76,7 @@ which occur in such conditions.
 </details>
 </br>
 
-### Demo
+### Demo (YouTube videos)
 [![Here must be demo](https://img.youtube.com/vi/T9Jqv2ou00k/hqdefault.jpg)](https://www.youtube.com/watch?v=T9Jqv2ou00k "\"default\" preset demo")
 [![Here must be demo](https://img.youtube.com/vi/zMXJDCG_DDw/hqdefault.jpg)](https://www.youtube.com/watch?v=zMXJDCG_DDw "GUI demo")
 </br>
