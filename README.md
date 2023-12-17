@@ -4,9 +4,8 @@ that exists according to the laws of an evolutionary algorithm.
 <br/>
 <br/>
 
-## How does it work
 <details>
-<summary>Click to see how does it work</summary>
+<summary>How does it work</summary>
 <br/>
 
 It is a cellular automaton that is a simulator of evolution.
@@ -82,9 +81,8 @@ which occur in such conditions.
 </br>
 </br>
 
-### Simulation rules
 <details>
-<summary>Click to see simulation rules</summary>
+<summary>Simulation rules</summary>
 <br/>
 
 - features of the environment:
@@ -110,9 +108,9 @@ which occur in such conditions.
         - commands are divided into final (command counter is incremented) and intermediate (conditional transition is performed):
             - the number of intermediate commands per turn is limited to a certain number, the number of final - one
         - the number of commands is equal to the size of the genome (for unconditional transitions) and a multiple of 8 (for the number of directions)
-        - list of teams:
-        - 0 - inaction (final)
-            - 1 - return (intermediate):
+        - list of commands:
+            - 0 - inaction (final)
+            - 1 - turn (intermediate):
                 - the angle of rotation is the remainder of the division by 8 values ​​of the gene № + 1
             - 2 - move (final):
                 - movement in the direction that is the remainder of the division by 8 of the sum of its own direction and the value of the gene № + 1
@@ -180,7 +178,7 @@ which occur in such conditions.
         - the cell must multiply if its energy is not less than the maximum energy (optional)
         - a cell can multiply if its energy is not less than the minimum energy for division, and the budding command is executed
         - if the cell needs to bud but does not have space for it - it becomes organic with energy conservation (optional)
-- interface:
+- user interface:
     - setting simulation parameters, genome, energy level, direction and position of the stem cell, as well as simulation grains in JSON format
     - pause rendering, pause simulation, set the number of ticks per drawing, step-by-step mode
     - switching on / off the image of photosynthesis and mineral nutrition zones
@@ -200,9 +198,8 @@ which occur in such conditions.
 </details>
 </br>
 
-### Formations
 <details>
-<summary>Click to see formations</summary>
+<summary>Formations</summary>
 <br/>
 
 You can discover different formations yourself.
@@ -228,9 +225,8 @@ Here are formations that I have found:
 </details>
 </br>
 
-### Configuration presets
 <details>
-<summary>Click to see configuration presets</summary>
+<summary>Configuration presets</summary>
 <br/>
 
 Here are available configuration presets and formations that can be found in them:
@@ -249,10 +245,6 @@ Here are available configuration presets and formations that can be found in the
 </br>
 
 ## Building
-<details>
-<summary>Click to see how to build it</summary>
-<br/>
-
 The prototype of the application is written in Processing so if you don't want
 to build the application yourself you can download Processing 3.5+ and run it.
 However, Processing version does not contain all the available rules,
@@ -287,15 +279,9 @@ cmake --build . --config Release
 ```
 You will have ```./build/bin/Release/cellarium```
 or ```./build/bin/Release/cellarium.exe``` built.
-
-</details>
 </br>
 
 ## Using
-<details>
-<summary>Click to see how to use it</summary>
-<br/>
-
 You can download released binaries and presets
 on [release page](https://github.com/maldenol/cellarium/releases)
 or build the source code yourself (see Building section).
@@ -304,8 +290,6 @@ Run the application with ```-h``` parameter to see help information.
 Use ```-c``` parameter to see controls help information.  
 Use ```-g``` parameter to generate default configuration so you can edit it and use.  
 Run the application with configuration file specified to start simulation.
-
-</details>
 </br>
 
 ## License
